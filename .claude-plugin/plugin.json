@@ -1,0 +1,9 @@
+{
+  "name": "dev-skills",
+  "description": "Issue → PR → review → merge skills for Claude Code. Repo-agnostic: each skill takes its standards from the consuming repo's CLAUDE.md.",
+  "version": "0.1.0",
+  "author": {
+    "name": "cesarte789"
+  },
+  "repository": "https://github.com/cesarte789/dev-skills"
+}

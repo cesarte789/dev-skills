@@ -1,0 +1,14 @@
+{
+  "name": "dev-skills",
+  "description": "cesarte789's shared Claude Code skills for software projects.",
+  "owner": {
+    "name": "cesarte789"
+  },
+  "plugins": [
+    {
+      "name": "dev-skills",
+      "source": "./",
+      "description": "Issue → PR → review → merge skills for Claude Code."
+    }
+  ]
+}
