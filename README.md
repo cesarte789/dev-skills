@@ -1,6 +1,6 @@
 # dev-skills
 
-Claude Code skills that automate the issue → PR → review → merge loop, packaged as a plugin so every repo uses the same copy instead of drifting forks.
+Claude Code skills that automate the issue → PR → review → merge loop, plus one output style, packaged as a plugin so every repo uses the same copy instead of drifting forks.
 
 The skills are repo-agnostic. Each one takes its standards from the **consuming repo's** `CLAUDE.md` (and `AGENTS.md` where present): how to run tests, what must be regenerated, where docs go, which language comments are in. Put those facts there, not in the skills.
 
@@ -64,6 +64,16 @@ claude plugin validate . --strict
 
 ⚠️ The orchestrators that merge are only safe where `main` is protected by **required CI that runs real tests**. They wait for green checks; with no meaningful checks, everything is green.
 
+## Output style
+
+| Skill | Invoke | What it does |
+|---|---|---|
+| `i-have-adhd` | `/dev-skills:i-have-adhd` | Shapes replies for an ADHD reader: the next action first, multi-step work numbered, state restated each turn, tangents held back, concrete time estimates. Stays on until you say "stop adhd mode". Invoke-only (`disable-model-invocation`), so it never switches itself on. |
+
+`i-have-adhd` is by [Ayoub Ghriss](https://github.com/ayghri), from [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd), and is vendored unmodified under its MIT license (`skills/i-have-adhd/LICENSE`).
+
+To have it on from the start of every session in a repo, as LifeOS does, the repo imports the file from `AGENTS.md` or `CLAUDE.md`. That import needs a path inside the repo, so such a repo keeps its own copy rather than relying on the plugin's.
+
 ## What the consuming repo must provide
 
 - A `CLAUDE.md` stating the conventions and **the exact test/build commands**, including a narrow per-area command if there is one. `polish-pr` and `generate-pr-from-issue` run whatever it names.
@@ -81,4 +91,4 @@ The skills are written against the `gh` CLI. Cloud sessions on `claude.ai/code` 
 
 ## Provenance
 
-Extracted from `cesarte789/lifeos`, with the LifeOS-specific rules (test commands, generated API types, feature-doc format, UI language) moved out of the skills and into that repo's `CLAUDE.md`.
+The workflow skills were extracted from `cesarte789/lifeos`, with the LifeOS-specific rules (test commands, generated API types, feature-doc format, UI language) moved out of the skills and into that repo's `CLAUDE.md`. `i-have-adhd` is third-party; see Output style above for its author and license.
