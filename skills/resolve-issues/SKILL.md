@@ -86,8 +86,8 @@ the backlog is clear.
 ## 3. Resolve each, one at a time
 
 Walk the candidate list in order until it is exhausted or `<max-issues>` issues
-have reached an outcome, whichever comes first. Only an issue `resolve-issue`
-actually finished — merged or rejected — counts against the cap; a skip costs
+are resolved, whichever comes first. Only an issue `resolve-issue` actually
+finished — `merged` or `rejected` — counts as resolved; a skip or a `split` costs
 nothing, because the cap is there to bound unattended merges. Report the
 candidates you never reached — the sweep is rerunnable and picks them up next
 time. For each:
@@ -114,21 +114,14 @@ issue has to be vetted against that updated `main`. That is also what makes
 overlapping issues safe — a request an earlier merge already satisfied is
 rejected by `resolve-issue` as already handled, instead of being built twice.
 
-Per issue, `resolve-issue` ends in one of these, and the sweep reacts:
+React only to the outcome `resolve-issue`'s report opens with:
 
-- **Merged** — the change landed. Continue to the next issue.
-- **Rejected and closed** — the issue didn't hold up against the code, or its
-  evaluation declined it as not worth its permanent cost. That is a completed
-  outcome too: continue.
-- **PR left open** (polish stopped without a clean result, e.g. its cap, a
-  steering abort, or a review failure) or **merge blocked** (failing check,
-  conflict, branch protection) — **stop the sweep.** Leave the PR open and report
-  it; never pile more unattended merges on an unresolved PR, and never force a
-  blocked merge.
-- **Split into an epic** — `resolve-issue` clarified a vague issue and it broke
-  into sub-tasks, so no PR came out of it. That blocks only that issue, not the
-  backlog: report the sub-issues and **continue** with the next one. They belong
-  to the next sweep, not this one — the snapshot was taken before they existed.
+- **`merged`** or **`rejected`** — continue to the next issue.
+- **`split`** — blocks only that issue, not the backlog: report the sub-issues
+  and **continue**. They belong to the next sweep, not this one — the snapshot
+  was taken before they existed.
+- **`stopped`** — **stop the sweep** and report what it left open; never pile
+  more unattended merges on top of it, and never force a blocked merge.
 
 ## Stop conditions
 
@@ -137,13 +130,13 @@ End the run when **any** holds, and report which one:
 - every candidate has reached an outcome or been skipped,
 - the number of issues resolved reaches `<max-issues>`,
 - no open issue survives the stage-2 filters (backlog clear),
-- `resolve-issue` leaves a PR open or is blocked from merging.
+- `resolve-issue` ends `stopped`.
 
 ## Report
 
 Summarize the whole sweep: how many issues the snapshot held and how many became
-candidates, then per candidate its number, title and outcome (merged PR, closed
-with a verdict, skipped and why) with URLs. Then the totals — how many changes landed,
+candidates, then per candidate its number, title and outcome (`resolve-issue`'s
+outcome name with the PR or verdict, or skipped and why) with URLs. Then the totals — how many changes landed,
 how many issues were rejected, how many skipped — which stop condition ended the
 sweep, and everything left open or never attempted, so the user knows exactly
 what a rerun would pick up. End on `main`, synced to the last merge.

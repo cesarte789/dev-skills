@@ -297,8 +297,21 @@ If no place in the code is the right anchor, skip the stage and say so.
 
 ## Report
 
-State the outcome first — merged, PR left open, issue rejected and closed, or
-split into an epic — then the details: the issue URL, the vetting verdict and the
+Open with exactly one outcome, named as below. Callers (`simplify-loop`,
+`resolve-issues`) branch on this name alone, so every way this skill can end
+maps to one of them:
+
+- **`merged`** — Stage 4 merged the PR and the issue went to closed.
+- **`rejected`** — Stage 5 closed the issue with a verdict, and no PR from this
+  run is left open (Stage 6 merged its comment-only PR, or was skipped).
+- **`split`** — Stage 1b split the issue into an epic; list the sub-issues.
+- **`stopped`** — anything else: polish stopped without a clean result
+  (Stage 3), the merge was blocked or merged without closing the issue
+  (Stage 4), the verdict comment failed to post and the issue is still open
+  (Stage 5), or the comment-only PR was blocked or its diff touched more than
+  comments (Stage 6). Name what is left open, uncommitted edits included.
+
+Then the details: the issue URL, the vetting verdict and the
 evidence behind it, whether Stage 1b rewrote the issue before implementing it (and
 the sub-issues if it split), whether Stage 1c evaluated it (its verdict and
 comment URL) or why it was skipped, the PR URL and how many polish iterations ran,

@@ -62,17 +62,11 @@ Run these stages in order. Capture the issue and PR numbers as you go.
 3. **Resolve.** Run the **resolve-issue** skill on that issue number. It vets
    the issue, implements it as a PR, polishes it and merges it — or closes it
    with a verdict. Everything about building, polishing and merging lives
-   there; react only to how it ended:
-   - **Merged** — continue to stage 4.
-   - **Rejected and closed**, with no PR of its own left open (vetting found
-     nothing to do, or no code change turned out to be warranted) — continue
-     to stage 4.
-   - **Anything else — stop the loop.** That covers a PR left open (polish
-     stopped without a clean result, or a rejection's comment-only PR was
-     blocked), a blocked merge (failing check, conflict, branch protection),
-     an issue left open because a step failed, and a split into an epic, which
-     a sharp proposal shouldn't produce. Never pile more autonomous merges on
-     top of an unresolved PR or issue.
+   there; react only to the outcome its report opens with:
+   - **`merged`** or **`rejected`** — continue to stage 4.
+   - **Anything else — stop the loop** and report what it left open; never
+     pile more autonomous merges on top of it. (`split` means a sharp proposal
+     came out vague.)
 
 4. **Loop.** Increment the resolved-count. If it is below `<max-iterations>`, go
    back to stage 1 and analyze the freshly-merged tree for the next
@@ -84,8 +78,7 @@ End the run when **any** holds, and report which one:
 
 - the resolved-count reaches `<max-iterations>`,
 - `propose-issues` finds nothing worth doing,
-- `resolve-issue` ends in anything but merged, or rejected-and-closed with no
-  PR left open.
+- `resolve-issue` ends in anything but `merged` or `rejected`.
 
 ## Report
 
