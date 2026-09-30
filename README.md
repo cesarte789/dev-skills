@@ -34,7 +34,9 @@ Skills are namespaced by the plugin: `/dev-skills:resolve-issue 42`.
 
 **Private repo caveat:** if this repo is private, whatever machine or cloud session installs the plugin needs git read access to it. Locally that is your normal GitHub credentials. In `claude.ai/code` sessions, confirm the plugin actually loads (`/plugin` lists it) before relying on it; making this repo public removes the question, and it holds nothing secret.
 
-Update with `claude plugin marketplace update dev-skills`. Check changes before pushing with:
+Update with `claude plugin marketplace update dev-skills`, then `claude plugin update dev-skills@dev-skills`.
+
+Bump `version` in `.claude-plugin/plugin.json` with every change to what the plugin ships. Claude Code compares that field, not the git commit, so an unbumped change never reaches existing installs. Check changes before pushing with:
 
 ```bash
 claude plugin validate . --strict
