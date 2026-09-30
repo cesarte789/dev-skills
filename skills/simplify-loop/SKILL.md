@@ -5,15 +5,12 @@ description: >-
   involvement: propose a simplification issue, ship it as a tested PR, polish it
   to merge-ready, merge it, then re-analyze the now-simpler code and repeat. Use
   for an autonomous cleanup run. Optionally pass a max number of iterations and/or
-  an area (e.g. "5 src/ui"). Chains propose-issues -> generate-pr-from-issue ->
-  polish-pr -> merge, in a loop. NOTE: merges to main without human vetting of
-  each idea or PR — use only where that is acceptable.
+  an area (e.g. "5 src/ui"). Chains propose-issues -> resolve-issue, in a
+  loop. NOTE: merges to main without human vetting of each idea or PR — use
+  only where that is acceptable.
 ---
 
 # Simplify loop
-
-> Commands below use the `gh` CLI. If `gh` isn't available in this session, do
-> the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
 
 > The other skills named here ship in the same `dev-skills` plugin. Invoke them
 > with the Skill tool by the name the session lists, `dev-skills:<name>` (e.g.
@@ -58,37 +55,20 @@ Run these stages in order. Capture the issue and PR numbers as you go.
      **stop the loop** — the codebase is clean for now. Report and exit.
    - Otherwise capture the issue number.
 
-3. **Generate the PR.** Run the **generate-pr-from-issue** skill on that issue.
-   - If it opens a PR: capture the PR number.
-   - If it determines no code change is warranted: skip this issue (close it with a
-     short note) and **continue to the next iteration** without counting it.
+3. **Resolve.** Run the **resolve-issue** skill on that issue number. It vets
+   the issue, implements it as a PR, polishes it and merges it — or closes it
+   with a verdict. Everything about building, polishing and merging lives
+   there; react only to how it ended:
+   - **Merged** — count it and continue to stage 4.
+   - **Rejected and closed** (vetting found nothing to do, or no code change
+     turned out to be warranted) — don't count it; go back to stage 1.
+   - **PR left open** (polish stopped without a clean result) or **merge
+     blocked** (failing check, conflict, branch protection) — **stop the loop.**
+     Never pile more autonomous merges on top of an unresolved PR.
+   - **Split into an epic** — a sharp proposal shouldn't split. If it does,
+     report the sub-issues and **stop the loop**.
 
-4. **Polish to merge-ready.** Run the **polish-pr** skill on the PR (review → fix →
-   verify loop until clean).
-   - If polish reaches **clean** (its done condition met): continue to merge.
-   - If polish stops for any other reason (e.g. its cap, a steering abort, a
-     review failure): **do not merge.** Leave the PR open, report it as needing
-     attention, and **stop the loop** — do not pile more autonomous merges on
-     top of an unresolved PR.
-
-5. **Merge.** Only after a clean polish, and only with green CI. `polish-pr`
-   checks CI after every push, so by now the checks are usually already green —
-   confirm with a snapshot, and while anything is still pending take another
-   every 15 seconds rather than blocking on `--watch`, which shows nothing until
-   it ends:
-
-   ```bash
-   gh pr checks <PR>; status=$?
-   while [ "$status" -eq 8 ]; do sleep 15; gh pr checks <PR>; status=$?; done  # 8 = still pending
-   gh pr merge <PR> --squash --delete-branch
-   ```
-
-   Never merge while checks are red or pending. This closes the linked issue
-   automatically (the PR body closes it). Confirm the merge succeeded; if GitHub
-   blocks it (failing required check, conflict, branch protection needing a
-   human), **stop the loop** and report — never force it.
-
-6. **Loop.** Increment the landed-count. If it is below `<max-iterations>`, go back
+4. **Loop.** Increment the landed-count. If it is below `<max-iterations>`, go back
    to stage 1 and analyze the freshly-merged tree for the next simplification.
 
 ## Stop conditions
@@ -97,8 +77,8 @@ End the run when **any** holds, and report which one:
 
 - the landed-count reaches `<max-iterations>`,
 - `propose-issues` finds nothing worth doing,
-- `polish-pr` stops without a clean result (PR left open for review),
-- a merge is blocked (CI failure, conflict, or branch protection).
+- `resolve-issue` leaves a PR open, is blocked from merging, or splits the
+  issue into an epic.
 
 ## Report
 
