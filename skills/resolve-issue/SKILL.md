@@ -172,9 +172,15 @@ blocking on `--watch`, which shows nothing until it ends:
 ```bash
 gh pr checks <PR>; status=$?
 while [ "$status" -eq 8 ]; do sleep 15; gh pr checks <PR>; status=$?; done  # 8 = still pending
+[ "$status" -eq 0 ] || { echo "Not merging: checks failed or none reported (exit $status)"; exit 1; }
 gh pr merge <PR> --squash --delete-branch
 git checkout main && git pull --ff-only && git fetch --prune
 ```
+
+Merge only on exit 0: every check passed. A failing check exits 1, and so does
+a PR with no checks at all; with no checks nothing has verified the change, so
+treat that as not green, the same as a red one. Either way, **do not merge**:
+leave the PR open and report the check state.
 
 The PR body closes the issue on merge — confirm the issue actually went to
 closed. If GitHub blocks the merge (failing required check, conflict, branch
@@ -276,6 +282,7 @@ gh pr create --title "docs: <what the comment records>" --body "<summary>
 Follows #<N>"
 gh pr checks; status=$?
 while [ "$status" -eq 8 ]; do sleep 15; gh pr checks; status=$?; done  # 8 = still pending
+[ "$status" -eq 0 ] || { echo "Not merging: checks failed or none reported (exit $status)"; exit 1; }
 gh pr merge --squash --delete-branch
 git checkout main && git pull --ff-only && git fetch --prune
 ```
@@ -286,8 +293,8 @@ the comment itself naming it. A comment-only diff changes no observable
 behavior, so it carries no test and skips `polish-pr` —
 there is nothing for a review loop to find. If the diff turns out to touch
 anything but comments, stop: that is a code change, and it does not belong to a
-rejected issue. As in Stage 4, if GitHub blocks the merge, leave the PR open and
-report it; never force it.
+rejected issue. As in Stage 4, if its checks fail or none are reported, or
+GitHub blocks the merge, leave the PR open and report it; never force it.
 
 If no place in the code is the right anchor, skip the stage and say so.
 

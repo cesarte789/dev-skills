@@ -66,7 +66,7 @@ Both are needed. On the repo root, `validate` checks only `marketplace.json`. Va
 | `resolve-issues` | `/dev-skills:resolve-issues [<max-issues>]` | resolve-issue × each open issue | Clears the backlog oldest first, re-syncing `main` between issues. Skips epics, claimed and held issues. Default cap 5. ⚠️ Merges to `main` and closes issues unattended. |
 | `simplify-loop` | `/dev-skills:simplify-loop [<max-iterations>] [area]` | (propose-issues `simplification` → generate-pr-from-issue → polish-pr → merge) × N | One simplification per pass, re-analyzing the merged tree each time. Default cap 3. ⚠️ Merges to `main` unattended. |
 
-⚠️ The orchestrators that merge are only safe where `main` is protected by **required CI that runs real tests**. They wait for green checks; with no meaningful checks, everything is green.
+⚠️ The orchestrators that merge are only safe where `main` is protected by **required CI that runs real tests**. They wait for checks to finish and merge only when every check passed, refusing a PR whose checks failed or that has no checks at all. But checks that test nothing still pass, so green means only as much as your CI does.
 
 ## Output style
 

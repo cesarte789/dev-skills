@@ -80,10 +80,14 @@ Run these stages in order. Capture the issue and PR numbers as you go.
    ```bash
    gh pr checks <PR>; status=$?
    while [ "$status" -eq 8 ]; do sleep 15; gh pr checks <PR>; status=$?; done  # 8 = still pending
+   [ "$status" -eq 0 ] || { echo "Not merging: checks failed or none reported (exit $status)"; exit 1; }
    gh pr merge <PR> --squash --delete-branch
    ```
 
-   Never merge while checks are red or pending. This closes the linked issue
+   Never merge while checks are red or pending, or when none are reported: a
+   failing check and a PR with no checks both exit 1, and with no checks nothing
+   has verified the change. If the guard refuses, leave the PR open, **stop the
+   loop** and report the check state. A merge closes the linked issue
    automatically (the PR body closes it). Confirm the merge succeeded; if GitHub
    blocks it (failing required check, conflict, branch protection needing a
    human), **stop the loop** and report — never force it.
@@ -98,7 +102,7 @@ End the run when **any** holds, and report which one:
 - the landed-count reaches `<max-iterations>`,
 - `propose-issues` finds nothing worth doing,
 - `polish-pr` stops without a clean result (PR left open for review),
-- a merge is blocked (CI failure, conflict, or branch protection).
+- a merge is blocked (failing or no CI checks, conflict, or branch protection).
 
 ## Report
 
