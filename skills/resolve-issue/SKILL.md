@@ -157,9 +157,10 @@ issue.
 
 Run the **polish-pr** skill on that PR (review → fix → verify loop).
 
-- Clean (polish-pr met its done condition): record the head it ended on
-  (`gh pr view <PR> --json headRefOid --jq .headRefOid`) and continue to
-  Stage 4.
+- Clean (polish-pr met its done condition): record the commit it reviewed and
+  pushed — `git rev-parse HEAD` on the PR branch it left checked out, not the
+  PR's current head on GitHub, which a later push may already have moved — and
+  continue to Stage 4.
 - Any other stop (e.g. its iteration cap, a steering abort, a review failure):
   **do not merge.** Leave the PR open, report exactly why polish stopped, and
   stop.
