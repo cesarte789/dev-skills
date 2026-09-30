@@ -3,8 +3,8 @@
 # (.github/workflows/validate.yml), so a green local run means a green check.
 #
 # Usage: scripts/check.sh [<base-ref>]
-#   With a base ref (e.g. origin/main), also require a plugin.json version bump
-#   when skills/ or output-styles/ changed since the branch left it.
+#   With a base ref (e.g. origin/main), also require a higher plugin.json
+#   version when what the plugin ships changed since the branch left it.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -22,14 +22,14 @@ import yaml
 
 failed = False
 for path in sorted(glob.glob("output-styles/*.md")):
-    text = open(path, encoding="utf-8").read()
-    head, sep, _ = text.partition("\n---\n")
-    if not text.startswith("---\n") or not sep:
+    lines = open(path, encoding="utf-8-sig").read().splitlines()
+    closing = next((i for i, line in enumerate(lines[1:], 1) if line.strip() == "---"), None)
+    if not lines or lines[0].strip() != "---" or closing is None:
         print(f"error: {path}: no '---' frontmatter block at the top", file=sys.stderr)
         failed = True
         continue
     try:
-        meta = yaml.safe_load(head[len("---\n"):])
+        meta = yaml.safe_load("\n".join(lines[1:closing]))
     except yaml.YAMLError as e:
         print(f"error: {path}: frontmatter failed to parse: {e}", file=sys.stderr)
         failed = True
@@ -46,20 +46,37 @@ PY
 
 base="${1:-}"
 [ -z "$base" ] && exit 0
-
-# Claude Code compares plugin.json's version, not the git commit, so a change to
-# what the plugin ships without a bump never reaches existing installs.
-fork_point="$(git merge-base "$base" HEAD)"
-if git diff --quiet "$fork_point" HEAD -- skills output-styles; then
-  echo "skills/ and output-styles/ unchanged since $base: no version bump needed."
-  exit 0
-fi
-version_at() { python3 -c 'import json, sys; print(json.load(sys.stdin)["version"])'; }
-old="$(git show "$fork_point:.claude-plugin/plugin.json" | version_at)"
-new="$(version_at < .claude-plugin/plugin.json)"
-if [ "$old" = "$new" ]; then
-  echo "error: skills/ or output-styles/ changed but .claude-plugin/plugin.json version is still $old." >&2
-  echo "Bump it: Claude Code compares that field, so an unbumped change never reaches existing installs." >&2
+if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
+  echo "error: base ref '$base' not found. Fetch it first (git fetch origin main)." >&2
   exit 1
 fi
-echo "plugin.json version bumped: $old -> $new"
+
+# Claude Code compares plugin.json's version, not the git commit, so a change to
+# what the plugin ships without a higher version never reaches existing installs.
+# Both sides come from commits, so uncommitted work can't pass here and fail in CI.
+shipped=(skills output-styles .claude-plugin/plugin.json)
+fork_point="$(git merge-base "$base" HEAD)"
+if git diff --quiet "$fork_point" HEAD -- "${shipped[@]}"; then
+  echo "${shipped[*]} unchanged since $base: no version bump needed."
+  exit 0
+fi
+python3 - "$fork_point" <<'PY'
+import json
+import subprocess
+import sys
+
+def version(commit):
+    manifest = subprocess.run(["git", "show", f"{commit}:.claude-plugin/plugin.json"],
+                              capture_output=True, text=True, check=True).stdout
+    raw = json.loads(manifest)["version"]
+    try:
+        return raw, tuple(int(part) for part in raw.split("."))
+    except ValueError:
+        sys.exit(f"error: plugin.json version '{raw}' is not dotted numbers")
+
+(old, old_key), (new, new_key) = version(sys.argv[1]), version("HEAD")
+if new_key <= old_key:
+    sys.exit(f"error: what the plugin ships changed but .claude-plugin/plugin.json version went {old} -> {new}.\n"
+             "Raise it: Claude Code compares that field, so a change without a higher version never reaches existing installs.")
+print(f"plugin.json version bumped: {old} -> {new}")
+PY
