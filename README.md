@@ -68,17 +68,25 @@ claude plugin validate . --strict
 
 ## Output style
 
-| Skill | Invoke | What it does |
-|---|---|---|
-| `i-have-adhd` | `/dev-skills:i-have-adhd` | Shapes replies for an ADHD reader: the next action first, multi-step work numbered, state restated each turn, tangents held back, concrete time estimates. Stays on until you say "stop adhd mode". Invoke-only (`disable-model-invocation`), so it never switches itself on. |
+`i-have-adhd` shapes replies for an ADHD reader: the next action first, multi-step work numbered, state restated each turn, tangents held back, concrete time estimates. It is a plugin [output style](https://code.claude.com/docs/en/output-styles), not a skill, so it applies to every reply in the main conversation while it is selected. Subagents don't get it, except forks, which inherit the main conversation's system prompt.
 
-`i-have-adhd` is by [Ayoub Ghriss](https://github.com/ayghri), from [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd), and is vendored unmodified under its MIT license (`skills/i-have-adhd/LICENSE`).
+To have it on in every session on a repo, add `outputStyle` to the committed `.claude/settings.json` from the install step above:
 
-To have it on from the start of every session in a repo, as LifeOS does, the repo keeps its own copy of `SKILL.md` and imports it with an `@` line in `CLAUDE.md`:
+```json
+{
+  "extraKnownMarketplaces": {
+    "dev-skills": {
+      "source": { "source": "github", "repo": "cesarte789/dev-skills" }
+    }
+  },
+  "enabledPlugins": {
+    "dev-skills@dev-skills": true
+  },
+  "outputStyle": "dev-skills:i-have-adhd"
+}
+```
 
-- **Import from `CLAUDE.md`.** By default Claude Code reads `AGENTS.md` only when a project has no `CLAUDE.md`, and consuming repos must have one (below). So an import that lives in `AGENTS.md` is skipped unless `CLAUDE.md` contains `@AGENTS.md`, or the built-in AGENTS.md plugin's `instructionFiles` option is set to load both files.
-- **Keep the copy inside the repo.** An import can point outside the repo, but not usefully at the plugin's copy: its cache path contains the plugin version, so it breaks on the next update. Outside-the-repo imports also load only after an approval prompt, saved per project on that machine. Cloud sessions, and `claude -p` runs where nobody approved it interactively first, never get that approval, so they skip the import.
-- **Copy the license with it.** The MIT license requires its copyright and permission notice in every copy, and `SKILL.md` carries neither. Put `skills/i-have-adhd/LICENSE` next to the copy.
+To use it on your machine only, pick it under `/config` → Output style. That saves it to the project's `.claude/settings.local.json`, so it stays on for later sessions there. Any pick there, this style or another, overrides the committed `outputStyle` until you delete the key from `settings.local.json`. Selecting it replaces any other output style, since only one can be active at a time. While it is selected, saying "stop adhd mode" makes Claude reply in its default style for the rest of the current session; the selection itself stays.
 
 ## What the consuming repo must provide
 
@@ -97,4 +105,4 @@ The skills are written against the `gh` CLI. Cloud sessions on `claude.ai/code` 
 
 ## Provenance
 
-The workflow skills were extracted from `cesarte789/lifeos`, with the LifeOS-specific rules (test commands, generated API types, feature-doc format, UI language) moved out of the skills and into that repo's `CLAUDE.md`. `i-have-adhd` is third-party; see Output style above for its author and license.
+The workflow skills were extracted from `cesarte789/lifeos`, with the LifeOS-specific rules (test commands, generated API types, feature-doc format, UI language) moved out of the skills and into that repo's `CLAUDE.md`. `output-styles/i-have-adhd.md` is by [Ayoub Ghriss](https://github.com/ayghri), adapted from [ayghri/i-have-adhd@4c76175](https://github.com/ayghri/i-have-adhd/tree/4c76175) (v0.3.0) under its MIT license (`output-styles/LICENSE`): the skill frontmatter became output-style frontmatter, and the Persistence section and one harness reference were reworded for an output style.
