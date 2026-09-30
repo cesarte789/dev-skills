@@ -84,7 +84,8 @@ End the run when **any** holds, and report which one:
 
 - the resolved-count reaches `<max-iterations>`,
 - `propose-issues` finds nothing worth doing,
-- `resolve-issue` ends in anything but merged or rejected-and-closed.
+- `resolve-issue` ends in anything but merged, or rejected-and-closed with no
+  PR left open.
 
 ## Report
 
