@@ -1,0 +1,26 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the version-bump check diffs against the PR base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm install -g @anthropic-ai/claude-code && pip install pyyaml
+      - name: scripts/check.sh
+        run: scripts/check.sh ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
