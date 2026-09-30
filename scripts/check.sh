@@ -54,13 +54,15 @@ fi
 # Claude Code compares plugin.json's version, not the git commit, so a change to
 # what the plugin ships without a higher version never reaches existing installs.
 # Both sides come from commits, so uncommitted work can't pass here and fail in CI.
+# What changed is measured from the fork point; the version to beat is the base
+# tip's, which is what CI's merge checkout sees once the base has moved on.
 shipped=(skills output-styles .claude-plugin/plugin.json)
 fork_point="$(git merge-base "$base" HEAD)"
 if git diff --quiet "$fork_point" HEAD -- "${shipped[@]}"; then
   echo "${shipped[*]} unchanged since $base: no version bump needed."
   exit 0
 fi
-python3 - "$fork_point" <<'PY'
+python3 - "$base" <<'PY'
 import json
 import subprocess
 import sys

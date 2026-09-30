@@ -23,5 +23,12 @@ jobs:
           python-version: "3.12"
       - run: npm install -g @anthropic-ai/claude-code && pip install pyyaml
       - name: scripts/check.sh
-        # PRs compare against their base; pushes to main against the previous tip.
-        run: scripts/check.sh ${{ github.event.pull_request.base.sha || github.event.before }}
+        # PRs compare against their base; pushes to main against the previous tip,
+        # which a branch creation or force-push can leave out of the clone.
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ "${{ github.event_name }}" = push ] && ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "::warning::previous tip $base is not in the clone; skipping the version-bump check"
+            base=
+          fi
+          scripts/check.sh $base
