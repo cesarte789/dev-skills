@@ -5,9 +5,10 @@ description: >-
   involvement: propose a simplification issue, ship it as a tested PR, polish it
   to merge-ready, merge it, then re-analyze the now-simpler code and repeat. Use
   for an autonomous cleanup run. Optionally pass a max number of iterations and/or
-  an area (e.g. "5 src/ui"). Chains propose-issues -> resolve-issue, in a
-  loop. NOTE: merges to main without human vetting of each idea or PR — use
-  only where that is acceptable.
+  an area (e.g. "5 src/ui"). Chains propose-issues -> resolve-issue (vet -> PR
+  -> polish -> merge, or close with a verdict), in a loop. NOTE: merges to main
+  and closes issues without human vetting of each idea or PR — use only where
+  that is acceptable.
 ---
 
 # Simplify loop
@@ -23,8 +24,9 @@ codebase for the next one. Sequential by design: the next proposal is made
 against the code *after* the previous simplification has landed, so each pass
 builds on a strictly simpler tree.
 
-> ⚠️ This runs unattended and **merges to `main`** on its own. No human vets each
-> idea or reviews each PR before it lands. Use it only on a repo/branch where that
+> ⚠️ This runs unattended and **merges to `main`** and **closes issues** on its
+> own, with everything `resolve-issue` warns about. No human vets each idea or
+> reviews each PR before it lands. Use it only on a repo/branch where that
 > is acceptable (e.g. low-stakes cleanup, or a protected `main` with required CI
 > gating the merge). If you want to review before merge, use `propose-and-ship`
 > with kind `simplification` instead — it ships *to* a PR and stops.
@@ -33,8 +35,10 @@ builds on a strictly simpler tree.
 
 `[<max-iterations>] [<area>]` — both optional.
 
-- `<max-iterations>` — leading integer; the hard cap on simplifications to land
-  this run. Default **3**. This is the loop's safety stop; never run unbounded.
+- `<max-iterations>` — leading integer; the hard cap on proposals this run
+  resolves, merged or rejected. Default **3**. This is the loop's safety stop;
+  never run unbounded. Rejections count too: a rejection can still merge a
+  comment-only PR, and the cap is there to bound unattended merges.
 - `<area>` — remaining words narrow the focus (a module, path, or layer), passed
   straight through to `propose-issues` (e.g. `src/ui`, `api/billing`).
 
@@ -59,32 +63,37 @@ Run these stages in order. Capture the issue and PR numbers as you go.
    the issue, implements it as a PR, polishes it and merges it — or closes it
    with a verdict. Everything about building, polishing and merging lives
    there; react only to how it ended:
-   - **Merged** — count it and continue to stage 4.
-   - **Rejected and closed** (vetting found nothing to do, or no code change
-     turned out to be warranted) — don't count it; go back to stage 1.
-   - **PR left open** (polish stopped without a clean result) or **merge
-     blocked** (failing check, conflict, branch protection) — **stop the loop.**
-     Never pile more autonomous merges on top of an unresolved PR.
-   - **Split into an epic** — a sharp proposal shouldn't split. If it does,
-     report the sub-issues and **stop the loop**.
+   - **Merged** — continue to stage 4.
+   - **Rejected and closed**, with no PR of its own left open (vetting found
+     nothing to do, or no code change turned out to be warranted) — continue
+     to stage 4.
+   - **Anything else — stop the loop.** That covers a PR left open (polish
+     stopped without a clean result, or a rejection's comment-only PR was
+     blocked), a blocked merge (failing check, conflict, branch protection),
+     an issue left open because a step failed, and a split into an epic, which
+     a sharp proposal shouldn't produce. Never pile more autonomous merges on
+     top of an unresolved PR or issue.
 
-4. **Loop.** Increment the landed-count. If it is below `<max-iterations>`, go back
-   to stage 1 and analyze the freshly-merged tree for the next simplification.
+4. **Loop.** Increment the resolved-count. If it is below `<max-iterations>`, go
+   back to stage 1 and analyze the freshly-merged tree for the next
+   simplification.
 
 ## Stop conditions
 
 End the run when **any** holds, and report which one:
 
-- the landed-count reaches `<max-iterations>`,
+- the resolved-count reaches `<max-iterations>`,
 - `propose-issues` finds nothing worth doing,
-- `resolve-issue` leaves a PR open, is blocked from merging, or splits the
-  issue into an epic.
+- `resolve-issue` ends in anything but merged or rejected-and-closed.
 
 ## Report
 
-Summarize the whole run: each iteration's issue → PR → merge (with URLs), how many
-simplifications landed, which stop condition ended the loop, and anything left open
-(e.g. a PR that stalled in polish). End on `main`, synced to the last merge.
+Summarize the whole run: each iteration's issue and outcome with URLs — merged
+PR, or closed with a verdict (plus any comment-only PR it merged) — how many
+simplifications landed and how many proposals were rejected, which stop
+condition ended the loop, and anything left open (a PR that stalled in polish,
+a blocked merge, sub-issues from a split). End on `main`, synced to the last
+merge.
 
 ## Tip
 
