@@ -8,7 +8,7 @@
     {
       "name": "dev-skills",
       "source": "./",
-      "description": "Issue → PR → review → merge skills for Claude Code."
+      "description": "Issue → PR → review → merge skills for Claude Code, plus the i-have-adhd output style."
     }
   ]
 }
