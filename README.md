@@ -70,13 +70,23 @@ claude plugin validate . --strict
 
 `i-have-adhd` shapes replies for an ADHD reader: the next action first, multi-step work numbered, state restated each turn, tangents held back, concrete time estimates. It is a plugin [output style](https://code.claude.com/docs/en/output-styles), not a skill, so it applies to every reply in the main conversation while it is selected. Subagents don't get it, except forks, which inherit the main conversation's system prompt.
 
-To have it on in every session on a repo, add one key to the committed `.claude/settings.json` from the install step above, next to `enabledPlugins`:
+To have it on in every session on a repo, add `outputStyle` to the committed `.claude/settings.json` from the install step above:
 
 ```json
+{
+  "extraKnownMarketplaces": {
+    "dev-skills": {
+      "source": { "source": "github", "repo": "cesarte789/dev-skills" }
+    }
+  },
+  "enabledPlugins": {
+    "dev-skills@dev-skills": true
+  },
   "outputStyle": "dev-skills:i-have-adhd"
+}
 ```
 
-To use it on your machine only, pick it under `/config` → Output style. That saves it to the project's `.claude/settings.local.json`, so it stays on for later sessions there, and it overrides the committed setting until you pick another style. Saying "stop adhd mode" returns to the default style for the rest of the current session. It replaces any other output style, since only one can be active at a time.
+To use it on your machine only, pick it under `/config` → Output style. That saves it to the project's `.claude/settings.local.json`, so it stays on for later sessions there. Any pick there, this style or another, overrides the committed `outputStyle` until you delete the key from `settings.local.json`. Saying "stop adhd mode" returns to the default style for the rest of the current session. It replaces any other output style, since only one can be active at a time.
 
 ## What the consuming repo must provide
 
