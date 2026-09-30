@@ -139,7 +139,8 @@ End the run when **any** holds, and report which one:
 - every candidate has reached an outcome or been skipped,
 - the number of issues resolved reaches `<max-issues>`,
 - no open issue survives the stage-2 filters (backlog clear),
-- `resolve-issue` leaves a PR open or is blocked from merging.
+- `resolve-issue` leaves an implementation PR open or is blocked from merging
+  it (a rejection's unmerged comment-only PR does not stop the sweep).
 
 ## Report
 

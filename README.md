@@ -62,7 +62,7 @@ Both are needed. On the repo root, `validate` checks only `marketplace.json`. Va
 | Skill | Invoke | Pipeline | Notes |
 |---|---|---|---|
 | `propose-and-ship` | `/dev-skills:propose-and-ship <kind> [area]` | propose-issues → generate-pr-from-issue → polish-pr | Nothing → merge-ready PR. ⚠️ Nobody vets the idea; you still review the PR before merge. |
-| `resolve-issue` | `/dev-skills:resolve-issue <N>` | vet → rewrite-issue (if vague) → evaluate-issue (if it grows the system) → generate-pr-from-issue → polish-pr → merge | Any issue → a merged PR, or the issue closed as not planned with a verdict. A durable rejection also lands a comment-only PR recording the decision in the code. ⚠️ Merges to `main`, rewrites and closes issues unattended. |
+| `resolve-issue` | `/dev-skills:resolve-issue <N>` | vet → rewrite-issue (if vague) → evaluate-issue (if it grows the system) → generate-pr-from-issue → polish-pr → merge | Any issue → a merged PR, or the issue closed as not planned with a verdict. A durable rejection also opens a comment-only PR recording the decision in the code, merged once its checks pass. ⚠️ Merges to `main`, rewrites and closes issues unattended. |
 | `resolve-issues` | `/dev-skills:resolve-issues [<max-issues>]` | resolve-issue × each open issue | Clears the backlog oldest first, re-syncing `main` between issues. Skips epics, claimed and held issues. Default cap 5. ⚠️ Merges to `main` and closes issues unattended. |
 | `simplify-loop` | `/dev-skills:simplify-loop [<max-iterations>] [area]` | (propose-issues `simplification` → generate-pr-from-issue → polish-pr → merge) × N | One simplification per pass, re-analyzing the merged tree each time. Default cap 3. ⚠️ Merges to `main` unattended. |
 
