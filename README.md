@@ -76,8 +76,8 @@ claude plugin validate . --strict
 
 To have it on from the start of every session in a repo, as LifeOS does, the repo keeps its own copy of `SKILL.md` and imports it with an `@` line in `CLAUDE.md`:
 
-- **Import from `CLAUDE.md`.** Claude Code reads `AGENTS.md` only when a project has no `CLAUDE.md`, and consuming repos must have one (below). An import that lives in `AGENTS.md` loads only if `CLAUDE.md` itself contains `@AGENTS.md`.
-- **Keep the copy inside the repo.** An import can point outside the repo, but not usefully at the plugin's copy: its cache path contains the plugin version, so it breaks on the next update. Outside-the-repo imports also load only after an approval prompt, and non-interactive runs (`claude -p`) and cloud sessions never show that prompt, so they skip the import.
+- **Import from `CLAUDE.md`.** By default Claude Code reads `AGENTS.md` only when a project has no `CLAUDE.md` (its `instructionFiles` setting changes that), and consuming repos must have one (below). An import that lives in `AGENTS.md` loads only if `CLAUDE.md` itself contains `@AGENTS.md`.
+- **Keep the copy inside the repo.** An import can point outside the repo, but not usefully at the plugin's copy: its cache path contains the plugin version, so it breaks on the next update. Outside-the-repo imports also load only after an approval prompt, saved per project on that machine. Cloud sessions, and `claude -p` runs where nobody approved it interactively first, never get that approval, so they skip the import.
 - **Copy the license with it.** The MIT license requires its copyright and permission notice in every copy, and `SKILL.md` carries neither. Put `skills/i-have-adhd/LICENSE` next to the copy.
 
 ## What the consuming repo must provide
