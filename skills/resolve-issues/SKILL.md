@@ -119,12 +119,14 @@ Per issue, `resolve-issue` ends in one of these, and the sweep reacts:
 - **Merged** — the change landed. Continue to the next issue.
 - **Rejected and closed** — the issue didn't hold up against the code, or its
   evaluation declined it as not worth its permanent cost. That is a completed
-  outcome too: continue.
+  outcome too: continue. It still is when the comment-only PR recording the
+  decision could not merge (e.g. no CI checks): that PR changes only comments,
+  so nothing later builds on it. List it in the report as left open.
 - **PR left open** (polish stopped without a clean result, e.g. its cap, a
-  steering abort, or a review failure) or **merge blocked** (failing check,
-  conflict, branch protection) — **stop the sweep.** Leave the PR open and report
-  it; never pile more unattended merges on an unresolved PR, and never force a
-  blocked merge.
+  steering abort, or a review failure) or **merge blocked** (failing or no CI
+  checks, conflict, branch protection) — **stop the sweep.** Leave the PR open
+  and report it; never pile more unattended merges on an unresolved PR, and
+  never force a blocked merge.
 - **Split into an epic** — `resolve-issue` clarified a vague issue and it broke
   into sub-tasks, so no PR came out of it. That blocks only that issue, not the
   backlog: report the sub-issues and **continue** with the next one. They belong

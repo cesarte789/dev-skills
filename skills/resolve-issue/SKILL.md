@@ -280,6 +280,7 @@ git push -u origin docs/<short-slug>
 gh pr create --title "docs: <what the comment records>" --body "<summary>
 
 Follows #<N>"
+sleep 30  # a PR this new has often not registered its checks yet
 gh pr checks; status=$?
 while [ "$status" -eq 8 ]; do sleep 15; gh pr checks; status=$?; done  # 8 = still pending
 [ "$status" -eq 0 ] || { echo "Not merging: checks failed or none reported (exit $status)"; exit 1; }
@@ -294,7 +295,10 @@ behavior, so it carries no test and skips `polish-pr` —
 there is nothing for a review loop to find. If the diff turns out to touch
 anything but comments, stop: that is a code change, and it does not belong to a
 rejected issue. As in Stage 4, if its checks fail or none are reported, or
-GitHub blocks the merge, leave the PR open and report it; never force it.
+GitHub blocks the merge, leave the PR open and report it; never force it. When
+the guard reports no checks, re-run the check once a minute later before
+believing it: CI can take that long to attach to a new PR. The rejection itself
+still stands either way; the report names the docs PR as left open.
 
 If no place in the code is the right anchor, skip the stage and say so.
 

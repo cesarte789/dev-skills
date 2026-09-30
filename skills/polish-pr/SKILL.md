@@ -119,8 +119,11 @@ Stop when **all** hold:
 
   Frequent snapshots rather than one `--watch`: a watch blocks with nothing to
   read until it ends, and a run that reprints where the checks have got to every
-  15 seconds is one you can read and steer while it waits. A failed check is a
-  new finding — loop again.
+  15 seconds is one you can read and steer while it waits. Green means the
+  final status is 0: every check passed. A failed check (exit 1) is a new
+  finding — loop again. "No checks reported" also exits 1 but is not green
+  either, and no fix makes it so: stop, skip the confirmation below, and report
+  that the PR has no CI checks.
 
 ## Confirm on the PR
 
