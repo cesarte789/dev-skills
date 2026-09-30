@@ -157,28 +157,32 @@ issue.
 
 Run the **polish-pr** skill on that PR (review → fix → verify loop).
 
-- Clean (polish-pr met its done condition): continue to Stage 4.
+- Clean (polish-pr met its done condition): record the commit it reviewed and
+  pushed — `git rev-parse HEAD` on the PR branch it left checked out, not the
+  PR's current head on GitHub, which a later push may already have moved — and
+  continue to Stage 4.
 - Any other stop (e.g. its iteration cap, a steering abort, a review failure):
   **do not merge.** Leave the PR open, report exactly why polish stopped, and
   stop.
 
 ## Stage 4 — Merge
 
-Only after a clean polish, and only with green CI. `polish-pr` checks CI after
-every push, so the checks are usually already green — confirm with a snapshot,
-and while anything is still pending take another every 15 seconds rather than
-blocking on `--watch`, which shows nothing until it ends:
+Only after a clean polish. That is the CI gate: `polish-pr` ends clean only with
+CI green on its latest push, so there is nothing left to wait for — what matters
+now is merging exactly that head, not one pushed after the review:
 
 ```bash
-gh pr checks <PR>; status=$?
-while [ "$status" -eq 8 ]; do sleep 15; gh pr checks <PR>; status=$?; done  # 8 = still pending
-gh pr merge <PR> --squash --delete-branch
+gh pr merge <PR> --squash --delete-branch --match-head-commit <sha from Stage 3>
 git checkout main && git pull --ff-only && git fetch --prune
 ```
 
+(The GitHub MCP merge tool takes the same pin as `expectedHeadSha`.)
+
 The PR body closes the issue on merge — confirm the issue actually went to
-closed. If GitHub blocks the merge (failing required check, conflict, branch
-protection needing a human), **stop and report**; never force it.
+closed. If GitHub refuses the merge (the head moved since Stage 3, a failing
+required check, a conflict, branch protection needing a human), **stop and
+report**; never force it. A moved head means the PR changed after its review,
+so it is a stop, not a retry.
 
 ## Stage 5 — Reject: comment the verdict, then close
 
