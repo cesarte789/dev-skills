@@ -86,7 +86,7 @@ To have it on in every session on a repo, add `outputStyle` to the committed `.c
 }
 ```
 
-To use it on your machine only, pick it under `/config` → Output style. That saves it to the project's `.claude/settings.local.json`, so it stays on for later sessions there. Any pick there, this style or another, overrides the committed `outputStyle` until you delete the key from `settings.local.json`. Saying "stop adhd mode" returns to the default style for the rest of the current session. It replaces any other output style, since only one can be active at a time.
+To use it on your machine only, pick it under `/config` → Output style. That saves it to the project's `.claude/settings.local.json`, so it stays on for later sessions there. Any pick there, this style or another, overrides the committed `outputStyle` until you delete the key from `settings.local.json`. Selecting it replaces any other output style, since only one can be active at a time. While it is selected, saying "stop adhd mode" makes Claude reply in its default style for the rest of the current session; the selection itself stays.
 
 ## What the consuming repo must provide
 
