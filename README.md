@@ -39,8 +39,10 @@ Update with `claude plugin marketplace update dev-skills`, then `claude plugin u
 Bump `version` in `.claude-plugin/plugin.json` with every change to what the plugin ships. Claude Code compares that field, not the git commit, so an unbumped change never reaches existing installs. Check changes before pushing with:
 
 ```bash
-claude plugin validate . --strict
+claude plugin validate . --strict && claude plugin validate .claude-plugin/plugin.json --strict
 ```
+
+Both are needed. On the repo root, `validate` checks only `marketplace.json`. Validating `plugin.json` is what parses each skill's `SKILL.md` frontmatter, and a skill whose frontmatter fails to parse still loads, silently, with every frontmatter field dropped. Neither command parses `output-styles/*.md` frontmatter, so check that by eye after editing it.
 
 ## Building blocks
 
