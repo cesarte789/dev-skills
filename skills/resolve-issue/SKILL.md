@@ -306,9 +306,10 @@ maps to one of them:
   run is left open (Stage 6 merged its comment-only PR, or was skipped).
 - **`split`** — Stage 1b split the issue into an epic; list the sub-issues.
 - **`stopped`** — anything else: polish stopped without a clean result
-  (Stage 3), the merge was blocked (Stage 4), the verdict comment failed to
-  post and the issue is still open (Stage 5), or the comment-only PR was
-  blocked (Stage 6). Name what is left open.
+  (Stage 3), the merge was blocked or merged without closing the issue
+  (Stage 4), the verdict comment failed to post and the issue is still open
+  (Stage 5), or the comment-only PR was blocked or its diff touched more than
+  comments (Stage 6). Name what is left open, uncommitted edits included.
 
 Then the details: the issue URL, the vetting verdict and the
 evidence behind it, whether Stage 1b rewrote the issue before implementing it (and

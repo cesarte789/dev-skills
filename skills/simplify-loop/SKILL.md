@@ -64,9 +64,9 @@ Run these stages in order. Capture the issue and PR numbers as you go.
    with a verdict. Everything about building, polishing and merging lives
    there; react only to the outcome its report opens with:
    - **`merged`** or **`rejected`** — continue to stage 4.
-   - **Anything else — stop the loop.** `stopped` leaves something open, and
-     never pile more autonomous merges on top of it; `split` means a sharp
-     proposal came out vague.
+   - **Anything else — stop the loop** and report what it left open; never
+     pile more autonomous merges on top of it. (`split` means a sharp proposal
+     came out vague.)
 
 4. **Loop.** Increment the resolved-count. If it is below `<max-iterations>`, go
    back to stage 1 and analyze the freshly-merged tree for the next

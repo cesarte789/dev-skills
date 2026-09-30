@@ -86,8 +86,8 @@ the backlog is clear.
 ## 3. Resolve each, one at a time
 
 Walk the candidate list in order until it is exhausted or `<max-issues>` issues
-have reached an outcome, whichever comes first. Only an issue `resolve-issue`
-actually finished — `merged` or `rejected` — counts against the cap; a skip costs
+are resolved, whichever comes first. Only an issue `resolve-issue` actually
+finished — `merged` or `rejected` — counts as resolved; a skip or a `split` costs
 nothing, because the cap is there to bound unattended merges. Report the
 candidates you never reached — the sweep is rerunnable and picks them up next
 time. For each:
@@ -135,8 +135,8 @@ End the run when **any** holds, and report which one:
 ## Report
 
 Summarize the whole sweep: how many issues the snapshot held and how many became
-candidates, then per candidate its number, title and outcome (merged PR, closed
-with a verdict, skipped and why) with URLs. Then the totals — how many changes landed,
+candidates, then per candidate its number, title and outcome (`resolve-issue`'s
+outcome name with the PR or verdict, or skipped and why) with URLs. Then the totals — how many changes landed,
 how many issues were rejected, how many skipped — which stop condition ended the
 sweep, and everything left open or never attempted, so the user knows exactly
 what a rerun would pick up. End on `main`, synced to the last merge.
