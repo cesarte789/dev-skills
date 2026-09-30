@@ -36,13 +36,15 @@ Skills are namespaced by the plugin: `/dev-skills:resolve-issue 42`.
 
 Update with `claude plugin marketplace update dev-skills`, then `claude plugin update dev-skills@dev-skills`.
 
-Bump `version` in `.claude-plugin/plugin.json` with every change to what the plugin ships. Claude Code compares that field, not the git commit, so an unbumped change never reaches existing installs. Check changes before pushing with:
+Bump `version` in `.claude-plugin/plugin.json` with every change to what the plugin ships (`skills/`, `output-styles/`, `plugin.json` itself). Claude Code compares that field, not the git commit, so an unbumped change never reaches existing installs. Check changes before pushing with:
 
 ```bash
-claude plugin validate . --strict && claude plugin validate .claude-plugin/plugin.json --strict
+scripts/check.sh origin/main
 ```
 
-Both are needed. On the repo root, `validate` checks only `marketplace.json`. Validating `plugin.json` is what parses each skill's `SKILL.md` frontmatter, and a skill whose frontmatter fails to parse still loads, silently, with every frontmatter field dropped. Neither command parses `output-styles/*.md` frontmatter, so check that by eye after editing it.
+It runs `claude plugin validate . --strict` and `claude plugin validate .claude-plugin/plugin.json --strict`, parses every `output-styles/*.md` frontmatter, and fails when `skills/`, `output-styles/` or `plugin.json` changed without a higher version. It needs `claude`, `python3` and PyYAML. Both validate commands are needed. On the repo root, `validate` checks only `marketplace.json`. Validating `plugin.json` is what parses each skill's `SKILL.md` frontmatter, and a skill whose frontmatter fails to parse still loads, silently, with every frontmatter field dropped. Neither parses output-style frontmatter, which is why the script does.
+
+The `validate` workflow (`.github/workflows/validate.yml`) runs the same script with no secrets: on every PR against its base, and on every push to `main` against the previous tip. Mark its `validate` check as required on `main` so the merging orchestrators have something real to wait for.
 
 ## Building blocks
 
