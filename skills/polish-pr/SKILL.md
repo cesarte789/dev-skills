@@ -4,7 +4,8 @@ description: >-
   Review a pull request and fix it in a loop until it's clean ("LGTM") — runs
   code review, applies fixes, runs tests, and repeats until no findings remain and
   the build/tests pass, marking a draft PR ready once review is clean. Use when
-  the user wants a PR brought to merge-ready automatically. Pass the PR number (e.g. "42"); defaults to the current branch.
+  the user wants a PR brought to merge-ready automatically. Pass the PR number
+  (e.g. "42"); defaults to the current branch.
 ---
 
 # Polish PR
