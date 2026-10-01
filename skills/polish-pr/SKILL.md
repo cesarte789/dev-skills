@@ -97,9 +97,9 @@ cap (default **20** — stop and report if reached, to avoid spinning):
    fixer mindset: if tests fail, diagnose the root cause and fix, don't paper over
    them). Iterate on a fix with what the round touched — the narrowest
    test command `CLAUDE.md` or `AGENTS.md` gives for those areas — then run what
-   they require before a push, since step 6 pushes every round — on a ready PR
-   each push is one CI run, and on a draft they are the only gate until review
-   is clean.
+   they require before a push, since step 6 pushes every round. On a ready PR
+   each push is one CI run; on a draft, these local tests are the only gate
+   until review is clean.
 
 6. **Commit & push** the round's fixes with a conventional-commit message, then
    loop. On a ready PR the push kicks off the next CI run, which runs while you
@@ -131,11 +131,11 @@ Stop when **all** hold:
   while [ "$status" -eq 8 ]; do sleep 15; gh pr checks <N>; status=$?; done  # 8 = still pending
   ```
 
-  Right after `gh pr ready`, the ready run may not have registered yet:
-  `no checks reported`, or only `skipping` checks left by draft pushes, are not
-  green. Re-check for about a minute until a check has run on the head; only if
-  none does, take it as a repo whose CI does not run here, and say so in the
-  Report.
+  Right after `gh pr ready`, the ready run may not have registered yet, and
+  `gh pr checks` exits 0 on checks that draft pushes left `skipping`. So
+  `no checks reported`, or **any** `skipping` check, is not green: re-check for
+  about a minute. If either remains, CI never ran on this head — stop short of
+  clean and report it (the repo's CI must also run on `ready_for_review`).
 
   Frequent snapshots rather than one `--watch`: a watch blocks with nothing to
   read until it ends, and a run that reprints where the checks have got to every
