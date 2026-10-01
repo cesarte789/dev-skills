@@ -110,4 +110,4 @@ The skills are written against the `gh` CLI. Cloud sessions on `claude.ai/code` 
 
 ## Provenance
 
-The workflow skills were extracted from `cesarte789/lifeos`, with the LifeOS-specific rules (test commands, generated API types, feature-doc format, UI language) moved out of the skills and into that repo's `CLAUDE.md`. `output-styles/i-have-adhd.md` is by [Ayoub Ghriss](https://github.com/ayghri), adapted from [ayghri/i-have-adhd@4c76175](https://github.com/ayghri/i-have-adhd/tree/4c76175) (v0.3.0) under its MIT license (`output-styles/LICENSE`): the skill frontmatter became output-style frontmatter, and the Persistence section and one harness reference were reworded for an output style.
+`output-styles/i-have-adhd.md` is by [Ayoub Ghriss](https://github.com/ayghri), adapted from [ayghri/i-have-adhd@4c76175](https://github.com/ayghri/i-have-adhd/tree/4c76175) (v0.3.0) under its MIT license (`output-styles/LICENSE`): the skill frontmatter became output-style frontmatter, and the Persistence section and one harness reference were reworded for an output style.
