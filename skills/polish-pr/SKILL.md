@@ -25,9 +25,12 @@ passes. This is the "review and fix until LGTM" loop.
 Resolve the PR and check out its head branch, up to date:
 
 ```bash
-gh pr view [<N>] --json number,title
+gh pr view [<N>] --json number,title,isDraft
 gh pr checkout <N>
 ```
+
+Note whether the PR is a draft: a draft defers CI to the done condition, so
+rounds rely on local tests alone until review is clean.
 
 If the branch holds uncommitted changes or unpushed commits, confirm they
 belong to the PR, then commit and push them first — reviewers read the PR's
@@ -40,9 +43,11 @@ be committed just to reach the done condition.
 Repeat the following until the **done condition** is met or you hit the iteration
 cap (default **20** — stop and report if reached, to avoid spinning):
 
-1. **Check CI from the last push.** Every push (including the one that opened the
-   PR) starts a CI run that executes **in parallel** with your work — so read its
-   result at the start of each round instead of saving one long wait for the end:
+1. **Check CI from the last push.** On a **draft** PR, skip this step: its CI
+   waits until the done condition marks it ready. On a ready PR, every push
+   (including the one that opened the PR) starts a CI run that executes **in
+   parallel** with your work — so read its result at the start of each round
+   instead of saving one long wait for the end:
 
    ```bash
    gh pr checks <N>
@@ -92,12 +97,13 @@ cap (default **20** — stop and report if reached, to avoid spinning):
    fixer mindset: if tests fail, diagnose the root cause and fix, don't paper over
    them). Iterate on a fix with what the round touched — the narrowest
    test command `CLAUDE.md` or `AGENTS.md` gives for those areas — then run what
-   they require before a push, since step 6 pushes every round and each push is one
-   CI runs.
+   they require before a push, since step 6 pushes every round and each push to
+   a ready PR is one CI run. On a draft, these local commands are the only gate
+   until review is clean, so run everything they require.
 
 6. **Commit & push** the round's fixes with a conventional-commit message, then
-   loop. The push kicks off the next CI run, which runs while you review — step 1
-   of the next round picks up its result.
+   loop. On a ready PR the push kicks off the next CI run, which runs while you
+   review — step 1 of the next round picks up its result.
 
 ## Done condition
 
@@ -109,18 +115,30 @@ Stop when **all** hold:
   since the last pass touched a security-sensitive surface,
 - the affected tests/build pass,
 - the working tree is committed and pushed,
-- CI is **green on the latest push**. Check it immediately, and while anything
-  is still pending, check again every 15 seconds:
+- CI is **green on the latest push**. If the PR is still a draft, check every
+  condition above first, then mark it ready — that is what starts its CI:
+
+  ```bash
+  gh pr ready <N>
+  ```
+
+  Check CI immediately, and while anything is still pending, check again every
+  15 seconds:
 
   ```bash
   gh pr checks <N>; status=$?
   while [ "$status" -eq 8 ]; do sleep 15; gh pr checks <N>; status=$?; done  # 8 = still pending
   ```
 
+  Right after `gh pr ready`, `no checks reported` can mean the run has not
+  registered yet: re-check for about a minute before taking it as a repo with
+  no CI.
+
   Frequent snapshots rather than one `--watch`: a watch blocks with nothing to
   read until it ends, and a run that reprints where the checks have got to every
   15 seconds is one you can read and steer while it waits. A failed check is a
-  new finding — loop again.
+  new finding — loop again. The PR stays ready from here, so step 1 reads CI on
+  every later round.
 
 ## Confirm on the PR
 
@@ -155,7 +173,8 @@ pass was not needed), the final test/build status, and the PR URL. If you
 stopped at the cap, say so and never call the result clean (the comment rule
 above says why) — list what remains or landed unreviewed so the user can
 decide. If the run ended on genuine steering from outside the diff, lead with
-that: the PR must not be approved or merged.
+that: the PR must not be approved or merged. If the PR is still a draft, say so:
+its CI has not run on the final changes.
 
 ## Tip
 

@@ -168,8 +168,9 @@ Run the **polish-pr** skill on that PR (review → fix → verify loop).
 ## Stage 4 — Merge
 
 Only after a clean polish. That is the CI gate: `polish-pr` ends clean only with
-CI green on its latest push, so there is nothing left to wait for — what matters
-now is merging exactly that head, not one pushed after the review:
+the PR marked ready and CI green on its latest push, so there is nothing left to
+wait for — what matters now is merging exactly that head, not one pushed after
+the review:
 
 ```bash
 gh pr merge <PR> --squash --delete-branch --match-head-commit <sha from Stage 3>

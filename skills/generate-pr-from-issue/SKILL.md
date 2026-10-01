@@ -53,21 +53,20 @@ Run the relevant tests/build and make them pass before opening the PR.
 
 ## 4. Open the PR
 
-Commit with a conventional-commit message, push, and open the PR linking the issue
-so it auto-closes on merge:
+Commit with a conventional-commit message, push, and open the PR as a **draft**,
+linking the issue so it auto-closes on merge:
 
 ```bash
 git push -u origin <branch>
-gh pr create --title "<conventional title>" --body "<summary>
+gh pr create --draft --title "<conventional title>" --body "<summary>
 
 Closes #<N>"
 ```
 
-Opening the PR kicks off its CI run immediately. Do **not** wait for it here —
-report the PR URL right away and let the checks run in the background; the
-downstream stages (`polish-pr`, merge) read their status while they work and
-verify green before any merge. If you have a spare moment before reporting, a
-quick `gh pr checks <N>` snapshot is welcome, but never sit in a long watch.
+A draft because review rounds push often and CI only has to pass on the result:
+`polish-pr` marks the PR ready once its review is clean, and a repo whose CI
+skips drafts runs it once there instead of on every round. Do **not** wait for
+CI here — report the PR URL right away.
 
 End commit messages with the Co-Authored-By trailer used in this repo. Report the
 PR URL and a short summary of what you changed and how it's tested. If, after

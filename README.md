@@ -98,6 +98,7 @@ To use it on your machine only, pick it under `/config` → Output style. That s
 - Anything that must be regenerated alongside a change (generated types, schema snapshots) and the command that does it.
 - Where docs live and which doc owns which fact, if there is more than a README.
 - Branch protection on `main` requiring CI, before running any merging orchestrator.
+- Optionally, CI that skips draft PRs and runs on `ready_for_review`. `generate-pr-from-issue` opens PRs as drafts and `polish-pr` marks them ready only once review is clean, so such CI runs once per PR rather than once per review round.
 
 ## Why the skills don't call `/review` or `/code-review`
 
