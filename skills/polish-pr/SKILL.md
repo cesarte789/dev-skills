@@ -131,11 +131,12 @@ Stop when **all** hold:
   while [ "$status" -eq 8 ]; do sleep 15; gh pr checks <N>; status=$?; done  # 8 = still pending
   ```
 
-  Right after `gh pr ready`, the ready run may not have registered yet, and
-  `gh pr checks` exits 0 on checks that draft pushes left `skipping`. So
-  `no checks reported`, or **any** `skipping` check, is not green: re-check for
-  about a minute. If either remains, CI never ran on this head — stop short of
-  clean and report it (the repo's CI must also run on `ready_for_review`).
+  If you marked the PR ready in this run, give its ready run about a minute to
+  register before trusting the loop: `gh pr checks` exits 0 on checks a draft
+  push left `skipping`. If after that no check has passed or failed — only
+  `skipping` ones, or `no checks reported` — CI never ran on this head: stop
+  short of clean and report it (the repo's CI must also run on
+  `ready_for_review`). Name any check still `skipping` in the Report.
 
   Frequent snapshots rather than one `--watch`: a watch blocks with nothing to
   read until it ends, and a run that reprints where the checks have got to every

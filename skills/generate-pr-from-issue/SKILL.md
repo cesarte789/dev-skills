@@ -3,7 +3,7 @@ name: generate-pr-from-issue
 description: >-
   Turn a GitHub issue into a complete, tested pull request. Use when the user
   wants an issue implemented end-to-end: read issue N, branch, implement with
-  tests, and open a PR that closes it. Pass the issue number (e.g. "42").
+  tests, and open a draft PR that closes it. Pass the issue number (e.g. "42").
 ---
 
 # Generate PR from issue
