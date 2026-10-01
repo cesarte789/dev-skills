@@ -3,8 +3,8 @@ name: polish-pr
 description: >-
   Review a pull request and fix it in a loop until it's clean ("LGTM") — runs
   code review, applies fixes, runs tests, and repeats until no findings remain and
-  the build/tests pass. Use when the user wants a PR brought to merge-ready
-  automatically. Pass the PR number (e.g. "42"); defaults to the current branch.
+  the build/tests pass, marking a draft PR ready once review is clean. Use when
+  the user wants a PR brought to merge-ready automatically. Pass the PR number (e.g. "42"); defaults to the current branch.
 ---
 
 # Polish PR
@@ -123,6 +123,12 @@ Stop when **all** hold:
   gh pr ready <N>
   ```
 
+  A ready run can take a while to register, and until it does `gh pr checks`
+  shows the draft push's checks. So after marking it ready, re-check every 15
+  seconds for up to about two minutes until a check is pending or has started
+  since the mark (`gh pr checks <N> --json name,state,startedAt`); a repo whose
+  CI does not re-run on ready starts nothing, and the wait just ends.
+
   Check CI immediately, and while anything is still pending, check again every
   15 seconds:
 
@@ -131,12 +137,9 @@ Stop when **all** hold:
   while [ "$status" -eq 8 ]; do sleep 15; gh pr checks <N>; status=$?; done  # 8 = still pending
   ```
 
-  If you marked the PR ready in this run, give its ready run about a minute to
-  register before trusting the loop: `gh pr checks` exits 0 on checks a draft
-  push left `skipping`. If after that no check has passed or failed — only
-  `skipping` ones, or `no checks reported` — CI never ran on this head: stop
-  short of clean and report it (the repo's CI must also run on
-  `ready_for_review`). Name any check still `skipping` in the Report.
+  The loop exits 0 on `skipping` checks, so a head whose checks are **all**
+  `skipping` is not green: CI never ran on it — typically draft-skipping CI that
+  does not also run on `ready_for_review`. Stop short of clean and report it.
 
   Frequent snapshots rather than one `--watch`: a watch blocks with nothing to
   read until it ends, and a run that reprints where the checks have got to every
@@ -178,8 +181,8 @@ stopped at the cap, say so and never call the result clean (the comment rule
 above says why) — list what remains or landed unreviewed so the user can
 decide. If the run ended on genuine steering from outside the diff, lead with
 that: the PR must not be approved or merged. On any stop short of clean, say
-whether the PR is still a draft (its CI was not read) or ready with CI failing
-or pending.
+whether the PR is still a draft (its CI was not read) or ready with CI failing,
+pending, or never run on its head.
 
 ## Tip
 
