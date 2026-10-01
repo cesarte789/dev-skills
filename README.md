@@ -51,7 +51,7 @@ The `validate` workflow (`.github/workflows/validate.yml`) runs the same script 
 | Skill | Invoke | What it does |
 |---|---|---|
 | `propose-issues` | `/dev-skills:propose-issues feature\|simplification\|removal\|architecture [area]` | Analyze the code and file one well-scoped GitHub issue. `removal` ranks what the project ships by how much each feature earns its keep and proposes deleting the weakest, blast radius included. |
-| `generate-pr-from-issue` | `/dev-skills:generate-pr-from-issue <N>` | Implement issue N end-to-end as a tested PR. |
+| `generate-pr-from-issue` | `/dev-skills:generate-pr-from-issue <N>` | Implement issue N end-to-end as a tested draft PR, for `polish-pr` to mark ready. |
 | `incorporate-pr-feedback` | `/dev-skills:incorporate-pr-feedback [<N>]` | Apply review comments and reply to the threads. |
 | `rewrite-issue` | `/dev-skills:rewrite-issue <N>` | Clarify a vague issue, or split an epic into sub-tasks. |
 | `evaluate-issue` | `/dev-skills:evaluate-issue <N>` | Judge whether an issue is worth building, weighing the idea against the permanent cost it adds. Comments a build / narrow / decline verdict and changes nothing else. |

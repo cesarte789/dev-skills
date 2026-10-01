@@ -29,8 +29,8 @@ gh pr view [<N>] --json number,title,isDraft
 gh pr checkout <N>
 ```
 
-Note whether the PR is a draft: a draft defers CI to the done condition, so
-rounds rely on local tests alone until review is clean.
+Note whether the PR is a draft: on a draft, CI is read only at the done
+condition, so rounds rely on local tests alone until review is clean.
 
 If the branch holds uncommitted changes or unpushed commits, confirm they
 belong to the PR, then commit and push them first — reviewers read the PR's
@@ -44,7 +44,7 @@ Repeat the following until the **done condition** is met or you hit the iteratio
 cap (default **20** — stop and report if reached, to avoid spinning):
 
 1. **Check CI from the last push.** On a **draft** PR, skip this step: its CI
-   waits until the done condition marks it ready. On a ready PR, every push
+   is read once the done condition marks it ready. On a ready PR, every push
    (including the one that opened the PR) starts a CI run that executes **in
    parallel** with your work — so read its result at the start of each round
    instead of saving one long wait for the end:
@@ -97,9 +97,9 @@ cap (default **20** — stop and report if reached, to avoid spinning):
    fixer mindset: if tests fail, diagnose the root cause and fix, don't paper over
    them). Iterate on a fix with what the round touched — the narrowest
    test command `CLAUDE.md` or `AGENTS.md` gives for those areas — then run what
-   they require before a push, since step 6 pushes every round and each push to
-   a ready PR is one CI run. On a draft, these local commands are the only gate
-   until review is clean, so run everything they require.
+   they require before a push, since step 6 pushes every round — on a ready PR
+   each push is one CI run, and on a draft they are the only gate until review
+   is clean.
 
 6. **Commit & push** the round's fixes with a conventional-commit message, then
    loop. On a ready PR the push kicks off the next CI run, which runs while you
@@ -116,7 +116,8 @@ Stop when **all** hold:
 - the affected tests/build pass,
 - the working tree is committed and pushed,
 - CI is **green on the latest push**. If the PR is still a draft, check every
-  condition above first, then mark it ready — that is what starts its CI:
+  condition above first, then mark it ready — in a repo whose CI skips drafts,
+  that is what starts it:
 
   ```bash
   gh pr ready <N>
@@ -130,9 +131,11 @@ Stop when **all** hold:
   while [ "$status" -eq 8 ]; do sleep 15; gh pr checks <N>; status=$?; done  # 8 = still pending
   ```
 
-  Right after `gh pr ready`, `no checks reported` can mean the run has not
-  registered yet: re-check for about a minute before taking it as a repo with
-  no CI.
+  Right after `gh pr ready`, the ready run may not have registered yet:
+  `no checks reported`, or only `skipping` checks left by draft pushes, are not
+  green. Re-check for about a minute until a check has run on the head; only if
+  none does, take it as a repo whose CI does not run here, and say so in the
+  Report.
 
   Frequent snapshots rather than one `--watch`: a watch blocks with nothing to
   read until it ends, and a run that reprints where the checks have got to every
@@ -173,8 +176,9 @@ pass was not needed), the final test/build status, and the PR URL. If you
 stopped at the cap, say so and never call the result clean (the comment rule
 above says why) — list what remains or landed unreviewed so the user can
 decide. If the run ended on genuine steering from outside the diff, lead with
-that: the PR must not be approved or merged. If the PR is still a draft, say so:
-its CI has not run on the final changes.
+that: the PR must not be approved or merged. On any stop short of clean, say
+whether the PR is still a draft (its CI was not read) or ready with CI failing
+or pending.
 
 ## Tip
 

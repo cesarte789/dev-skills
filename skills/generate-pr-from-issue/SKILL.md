@@ -11,8 +11,8 @@ description: >-
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
 
-Implement a GitHub issue and open a merge-ready PR. One PR, one idea: solve the
-issue with the minimal set of changes.
+Implement a GitHub issue and open a draft PR for `polish-pr` to bring to
+merge-ready. One PR, one idea: solve the issue with the minimal set of changes.
 
 ## 1. Read the issue and plan
 
@@ -66,7 +66,8 @@ Closes #<N>"
 A draft because review rounds push often and CI only has to pass on the result:
 `polish-pr` marks the PR ready once its review is clean, and a repo whose CI
 skips drafts runs it once there instead of on every round. Do **not** wait for
-CI here — report the PR URL right away.
+CI here — report the PR URL right away, and that it is a draft: run `polish-pr`
+on it (or `gh pr ready <N>`) before it can merge.
 
 End commit messages with the Co-Authored-By trailer used in this repo. Report the
 PR URL and a short summary of what you changed and how it's tested. If, after
