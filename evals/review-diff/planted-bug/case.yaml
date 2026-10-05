@@ -30,11 +30,12 @@ graders:
       clean, or only mentions the defect as unverified speculation, or gives
       `no findings` as its verdict and mentions the defect only as an aside:
       a caller acts on the verdict and would merge.
-  # Only paths outside .git/ count: review-diff's own `git fetch` writes FETCH_HEAD and origin/main.
+  # Only paths outside .git/ and __pycache__/ count: review-diff's own `git fetch` writes
+  # FETCH_HEAD and origin/main, and a reviewer importing pager.py to check it writes bytecode.
   - name: creates-no-files
     type: regex
     target: files
-    pattern: "^(?!.*(?:^|/)\\.git/).*\\S"
+    pattern: "^(?!.*(?:^|/)(?:\\.git|__pycache__)/).*\\S"
     flags: m
     match: not_contains
   # `files` lists only new paths, so edits to the committed files are caught here,
