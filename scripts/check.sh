@@ -44,6 +44,66 @@ for path in sorted(glob.glob("output-styles/*.md")):
 sys.exit(1 if failed else 0)
 PY
 
+# evals/ ships alongside the plugin but is never loaded at install time, and CI
+# never runs the cases (they bill real sessions and need a sandbox), so a broken
+# case.yaml would sit undetected until the next by-hand run. Shape-check them here
+# — parse only, never run — the way the output-style frontmatter is checked above.
+python3 - <<'PY'
+import glob
+import os
+import sys
+
+import yaml
+
+GRADER_TYPES = {"llm", "regex"}  # the types the cases use; extend when a case adds one
+
+failed = False
+for path in sorted(glob.glob("evals/**/case.yaml", recursive=True)):
+    try:
+        case = yaml.safe_load(open(path, encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as e:
+        print(f"error: {path}: failed to parse: {e}", file=sys.stderr)
+        failed = True
+        continue
+    problems = []
+    if not isinstance(case, dict):
+        problems.append("is not a YAML mapping")
+        case = {}
+    if not isinstance(case.get("name"), str) or not case["name"].strip():
+        problems.append("needs a non-empty 'name'")
+    execution = case.get("execution")
+    prompt = execution.get("prompt") if isinstance(execution, dict) else None
+    if not isinstance(prompt, str) or not prompt.strip():
+        problems.append("needs a non-empty 'execution.prompt'")
+    graders = case.get("graders")
+    if not isinstance(graders, list) or not graders:
+        problems.append("needs a non-empty 'graders' list")
+        graders = []
+    for i, grader in enumerate(graders):
+        where = f"graders[{i}]"
+        if not isinstance(grader, dict):
+            problems.append(f"{where} is not a mapping")
+            continue
+        if not isinstance(grader.get("name"), str) or not grader["name"].strip():
+            problems.append(f"{where} needs a non-empty 'name'")
+        gtype = grader.get("type")
+        if gtype not in GRADER_TYPES:
+            problems.append(f"{where} has type {gtype!r}, not one of {sorted(GRADER_TYPES)}")
+    context = case.get("context")
+    if isinstance(context, dict) and "scaffold_script" in context:
+        script = context["scaffold_script"]
+        if not isinstance(script, str) or not script.strip():
+            problems.append("context.scaffold_script is empty")
+        elif not os.path.isfile(os.path.join(os.path.dirname(path), script)):
+            problems.append(f"context.scaffold_script '{script}' names no file next to the case")
+    for problem in problems:
+        print(f"error: {path}: {problem}", file=sys.stderr)
+    failed = failed or bool(problems)
+    if not problems:
+        print(f"{path}: case ok")
+sys.exit(1 if failed else 0)
+PY
+
 base="${1:-}"
 [ -z "$base" ] && exit 0
 if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
