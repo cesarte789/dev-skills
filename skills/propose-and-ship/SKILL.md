@@ -30,8 +30,9 @@ existing skill — invoke them in order and stop early if a stage says to.
 Run the **propose-issues** skill with the requested kind and area.
 
 - If it files an issue: capture the issue number and continue.
-- If it concludes there's no worthwhile proposal and files nothing: **stop** and
-  report that — there's nothing to build.
+- If it files nothing: **stop** and report that there's nothing new to build.
+  Pass on any settling issues it named; an open one is still work, for
+  `resolve-issue` rather than a fresh proposal.
 
 ## Stage 2 — Generate the PR
 

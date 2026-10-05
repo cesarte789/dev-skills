@@ -77,7 +77,26 @@ Constraints:
 Titles follow conventional-commit style. Bodies are markdown, concrete, and
 reference real files/paths you found.
 
-## 4. File it
+## 4. Check it isn't already settled
+
+The code shows what landed, not what was proposed or turned down: a rejected
+proposal usually leaves the code unchanged, and the same analysis keeps finding
+it. Before filing, search the issues, both open ones and those closed as not
+planned, for the same idea:
+
+```bash
+gh issue list --state open --search "<key terms>" --json number,title,url
+gh issue list --state closed --search "<key terms> reason:\"not planned\"" --json number,title,url
+```
+
+Read the body and the closing comments of every close match. The candidate is
+**settled** when an open issue already proposes it, or when a closed one turned
+it down and nothing its verdict named as decisive has changed since. Drop a
+settled candidate and take your next-best one through this same check. A
+rejected idea whose decisive fact did change is not settled: file it, link the
+old issue and say what changed.
+
+## 5. File it
 
 Ensure the label exists, then create the issue:
 
@@ -86,5 +105,7 @@ gh label create "<label>" --color BFD4F2 --description "AI-proposed <kind>" 2>/d
 gh issue create --title "<title>" --body "<body>" --label "<label>"
 ```
 
-Report the created issue URL. If you genuinely cannot find a worthwhile proposal,
-say so and file nothing — do not invent filler.
+Report the created issue URL. If you genuinely cannot find a worthwhile proposal
+that isn't settled, say so and file nothing — do not invent filler. Name the
+issues that settled the candidates you dropped, so the caller can tell "nothing
+left to do" from "already proposed or turned down".
