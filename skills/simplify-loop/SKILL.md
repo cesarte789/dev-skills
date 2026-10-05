@@ -55,8 +55,9 @@ Run these stages in order. Capture the issue and PR numbers as you go.
 
 2. **Propose.** Run the **propose-issues** skill with kind `simplification` and
    the area. It studies the current code and files one sharp issue.
-   - If it concludes there is no worthwhile simplification left and files nothing:
-     **stop the loop** — the codebase is clean for now. Report and exit.
+   - If it files nothing — no worthwhile simplification left that isn't already
+     proposed or turned down: **stop the loop** — the codebase is clean for now.
+     Report and exit, naming any settling issues it reported.
    - Otherwise capture the issue number.
 
 3. **Resolve.** Run the **resolve-issue** skill on that issue number. It vets
