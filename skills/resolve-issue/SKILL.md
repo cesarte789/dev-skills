@@ -273,17 +273,27 @@ comment the one that is the real decision point and leave the others alone.
 ```bash
 git fetch origin --quiet && git checkout -b docs/<short-slug> origin/main
 # add the comment(s)
-git diff   # verify: comments only
+git diff --stat   # verify: only the files you meant to annotate
+git diff          # verify: comments only
 git commit -am "docs: <what the comment records>"
+sha=$(git rev-parse HEAD)
 git push -u origin docs/<short-slug>
 gh pr create --title "docs: <what the comment records>" --body "<summary>
 
 Follows #<N>"
 gh pr checks; status=$?
 while [ "$status" -eq 8 ]; do sleep 15; gh pr checks; status=$?; done  # 8 = still pending
-gh pr merge --squash --delete-branch
+# merge only if status is 0 and not every check is `skipping`, else stop (below)
+gh pr merge --squash --delete-branch --match-head-commit "$sha"
 git checkout main && git pull --ff-only && git fetch --prune
 ```
+
+Merge only when the wait ends with `status` 0: a failed check, "no checks
+reported", or a head whose checks are **all** `skipping` is not green, and this
+PR has no other gate — it skips `polish-pr`, and the consuming repo may not
+require checks at all. Pin the merge to the commit you verified, as Stage 4
+does (`expectedHeadSha` on the MCP tool), so a push that lands after
+`git diff` cannot merge unread.
 
 Use `Follows #<N>`, never `Closes` — the issue is already closed, and the
 cross-reference is what keeps the decision traceable to the discussion without
@@ -291,8 +301,8 @@ the comment itself naming it. A comment-only diff changes no observable
 behavior, so it carries no test and skips `polish-pr` —
 there is nothing for a review loop to find. If the diff turns out to touch
 anything but comments, stop: that is a code change, and it does not belong to a
-rejected issue. As in Stage 4, if GitHub blocks the merge, leave the PR open and
-report it; never force it.
+rejected issue. As in Stage 4, if CI is not green or GitHub blocks the merge,
+leave the PR open and report it; never force it.
 
 If no place in the code is the right anchor, skip the stage and say so.
 
@@ -309,8 +319,9 @@ maps to one of them:
 - **`stopped`** — anything else: polish stopped without a clean result
   (Stage 3), the merge was blocked or merged without closing the issue
   (Stage 4), the verdict comment failed to post and the issue is still open
-  (Stage 5), or the comment-only PR was blocked or its diff touched more than
-  comments (Stage 6). Name what is left open, uncommitted edits included.
+  (Stage 5), or the comment-only PR was blocked, its CI was not green, or its
+  diff touched more than comments (Stage 6). Name what is left open,
+  uncommitted edits included.
 
 Then the details: the issue URL, the vetting verdict and the
 evidence behind it, whether Stage 1b rewrote the issue before implementing it (and
