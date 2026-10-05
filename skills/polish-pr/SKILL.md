@@ -76,7 +76,7 @@ cap (default **20** — stop and report if reached, to avoid spinning):
    the one that first triggered the pass.
 
    > A repo skill cannot rely on invoking `/code-review` or `/review` — see
-   > this plugin's `README.md` for why.
+   > this plugin's `.claude/CLAUDE.md` for why.
 
 3. **Decide.** If the **done condition** below holds, you are done. Otherwise
    continue.
