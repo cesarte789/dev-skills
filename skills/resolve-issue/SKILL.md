@@ -43,7 +43,8 @@ ambiguous state.
 > clarified version, and a declined one is closed on the evaluation's judgement
 > alone. Use it where that is acceptable (low-stakes work, or a `main` protected
 > by required CI). Stage 0 refuses to run on a `main` that requires no status
-> check, but cannot tell whether the checks it requires run real tests.
+> check, or without `gh` to ask, but cannot tell whether the checks it requires
+> run real tests.
 
 ## Arguments
 
@@ -64,11 +65,20 @@ gh api repos/{owner}/{repo}/rules/branches/<default> \
   --jq '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[]] | length'
 ```
 
+These are REST calls, so `gh api` answers them even where `gh`'s GraphQL
+commands are blocked. The GitHub MCP tools have no equivalent: without `gh` at
+all, this stage cannot run, and that counts as a failed call.
+
 Continue when either count is above 0. When both are 0, or a call fails, stop
 before Stage 1 without touching the issue: report that the repository is not
 set up for unattended merges, and that marking a CI check as required on the
 default branch is what this skill needs. The building blocks
 (`generate-pr-from-issue`, `polish-pr`) still work, with a human merging.
+
+A count above 0 shows that checks are required, not that the merging account
+cannot bypass them (an admin when protection does not enforce admins, a
+ruleset bypass actor). Only admin-only endpoints say that, so this stage does not
+ask: Stages 4 and 6 still merge only on green CI and never bypass.
 
 ## Stage 1 — Vet the issue
 

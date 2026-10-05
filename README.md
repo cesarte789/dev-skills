@@ -61,7 +61,7 @@ Update with `claude plugin marketplace update dev-skills`, then `claude plugin u
 - A `CLAUDE.md` stating the conventions and **the exact test/build commands**, including a narrow per-area command if there is one. `polish-pr` and `generate-pr-from-issue` run whatever it names.
 - Anything that must be regenerated alongside a change (generated types, schema snapshots) and the command that does it.
 - Where docs live and which doc owns which fact, if there is more than a README.
-- Branch protection or a ruleset on `main` requiring CI that runs real tests, before running any merging orchestrator: `resolve-issue` refuses to start when `main` requires no status check, but it cannot tell whether the checks it requires test anything, and with no meaningful checks everything is green.
+- Branch protection or a ruleset on `main` requiring CI that runs real tests, before running any merging orchestrator: `resolve-issue` refuses to start when `main` requires no status check (or `gh` is missing to ask), but it cannot tell whether the checks it requires test anything, and with no meaningful checks everything is green.
 - Optionally, CI that skips draft PRs and runs on `ready_for_review`. `generate-pr-from-issue` opens PRs as drafts and `polish-pr` marks them ready only once review is clean, so such CI runs once per PR rather than once per review round.
 
 ## More
