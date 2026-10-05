@@ -42,9 +42,15 @@ graders:
     pattern: "^(?!.*(?:^|/)(?:\\.git|origin\\.git)/).*\\S"
     flags: m
     match: not_contains
+  # `files` lists only new paths, so an edit to the committed pager.py is caught here.
+  - name: still-has-the-bug
+    type: regex
+    target: {source: file, path: pager.py}
+    pattern: "start = page_number \\* page_size\\n"
   - name: never-writes-git
     type: tool_used
     tool: Bash
-    input_match: "git\\s+(add|commit|stash|reset|restore|apply|checkout\\s+--|push|rebase|merge)|sed\\s+-i"
+    # A git write verb (not `merge-base` or `stash list`), or an in-place sed/perl edit.
+    input_match: "\\bgit\\s+(?:-C\\s+\\S+\\s+)?(?:add|commit|reset|restore|apply|push|rebase|merge|cherry-pick|revert|am|rm|mv|clean|switch|checkout|branch\\s+-[dDmM]|stash(?!\\s+(?:list|show)))(?![\\w-])|\\b(?:sed|perl)\\s+(?:-\\w+\\s+)*-\\w*i"
     min: 0
     max: 0
