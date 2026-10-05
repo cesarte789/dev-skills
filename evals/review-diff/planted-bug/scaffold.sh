@@ -5,6 +5,8 @@ export GIT_COMMITTER_NAME=eval GIT_COMMITTER_EMAIL=eval@example.com
 # No user or system git config (signing, hooks, templates) and fixed dates: the commit
 # SHAs come out the same on any machine, so the graders can pin HEAD and both branch tips.
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+# Loose ref files, which the graders read; git versions without reftable ignore this.
+export GIT_DEFAULT_REF_FORMAT=files
 export GIT_AUTHOR_DATE="2026-01-01T00:00:00Z" GIT_COMMITTER_DATE="2026-01-01T00:00:00Z"
 git init -q -b main
 # A local bare repo stands in for origin: review-diff runs `git fetch origin main`.
