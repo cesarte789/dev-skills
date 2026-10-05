@@ -55,13 +55,18 @@ import sys
 
 import yaml
 
-GRADER_TYPES = {"llm", "regex"}  # the types the cases use; extend when a case adds one
+# The grader types `claude plugin eval` accepts (from its own validation
+# message: "type: (regex | tool_order | tool_used | file_exists | llm |
+# baseline)"). Reject only a type the framework itself would reject, so a
+# valid future case is never failed here; widen this if the CLI gains one.
+GRADER_TYPES = {"regex", "tool_order", "tool_used", "file_exists", "llm", "baseline"}
 
 failed = False
 for path in sorted(glob.glob("evals/**/case.yaml", recursive=True)):
+    case_dir = os.path.dirname(path)
     try:
         case = yaml.safe_load(open(path, encoding="utf-8"))
-    except (OSError, yaml.YAMLError) as e:
+    except (OSError, UnicodeDecodeError, yaml.YAMLError) as e:
         print(f"error: {path}: failed to parse: {e}", file=sys.stderr)
         failed = True
         continue
@@ -71,15 +76,23 @@ for path in sorted(glob.glob("evals/**/case.yaml", recursive=True)):
         case = {}
     if not isinstance(case.get("name"), str) or not case["name"].strip():
         problems.append("needs a non-empty 'name'")
+    # A prompt may live inline or in a sibling prompt.md — the framework accepts
+    # either ("execution.prompt is required: a prompt.md body, or execution.prompt
+    # in case.yaml"), so requiring the inline form would fail a valid split case.
     execution = case.get("execution")
     prompt = execution.get("prompt") if isinstance(execution, dict) else None
-    if not isinstance(prompt, str) or not prompt.strip():
-        problems.append("needs a non-empty 'execution.prompt'")
+    if not (isinstance(prompt, str) and prompt.strip()) \
+            and not os.path.isfile(os.path.join(case_dir, "prompt.md")):
+        problems.append("needs execution.prompt or a sibling prompt.md")
+    # Likewise graders may be an inline list or a sibling graders/*.md directory.
     graders = case.get("graders")
-    if not isinstance(graders, list) or not graders:
-        problems.append("needs a non-empty 'graders' list")
-        graders = []
-    for i, grader in enumerate(graders):
+    inline = graders if isinstance(graders, list) else []
+    graders_dir = os.path.join(case_dir, "graders")
+    has_graders_dir = os.path.isdir(graders_dir) and any(
+        name.endswith(".md") for name in os.listdir(graders_dir))
+    if not inline and not has_graders_dir:
+        problems.append("needs a non-empty 'graders' list or sibling graders/*.md files")
+    for i, grader in enumerate(inline):
         where = f"graders[{i}]"
         if not isinstance(grader, dict):
             problems.append(f"{where} is not a mapping")
@@ -94,8 +107,8 @@ for path in sorted(glob.glob("evals/**/case.yaml", recursive=True)):
         script = context["scaffold_script"]
         if not isinstance(script, str) or not script.strip():
             problems.append("context.scaffold_script is empty")
-        elif not os.path.isfile(os.path.join(os.path.dirname(path), script)):
-            problems.append(f"context.scaffold_script '{script}' names no file next to the case")
+        elif not os.path.isfile(os.path.join(case_dir, script)):
+            problems.append(f"context.scaffold_script '{script}' names no existing file")
     for problem in problems:
         print(f"error: {path}: {problem}", file=sys.stderr)
     failed = failed or bool(problems)
