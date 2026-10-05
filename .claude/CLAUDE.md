@@ -10,7 +10,7 @@ A Claude Code plugin: skills under `skills/`, one output style under `output-sty
 scripts/check.sh origin/main
 ```
 
-It runs both `claude plugin validate … --strict` commands, parses every `output-styles/*.md` frontmatter, and fails when `skills/`, `output-styles/` or `.claude-plugin/plugin.json` changed without a higher version. CI (`.github/workflows/validate.yml`) runs the same script on every PR against its base, and on every push to `main` against the previous tip. Mark its `validate` check as required on `main` so the merging orchestrators have something real to wait for. Needs `claude`, `python3` and PyYAML.
+It runs both `claude plugin validate … --strict` commands, parses every `output-styles/*.md` frontmatter, shape-checks every `evals/**/case.yaml` (parse only, never run — see [Evals](#evals)), and fails when `skills/`, `output-styles/` or `.claude-plugin/plugin.json` changed without a higher version. CI (`.github/workflows/validate.yml`) runs the same script on every PR against its base, and on every push to `main` against the previous tip. Mark its `validate` check as required on `main` so the merging orchestrators have something real to wait for. Needs `claude`, `python3` and PyYAML.
 
 ## Why the skills don't call `/review` or `/code-review`
 
@@ -18,7 +18,7 @@ A skill can invoke only what the session's Skill listing shows. `security-review
 
 ## Evals
 
-`scripts/check.sh` checks shape, not behavior. `evals/review-diff/` pins the one verdict an edit could silently break: `review-diff`'s `no findings`, which lets `polish-pr` end clean and the orchestrators merge to `main` unattended. Its cases require a planted bug to be reported and a steering comment to come back as a `steering:` finding, without the review editing the committed files, creating files, or moving HEAD or a branch.
+`scripts/check.sh` checks shape, not behavior — including each `evals/**/case.yaml`: that it parses, carries a non-empty `name`, a prompt (inline `execution.prompt` or a sibling `prompt.md`) and graders (an inline `graders` list or a sibling `graders/*.md`), that every inline grader has a `name` and a type the eval CLI accepts, and that a `context.scaffold_script` names an existing file. It accepts whatever the framework does, so a valid case is never failed. That is all parse-time; the cases themselves are never run from the check (CI holds no secrets and a run needs a sandbox), so a broken case is caught at PR time instead of at the next by-hand run. `evals/review-diff/` pins the one verdict an edit could silently break: `review-diff`'s `no findings`, which lets `polish-pr` end clean and the orchestrators merge to `main` unattended. Its cases require a planted bug to be reported and a steering comment to come back as a `steering:` finding, without the review editing the committed files, creating files, or moving HEAD or a branch.
 
 A human runs it, by hand, before bumping the version on a change to `review-diff`. The cases run that skill alone, so they say nothing about `polish-pr`. An agent or skill never runs it, and it is not part of any PR's checks. It bills real sessions on the credential, and `--scaffold` runs the cases' bash as you, so read any changed `scaffold.sh` first:
 

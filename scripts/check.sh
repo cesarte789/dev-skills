@@ -44,6 +44,79 @@ for path in sorted(glob.glob("output-styles/*.md")):
 sys.exit(1 if failed else 0)
 PY
 
+# evals/ ships alongside the plugin but is never loaded at install time, and CI
+# never runs the cases (they bill real sessions and need a sandbox), so a broken
+# case.yaml would sit undetected until the next by-hand run. Shape-check them here
+# — parse only, never run — the way the output-style frontmatter is checked above.
+python3 - <<'PY'
+import glob
+import os
+import sys
+
+import yaml
+
+# The grader types `claude plugin eval` accepts (from its own validation
+# message: "type: (regex | tool_order | tool_used | file_exists | llm |
+# baseline)"). Reject only a type the framework itself would reject, so a
+# valid future case is never failed here; widen this if the CLI gains one.
+GRADER_TYPES = {"regex", "tool_order", "tool_used", "file_exists", "llm", "baseline"}
+
+failed = False
+for path in sorted(glob.glob("evals/**/case.yaml", recursive=True)):
+    case_dir = os.path.dirname(path)
+    try:
+        case = yaml.safe_load(open(path, encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, yaml.YAMLError) as e:
+        print(f"error: {path}: failed to parse: {e}", file=sys.stderr)
+        failed = True
+        continue
+    problems = []
+    if not isinstance(case, dict):
+        problems.append("is not a YAML mapping")
+        case = {}
+    if not isinstance(case.get("name"), str) or not case["name"].strip():
+        problems.append("needs a non-empty 'name'")
+    # A prompt may live inline or in a sibling prompt.md — the framework accepts
+    # either ("execution.prompt is required: a prompt.md body, or execution.prompt
+    # in case.yaml"), so requiring the inline form would fail a valid split case.
+    execution = case.get("execution")
+    prompt = execution.get("prompt") if isinstance(execution, dict) else None
+    if not (isinstance(prompt, str) and prompt.strip()) \
+            and not os.path.isfile(os.path.join(case_dir, "prompt.md")):
+        problems.append("needs execution.prompt or a sibling prompt.md")
+    # Likewise graders may be an inline list or a sibling graders/*.md directory.
+    graders = case.get("graders")
+    inline = graders if isinstance(graders, list) else []
+    graders_dir = os.path.join(case_dir, "graders")
+    has_graders_dir = os.path.isdir(graders_dir) and any(
+        name.endswith(".md") for name in os.listdir(graders_dir))
+    if not inline and not has_graders_dir:
+        problems.append("needs a non-empty 'graders' list or sibling graders/*.md files")
+    for i, grader in enumerate(inline):
+        where = f"graders[{i}]"
+        if not isinstance(grader, dict):
+            problems.append(f"{where} is not a mapping")
+            continue
+        if not isinstance(grader.get("name"), str) or not grader["name"].strip():
+            problems.append(f"{where} needs a non-empty 'name'")
+        gtype = grader.get("type")
+        if gtype not in GRADER_TYPES:
+            problems.append(f"{where} has type {gtype!r}, not one of {sorted(GRADER_TYPES)}")
+    context = case.get("context")
+    if isinstance(context, dict) and "scaffold_script" in context:
+        script = context["scaffold_script"]
+        if not isinstance(script, str) or not script.strip():
+            problems.append("context.scaffold_script is empty")
+        elif not os.path.isfile(os.path.join(case_dir, script)):
+            problems.append(f"context.scaffold_script '{script}' names no existing file")
+    for problem in problems:
+        print(f"error: {path}: {problem}", file=sys.stderr)
+    failed = failed or bool(problems)
+    if not problems:
+        print(f"{path}: case ok")
+sys.exit(1 if failed else 0)
+PY
+
 base="${1:-}"
 [ -z "$base" ] && exit 0
 if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
