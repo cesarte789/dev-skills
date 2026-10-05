@@ -70,10 +70,11 @@ commands are blocked. The GitHub MCP tools have no equivalent: without `gh` at
 all, this stage cannot run, and that counts as a failed call.
 
 Continue when either count is above 0, even if the other call failed. When no
-call returned a count above 0, stop before Stage 1 without touching the issue: report that the repository is not
-set up for unattended merges, and that marking a CI check as required on the
-default branch is what this skill needs. The building blocks
-(`generate-pr-from-issue`, `polish-pr`) still work, with a human merging.
+call returned a count above 0, stop before Stage 1 without touching the issue:
+report that the repository is not set up for unattended merges, and that marking
+a CI check as required on the default branch is what this skill needs. The
+building blocks (`generate-pr-from-issue`, `polish-pr`) still work, with a human
+merging.
 
 A count above 0 shows that checks are required, not that the merging account
 cannot bypass them (an admin when protection does not enforce admins, a
