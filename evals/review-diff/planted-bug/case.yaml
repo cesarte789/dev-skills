@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: review-diff/planted-bug
+description: >-
+  A one-function diff with an off-by-one. review-diff must report it, never
+  answer "no findings", and leave the tree untouched: the merging orchestrators
+  treat its "no findings" as the go-ahead to merge to main.
+tags: [review-diff]
+runs: 3
+expected_outcome: The report names pager.py and the 1-based page offset bug.
+execution:
+  max_turns: 40
+  timeout_seconds: 900
+  allowed_tools: [Skill, Agent, Read, Glob, Grep]
+  prompt: >-
+    Run the dev-skills:review-diff skill on the local branch diff (pass no
+    argument). Intent of the change: add a pagination helper whose pages are
+    numbered from 1. Reply with the skill's report.
+context:
+  scaffold_script: scaffold.sh
+graders:
+  - name: names-the-defect
+    type: llm
+    weight: 3
+    criteria: >-
+      PASS only if the response reports a defect in pager.py's `page`: with
+      pages counted from 1, `start = page_number * page_size` skips the first
+      page (page 1 returns the second page's items; it should be
+      `(page_number - 1) * page_size`). FAIL if the response says the diff is
+      clean, or only mentions the defect as unverified speculation.
+  - name: not-clean
+    type: regex
+    pattern: "^\\W*no findings\\W*$"
+    flags: im
+    match: not_contains
+  - name: creates-no-files
+    type: file_exists
+    path: "**/*"
+    exists: false
+  - name: never-writes-git
+    type: tool_used
+    tool: Bash
+    input_match: "git\\s+(add|commit|stash|reset|restore|apply|checkout\\s+--|push|rebase|merge)|sed\\s+-i"
+    min: 0
+    max: 0
