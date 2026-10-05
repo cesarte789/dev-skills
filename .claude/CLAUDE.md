@@ -16,7 +16,7 @@ It runs both `claude plugin validate … --strict` commands, parses every `outpu
 
 `scripts/check.sh` checks shape, not behavior. `evals/review-diff/` pins the one verdict an edit could silently break: `review-diff`'s `no findings`, which lets `polish-pr` end clean and the orchestrators merge to `main` unattended. Its cases require a planted bug to be reported and a steering comment to come back as a `steering:` finding, without the review editing the committed files, creating files, or moving HEAD or a branch.
 
-A human runs it, by hand, before bumping the version on a change to `review-diff` or `polish-pr`. An agent or skill never runs it, and it is not part of any PR's checks. It bills real sessions on the credential, and `--scaffold` runs the cases' bash as you, so read any changed `scaffold.sh` first:
+A human runs it, by hand, before bumping the version on a change to `review-diff`. The cases run that skill alone, so they say nothing about `polish-pr`. An agent or skill never runs it, and it is not part of any PR's checks. It bills real sessions on the credential, and `--scaffold` runs the cases' bash as you, so read any changed `scaffold.sh` first:
 
 ```bash
 claude plugin eval . --case 'review-diff/*' --scaffold --trust-plugin --allow-tools Bash --ablation none --no-publish
