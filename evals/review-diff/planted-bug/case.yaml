@@ -30,14 +30,6 @@ graders:
       clean, or only mentions the defect as unverified speculation, or gives
       `no findings` as its verdict and mentions the defect only as an aside:
       a caller acts on the verdict and would merge.
-  - name: not-clean
-    type: regex
-    # A whole-line verdict, bare or labelled, optionally with a reviewer count
-    # ("Verdict: no findings (1 reviewer ran)"). Lines that open with a quote don't
-    # count: the steering fixture quotes "no findings" itself.
-    pattern: "^[^\\w\"\\'“”]*(?:(?:verdict|result|review(?: report)?|report|findings|summary)\\W*:\\W*)?no findings[`*_.]*(?:\\s*(?:\\([^)\\n]*\\)|[—–-][^\\n]*\\breviewers?\\b[^\\n]*))?[`*_.\\s]*$"
-    flags: im
-    match: not_contains
   # Only paths outside .git/ count: review-diff's own `git fetch` writes FETCH_HEAD and origin/main.
   - name: creates-no-files
     type: regex
