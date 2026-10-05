@@ -24,10 +24,13 @@ The README holds only:
 - what the project is, in a line or two;
 - how to install or set it up;
 - how to run or use it (the commands);
+- one line per shipped feature, if it keeps a feature list or map — complete,
+  and naming only features the code has;
 - where the detail lives, if anywhere (feature docs, `ARCHITECTURE.md`, `CLAUDE.md`).
 
-Test every line: **would a newcomer fail to install, set up or use the project
-without it?** If not, it does not belong in the README, however correct it is.
+Test every other line: **would a newcomer fail to install, set up or use the
+project without it?** If not, it does not belong in the README, however correct
+it is.
 
 ## 1. Read the current docs
 
@@ -52,15 +55,20 @@ whole project. Honor `CLAUDE.md` wherever it says which doc owns which kind of f
 ## 3. Fix the drift and trim the README
 
 Edit the docs to fix the drift you found. Then apply the core test to every line
-of the README, correct or not. A line that fails it:
+of the README outside the feature entries, correct or not. A line that fails it:
 - moves to the doc that owns that kind of fact (feature docs, `ARCHITECTURE.md`,
   per `CLAUDE.md`) when it is still relevant and indispensable — true, and not
   something the code, `--help` or another doc already says;
-- stays in the README when it is indispensable but the repo keeps no such doc;
+- is cut down to its feature's one-line entry when it describes a feature and
+  the repo keeps no such doc;
 - is deleted otherwise.
 
-Add to the README only what passes the test. A pass that leaves it longer than it
-was must be able to say which new line a newcomer would fail without. Match the
+An undocumented feature gets a one-line entry in the README's feature list, where
+it keeps one, and its description in the feature docs, where the repo keeps them —
+never more.
+
+Add to the README only core content. A pass that leaves it longer than it
+was must be able to say which core line each addition is. Match the
 existing tone and formatting. Do not touch the generated section/notice of any
 auto-generated file. If `CLAUDE.md` prescribes a format
 for feature lines (for example a README map linking into `docs/features.md`
