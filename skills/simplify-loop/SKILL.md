@@ -55,9 +55,10 @@ Run these stages in order. Capture the issue and PR numbers as you go.
 
 2. **Propose.** Run the **propose-issues** skill with kind `simplification` and
    the area. It studies the current code and files one sharp issue.
-   - If it files nothing — no worthwhile simplification left that isn't already
-     proposed or turned down: **stop the loop** — the codebase is clean for now.
-     Report and exit, naming any settling issues it reported.
+   - If it files nothing: **stop the loop**. Report and exit. When it named no
+     settling issues, the codebase is clean for now. Otherwise what is left is
+     already proposed or turned down: say so, and list the open ones as work
+     `resolve-issue` or `resolve-issues` can pick up.
    - Otherwise capture the issue number.
 
 3. **Resolve.** Run the **resolve-issue** skill on that issue number. It vets
@@ -78,7 +79,7 @@ Run these stages in order. Capture the issue and PR numbers as you go.
 End the run when **any** holds, and report which one:
 
 - the resolved-count reaches `<max-iterations>`,
-- `propose-issues` finds nothing worth doing,
+- `propose-issues` files nothing (clean, or everything left is already settled),
 - `resolve-issue` ends in anything but `merged` or `rejected`.
 
 ## Report
