@@ -46,8 +46,13 @@ particular:
 - If the change touches anything `CLAUDE.md` says must be regenerated or kept in
   sync (generated types or clients, schema snapshots, lockfiles), do it in the
   same change with the repo's own tooling.
-- Update `README.md` if user-facing behavior or setup changes, and any feature docs
-  the repo keeps (e.g. `docs/features.md`) with it.
+- Keep the docs matching the code and the README to its core: what the project
+  is, how to install, set up and use it, one line per feature if it keeps a
+  feature list, and where the detail lives. Touch the README only when install,
+  setup or the commands change, or to add, update or remove the one-line entry of
+  a feature the change adds, changes or removes. Describe the feature itself in
+  the feature docs the repo keeps (e.g. `docs/features.md`), and delete what they
+  say about removed code.
 
 Run the relevant tests/build and make them pass before opening the PR.
 
