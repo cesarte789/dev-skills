@@ -13,8 +13,10 @@ description: >-
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
 
-Reconcile the documentation with reality, and keep the README to its core.
-Fix what is stale, cut what is not essential, and do not invent content.
+The goal is docs that say what the code actually does, and nothing else. Every
+claim in the README and the feature docs must match something that exists in the
+code today: fix what is stale, delete what describes code that is gone, and do not
+invent content. Within that, keep the README to its core.
 
 ## The README core
 
