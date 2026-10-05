@@ -55,7 +55,7 @@ ambiguous state.
 Every outcome past Stage 1 can merge unattended, and the skills' own CI waits
 are the only gate unless GitHub itself refuses a red PR. Before reading the
 issue, confirm the default branch requires at least one status check, through
-classic branch protection or a ruleset. Both calls need only read access:
+classic branch protection or a ruleset. All three calls need only read access:
 
 ```bash
 gh api repos/{owner}/{repo} --jq .default_branch
@@ -69,8 +69,8 @@ These are REST calls, so `gh api` answers them even where `gh`'s GraphQL
 commands are blocked. The GitHub MCP tools have no equivalent: without `gh` at
 all, this stage cannot run, and that counts as a failed call.
 
-Continue when either count is above 0. When both are 0, or a call fails, stop
-before Stage 1 without touching the issue: report that the repository is not
+Continue when either count is above 0, even if the other call failed. When no
+call returned a count above 0, stop before Stage 1 without touching the issue: report that the repository is not
 set up for unattended merges, and that marking a CI check as required on the
 default branch is what this skill needs. The building blocks
 (`generate-pr-from-issue`, `polish-pr`) still work, with a human merging.
