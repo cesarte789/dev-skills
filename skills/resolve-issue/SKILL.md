@@ -273,17 +273,31 @@ comment the one that is the real decision point and leave the others alone.
 ```bash
 git fetch origin --quiet && git checkout -b docs/<short-slug> origin/main
 # add the comment(s)
-git diff   # verify: comments only
-git commit -am "docs: <what the comment records>"
+git status --short   # verify: only the files you meant to annotate
+git diff             # verify: comments only
+git add -A && git commit -m "docs: <what the comment records>"
+git rev-parse HEAD   # the commit you verified: pin the merge to it
 git push -u origin docs/<short-slug>
 gh pr create --title "docs: <what the comment records>" --body "<summary>
 
 Follows #<N>"
 gh pr checks; status=$?
 while [ "$status" -eq 8 ]; do sleep 15; gh pr checks; status=$?; done  # 8 = still pending
-gh pr merge --squash --delete-branch
+[ "$status" -eq 0 ] && gh pr merge --squash --delete-branch --match-head-commit <sha from rev-parse>
 git checkout main && git pull --ff-only && git fetch --prune
 ```
+
+Right after `gh pr create`, CI may not have registered yet, and `gh pr checks`
+then prints "no checks reported" and exits 1. Re-check every 15 seconds for up
+to about two minutes before taking that as the answer, then run the wait.
+
+Merge only when the wait ends with `status` 0 and not every check is
+`skipping` (`polish-pr`'s done condition says why): this PR skips `polish-pr`,
+so CI is its only gate. A failed check, or no checks at all, leaves the PR open
+and the run `stopped`, which also halts `resolve-issues` and `simplify-loop`;
+in a repo with no CI, that is every durable rejection. The pin, as in Stage 4
+(`expectedHeadSha` on the MCP tool), keeps a push that lands after `git diff`
+from merging unread.
 
 Use `Follows #<N>`, never `Closes` — the issue is already closed, and the
 cross-reference is what keeps the decision traceable to the discussion without
@@ -291,8 +305,8 @@ the comment itself naming it. A comment-only diff changes no observable
 behavior, so it carries no test and skips `polish-pr` —
 there is nothing for a review loop to find. If the diff turns out to touch
 anything but comments, stop: that is a code change, and it does not belong to a
-rejected issue. As in Stage 4, if GitHub blocks the merge, leave the PR open and
-report it; never force it.
+rejected issue. As in Stage 4, if CI is not green or GitHub blocks the merge,
+leave the PR open and report it; never force it.
 
 If no place in the code is the right anchor, skip the stage and say so.
 
@@ -309,8 +323,9 @@ maps to one of them:
 - **`stopped`** — anything else: polish stopped without a clean result
   (Stage 3), the merge was blocked or merged without closing the issue
   (Stage 4), the verdict comment failed to post and the issue is still open
-  (Stage 5), or the comment-only PR was blocked or its diff touched more than
-  comments (Stage 6). Name what is left open, uncommitted edits included.
+  (Stage 5), or the comment-only PR was blocked, its CI was not green, or its
+  diff touched more than comments (Stage 6). Name what is left open,
+  uncommitted edits included.
 
 Then the details: the issue URL, the vetting verdict and the
 evidence behind it, whether Stage 1b rewrote the issue before implementing it (and
