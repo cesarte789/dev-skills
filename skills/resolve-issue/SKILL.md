@@ -61,7 +61,7 @@ classic branch protection or a ruleset. Both calls need only read access:
 gh api repos/{owner}/{repo} --jq .default_branch
 gh api repos/{owner}/{repo}/branches/<default> \
   --jq '(.protection.required_status_checks // {}) | (.contexts // []) + [(.checks // [])[].context] | length'
-gh api repos/{owner}/{repo}/rules/branches/<default> \
+gh api 'repos/{owner}/{repo}/rules/branches/<default>?per_page=100' \
   --jq '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[]] | length'
 ```
 
@@ -327,7 +327,8 @@ Merge only when the wait ends with `status` 0 and not every check is
 `skipping` (`polish-pr`'s done condition says why): this PR skips `polish-pr`,
 so CI is its only gate. A failed check, or no checks at all, leaves the PR open
 and the run `stopped`, which also halts `resolve-issues` and `simplify-loop`;
-in a repo with no CI, that is every durable rejection. The pin, as in Stage 4
+Stage 0 rules out a repo with no CI, but required checks that path filters skip
+on a comment-only diff still end here. The pin, as in Stage 4
 (`expectedHeadSha` on the MCP tool), keeps a push that lands after `git diff`
 from merging unread.
 
