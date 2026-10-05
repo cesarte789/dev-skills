@@ -10,7 +10,11 @@ A Claude Code plugin: skills under `skills/`, one output style under `output-sty
 scripts/check.sh origin/main
 ```
 
-It runs both `claude plugin validate … --strict` commands, parses every `output-styles/*.md` frontmatter, and fails when `skills/`, `output-styles/` or `.claude-plugin/plugin.json` changed without a higher version. CI (`.github/workflows/validate.yml`) runs the same script on every PR against its base, and on every push to `main` against the previous tip. Needs `claude`, `python3` and PyYAML.
+It runs both `claude plugin validate … --strict` commands, parses every `output-styles/*.md` frontmatter, and fails when `skills/`, `output-styles/` or `.claude-plugin/plugin.json` changed without a higher version. CI (`.github/workflows/validate.yml`) runs the same script on every PR against its base, and on every push to `main` against the previous tip. Mark its `validate` check as required on `main` so the merging orchestrators have something real to wait for. Needs `claude`, `python3` and PyYAML.
+
+## Why the skills don't call `/review` or `/code-review`
+
+A skill can invoke only what the session's Skill listing shows. `security-review`, `simplify` and `loop` are built in and listed, so these skills may call them (`polish-pr` runs `security-review` on security-sensitive diffs). `/review` never appears in the listing, and `/code-review` is present in some sessions and not others, so nothing here depends on either. `polish-pr` reviews through `review-diff`'s subagents instead, which is what lets the orchestrators run unattended.
 
 ## Evals
 
