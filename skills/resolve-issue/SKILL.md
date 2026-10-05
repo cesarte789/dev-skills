@@ -273,27 +273,31 @@ comment the one that is the real decision point and leave the others alone.
 ```bash
 git fetch origin --quiet && git checkout -b docs/<short-slug> origin/main
 # add the comment(s)
-git diff --stat   # verify: only the files you meant to annotate
-git diff          # verify: comments only
-git commit -am "docs: <what the comment records>"
-sha=$(git rev-parse HEAD)
+git status --short   # verify: only the files you meant to annotate
+git diff             # verify: comments only
+git add -A && git commit -m "docs: <what the comment records>"
+git rev-parse HEAD   # the commit you verified: pin the merge to it
 git push -u origin docs/<short-slug>
 gh pr create --title "docs: <what the comment records>" --body "<summary>
 
 Follows #<N>"
 gh pr checks; status=$?
 while [ "$status" -eq 8 ]; do sleep 15; gh pr checks; status=$?; done  # 8 = still pending
-# merge only if status is 0 and not every check is `skipping`, else stop (below)
-gh pr merge --squash --delete-branch --match-head-commit "$sha"
+[ "$status" -eq 0 ] && gh pr merge --squash --delete-branch --match-head-commit <sha from rev-parse>
 git checkout main && git pull --ff-only && git fetch --prune
 ```
 
-Merge only when the wait ends with `status` 0: a failed check, "no checks
-reported", or a head whose checks are **all** `skipping` is not green, and this
-PR has no other gate — it skips `polish-pr`, and the consuming repo may not
-require checks at all. Pin the merge to the commit you verified, as Stage 4
-does (`expectedHeadSha` on the MCP tool), so a push that lands after
-`git diff` cannot merge unread.
+Right after `gh pr create`, CI may not have registered yet, and `gh pr checks`
+then prints "no checks reported" and exits 1. Re-check every 15 seconds for up
+to about two minutes before taking that as the answer, then run the wait.
+
+Merge only when the wait ends with `status` 0 and not every check is
+`skipping` (`polish-pr`'s done condition says why): this PR skips `polish-pr`,
+so CI is its only gate. A failed check, or no checks at all, leaves the PR open
+and the run `stopped`, which also halts `resolve-issues` and `simplify-loop`;
+in a repo with no CI, that is every durable rejection. The pin, as in Stage 4
+(`expectedHeadSha` on the MCP tool), keeps a push that lands after `git diff`
+from merging unread.
 
 Use `Follows #<N>`, never `Closes` — the issue is already closed, and the
 cross-reference is what keeps the decision traceable to the discussion without
