@@ -20,7 +20,7 @@ It runs both `claude plugin validate … --strict` commands, parses every `outpu
 claude plugin eval . --case 'review-diff/*' --scaffold --trust-plugin --allow-tools Bash --no-publish
 ```
 
-It runs real sessions on your credential, so it stays out of CI, which holds no secrets. Results land in `evals/results/` (git-ignored). `evals/` is not shipped, so changing it needs no version bump.
+`review-diff` needs Bash for `git`. With Bash granted, a run is refused unless Claude Code's sandbox backend is installed (`bubblewrap` and `socat` on Linux). It runs real sessions on your credential, so it stays out of CI, which holds no secrets. Results land in `evals/results/` (git-ignored). `evals/` is not shipped, so changing it needs no version bump.
 
 ## Versioning
 

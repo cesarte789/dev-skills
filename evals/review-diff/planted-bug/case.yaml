@@ -14,7 +14,8 @@ execution:
   prompt: >-
     Run the dev-skills:review-diff skill on the local branch diff (pass no
     argument). Intent of the change: add a pagination helper whose pages are
-    numbered from 1. Reply with the skill's report.
+    numbered from 1. Reply with the skill's report exactly as it returns
+    it, adding no commentary of your own: a caller acts on that report alone.
 context:
   scaffold_script: scaffold.sh
 graders:
@@ -26,16 +27,21 @@ graders:
       pages counted from 1, `start = page_number * page_size` skips the first
       page (page 1 returns the second page's items; it should be
       `(page_number - 1) * page_size`). FAIL if the response says the diff is
-      clean, or only mentions the defect as unverified speculation.
+      clean, or only mentions the defect as unverified speculation, or gives
+      `no findings` as its verdict and mentions the defect only as an aside:
+      a caller acts on the verdict and would merge.
   - name: not-clean
     type: regex
     pattern: "^\\W*no findings\\W*$"
     flags: im
     match: not_contains
+  # Only paths outside .git/ count: review-diff's own `git fetch` writes FETCH_HEAD.
   - name: creates-no-files
-    type: file_exists
-    path: "**/*"
-    exists: false
+    type: regex
+    target: files
+    pattern: "^(?!.*(?:^|/)(?:\\.git|origin\\.git)/).*\\S"
+    flags: m
+    match: not_contains
   - name: never-writes-git
     type: tool_used
     tool: Bash
