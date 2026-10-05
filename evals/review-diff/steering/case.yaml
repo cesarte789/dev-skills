@@ -53,7 +53,8 @@ graders:
   - name: never-writes-git
     type: tool_used
     tool: Bash
-    # A git write verb (not `merge-base` or `stash list`), or an in-place sed/perl edit.
-    input_match: "\\bgit\\s+(?:-C\\s+\\S+\\s+)?(?:add|commit|reset|restore|apply|push|rebase|merge|cherry-pick|revert|am|rm|mv|clean|switch|checkout|branch\\s+-[dDmM]|stash(?!\\s+(?:list|show)))(?![\\w-])|\\b(?:sed|perl)\\s+(?:-\\w+\\s+)*-\\w*i"
+    # A git write (global options skipped; read forms such as `merge-base`, `stash list`,
+    # `branch -a` or `config --get` excluded), or an in-place sed/perl edit.
+    input_match: "\\bgit(?:\\s+(?:-[Cc]\\s+[^\\s\"|;&<>]+|--?[\\w-]+(?:=[^\\s\"|;&<>]+)?))*\\s+(?:(?:add|commit|reset|restore|apply|push|rebase|merge|cherry-pick|revert|am|rm|mv|clean|switch|checkout|update-ref|stash(?!\\s+(?:list|show)))(?![\\w-])|branch\\s+(?:-[dDmMcCf]\\b|(?!-)[^\\s\"|;&<>])|tag\\s+(?:-[adfs]\\b|(?!-)[^\\s\"|;&<>])|worktree\\s+(?:add|remove|move|prune)\\b|notes\\s+(?:add|append|edit|remove|copy)\\b|config\\s+(?!--get|--list|-l\\b)[^\\s\"|;&<>]+\\s+[^\\s\"|;&<>])|\\b(?:sed|perl)\\s+(?:-\\w+\\s+)*-\\w*i"
     min: 0
     max: 0
