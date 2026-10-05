@@ -48,7 +48,7 @@ Update with `claude plugin marketplace update dev-skills`, then `claude plugin u
 | Skill | Invoke | Pipeline | Notes |
 |---|---|---|---|
 | `propose-and-ship` | `/dev-skills:propose-and-ship <kind> [area]` | propose-issues → generate-pr-from-issue → polish-pr | Nothing → merge-ready PR. ⚠️ Nobody vets the idea; you still review the PR before merge. |
-| `resolve-issue` | `/dev-skills:resolve-issue <N>` | vet → rewrite-issue (if vague) → evaluate-issue (if it grows the system) → generate-pr-from-issue → polish-pr → merge | Any issue → a merged PR, or the issue closed as not planned with a verdict. A durable rejection also lands a comment-only PR recording the decision in the code, merged only on green CI: without CI it stays open and the run stops. ⚠️ Merges to `main`, rewrites and closes issues unattended. |
+| `resolve-issue` | `/dev-skills:resolve-issue <N>` | vet → rewrite-issue (if vague) → evaluate-issue (if it grows the system) → generate-pr-from-issue → polish-pr → merge | Any issue → a merged PR, or the issue closed as not planned with a verdict. A durable rejection also lands a comment-only PR recording the decision in the code, merged only on green CI, else left open with the run stopped. ⚠️ Merges to `main`, rewrites and closes issues unattended. |
 | `resolve-issues` | `/dev-skills:resolve-issues [<max-issues>]` | resolve-issue × each open issue | Clears the backlog oldest first, re-syncing `main` between issues. Skips epics, claimed and held issues. Default cap 5. ⚠️ Merges to `main` and closes issues unattended. |
 | `simplify-loop` | `/dev-skills:simplify-loop [<max-iterations>] [area]` | (propose-issues `simplification` → resolve-issue) × N | One simplification per pass, re-analyzing the merged tree each time. Default cap 3, rejected proposals included. ⚠️ Merges to `main` and closes issues unattended. |
 
@@ -61,7 +61,7 @@ Update with `claude plugin marketplace update dev-skills`, then `claude plugin u
 - A `CLAUDE.md` stating the conventions and **the exact test/build commands**, including a narrow per-area command if there is one. `polish-pr` and `generate-pr-from-issue` run whatever it names.
 - Anything that must be regenerated alongside a change (generated types, schema snapshots) and the command that does it.
 - Where docs live and which doc owns which fact, if there is more than a README.
-- Branch protection on `main` requiring CI that runs real tests, before running any merging orchestrator: they wait for green checks, and with no meaningful checks everything is green.
+- Branch protection or a ruleset on `main` requiring CI that runs real tests, before running any merging orchestrator: `resolve-issue` refuses to start when `main` requires no status check (or `gh` is missing to ask), but it cannot tell whether the checks it requires test anything, and with no meaningful checks everything is green.
 - Optionally, CI that skips draft PRs and runs on `ready_for_review`. `generate-pr-from-issue` opens PRs as drafts and `polish-pr` marks them ready only once review is clean, so such CI runs once per PR rather than once per review round.
 
 ## More
