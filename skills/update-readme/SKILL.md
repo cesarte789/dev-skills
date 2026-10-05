@@ -55,7 +55,8 @@ whole project. Honor `CLAUDE.md` wherever it says which doc owns which kind of f
 ## 3. Fix the drift and trim the README
 
 Edit the docs to fix the drift you found. Then apply the core test to every line
-of the README outside the feature entries, correct or not. A line that fails it:
+of the README outside the feature entries, correct or not — within the given area
+when one was passed. A line that fails it:
 - moves to the doc that owns that kind of fact (feature docs, `ARCHITECTURE.md`,
   per `CLAUDE.md`) when it is still relevant and indispensable — true, and not
   something the code, `--help` or another doc already says;

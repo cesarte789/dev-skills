@@ -49,8 +49,8 @@ particular:
 - Keep the docs matching the code and the README to its core: what the project
   is, how to install, set up and use it, one line per feature if it keeps a
   feature list, and where the detail lives. Touch the README only when install,
-  setup or the commands change, or to add, rename or remove the one-line entry of
-  a feature the change adds, renames or removes. Describe the feature itself in
+  setup or the commands change, or to add, update or remove the one-line entry of
+  a feature the change adds, changes or removes. Describe the feature itself in
   the feature docs the repo keeps (e.g. `docs/features.md`), and delete what they
   say about removed code.
 
