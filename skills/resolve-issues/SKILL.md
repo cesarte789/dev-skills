@@ -27,7 +27,9 @@ issue closed with a written verdict. One issue at a time, oldest first.
 > ⚠️ This runs unattended and both **merges to `main`** and **closes issues** on
 > its own. No human vets each issue or reviews each PR before it lands. Use it
 > only where that is acceptable (low-stakes work, or a `main` protected by
-> required CI).
+> required CI). On a `main` that requires no status check, only
+> `resolve-issue`'s own CI waits guard each merge, and GitHub will not stop a
+> merge that skips them.
 
 ## Which one to use
 

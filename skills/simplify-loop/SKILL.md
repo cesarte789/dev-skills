@@ -28,7 +28,9 @@ builds on a strictly simpler tree.
 > own, with everything `resolve-issue` warns about. No human vets each idea or
 > reviews each PR before it lands. Use it only on a repo/branch where that
 > is acceptable (e.g. low-stakes cleanup, or a protected `main` with required CI
-> gating the merge). If you want to review before merge, use `propose-and-ship`
+> gating the merge). On a `main` that requires no status check, only
+> `resolve-issue`'s own CI waits guard each merge, and GitHub will not stop a
+> merge that skips them. If you want to review before merge, use `propose-and-ship`
 > with kind `simplification` instead — it ships *to* a PR and stops.
 
 ## Arguments
