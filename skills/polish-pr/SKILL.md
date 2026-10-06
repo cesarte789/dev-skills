@@ -141,6 +141,10 @@ Stop when **all** hold:
   The loop exits 0 on `skipping` checks, so a head whose checks are **all**
   `skipping` is not green: CI never ran on it — typically draft-skipping CI that
   does not also run on `ready_for_review`. Stop short of clean and report it.
+  The same goes for a head with no checks at all ("no checks reported" once the
+  ready run has had its two minutes to register): with nothing having run, there
+  is no green to see, and on a default branch that requires no check that is
+  the only thing keeping an unchecked PR from merging.
 
   Frequent snapshots rather than one `--watch`: a watch blocks with nothing to
   read until it ends, and a run that reprints where the checks have got to every

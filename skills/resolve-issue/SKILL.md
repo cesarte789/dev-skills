@@ -42,20 +42,22 @@ ambiguous state.
 > rough issue is also **rewritten in place** without anyone confirming the
 > clarified version, and a declined one is closed on the evaluation's judgement
 > alone. Use it where that is acceptable (low-stakes work, or a `main` protected
-> by required CI). Stage 0 refuses to run on a `main` that requires no status
-> check, or without `gh` to ask, but cannot tell whether the checks it requires
-> run real tests.
+> by required CI). On a `main` that requires no status check (a private repo on
+> GitHub Free cannot require one), the skill's own CI waits are the only guard on
+> the merge, and GitHub will not stop a merge that skips them. Either way, the
+> skill cannot tell whether the checks run real tests.
 
 ## Arguments
 
 `<issue-number>` — required, e.g. `42`.
 
-## Stage 0 — Check that the default branch requires CI
+## Stage 0 — Check whether the default branch requires CI
 
 Every outcome past Stage 1 can merge unattended, and the skills' own CI waits
 are the only gate unless GitHub itself refuses a red PR. Before reading the
-issue, confirm the default branch requires at least one status check, through
-classic branch protection or a ruleset. All three calls need only read access:
+issue, check whether the default branch requires at least one status check,
+through classic branch protection or a ruleset. All three calls need only read
+access:
 
 ```bash
 gh api repos/{owner}/{repo} --jq .default_branch
@@ -69,17 +71,19 @@ These are REST calls, so `gh api` answers them even where `gh`'s GraphQL
 commands are blocked. The GitHub MCP tools have no equivalent: without `gh` at
 all, this stage cannot run, and that counts as a failed call.
 
-Continue when either count is above 0, even if the other call failed. When no
-call returned a count above 0, stop before Stage 1 without touching the issue:
-report that the repository is not set up for unattended merges, and that marking
-a CI check as required on the default branch is what this skill needs. The
-building blocks (`generate-pr-from-issue`, `polish-pr`) still work, with a human
-merging.
+Either count above 0, even if the other call failed, means GitHub enforces CI
+on the merge. When no call returned a count above 0 — none is required, or the
+calls failed (the rules endpoint answers 403 on a private repo on GitHub Free,
+which has no branch protection or rulesets) — log "no required checks on
+`<default>`; merging on observed green CI only" and continue. The run still
+merges only on green CI it has seen itself: `polish-pr`'s done condition (green
+CI on its latest push), the `--match-head-commit` pin in Stage 4, and the CI
+wait in Stage 6. Note which of the two modes this run is in for the report.
 
 A count above 0 shows that checks are required, not that the merging account
 cannot bypass them (an admin when protection does not enforce admins, a
 ruleset bypass actor). Only admin-only endpoints say that, so this stage does not
-ask: Stages 4 and 6 still merge only on green CI and never bypass.
+ask: in both modes, Stages 4 and 6 merge only on green CI and never bypass.
 
 ## Stage 1 — Vet the issue
 
@@ -327,9 +331,10 @@ to about two minutes before taking that as the answer, then run the wait.
 Merge only when the wait ends with `status` 0 and not every check is
 `skipping` (`polish-pr`'s done condition says why): this PR skips `polish-pr`,
 so CI is its only gate. A failed check, or no checks at all, leaves the PR open
-and the run `stopped`, which also halts `resolve-issues` and `simplify-loop`;
-Stage 0 rules out a repo with no CI, but required checks that path filters skip
-on a comment-only diff still end here. The pin, as in Stage 4
+and the run `stopped`, which also halts `resolve-issues` and `simplify-loop`.
+On a default branch that requires no check, this wait is the only thing
+standing between a repo with no CI and an unchecked merge; required checks that
+path filters skip on a comment-only diff end here too. The pin, as in Stage 4
 (`expectedHeadSha` on the MCP tool), keeps a push that lands after `git diff`
 from merging unread.
 
@@ -354,16 +359,16 @@ maps to one of them:
 - **`rejected`** — Stage 5 closed the issue with a verdict, and no PR from this
   run is left open (Stage 6 merged its comment-only PR, or was skipped).
 - **`split`** — Stage 1b split the issue into an epic; list the sub-issues.
-- **`stopped`** — anything else: the default branch requires no status
-  check or it could not be read (Stage 0), polish stopped without a clean result
+- **`stopped`** — anything else: polish stopped without a clean result
   (Stage 3), the merge was blocked or merged without closing the issue
   (Stage 4), the verdict comment failed to post and the issue is still open
   (Stage 5), or the comment-only PR was blocked, its CI was not green, or its
   diff touched more than comments (Stage 6). Name what is left open,
   uncommitted edits included.
 
-Then the details: the issue URL, the vetting verdict and the
-evidence behind it, whether Stage 1b rewrote the issue before implementing it (and
+Then the details: whether GitHub enforced CI on the default branch or the run
+merged on observed green CI only (Stage 0), the issue URL, the vetting verdict
+and the evidence behind it, whether Stage 1b rewrote the issue before implementing it (and
 the sub-issues if it split), whether Stage 1c evaluated it (its verdict and
 comment URL) or why it was skipped, the PR URL and how many polish iterations ran,
 the final test/build status, and anything left open. When a *narrow it* verdict
