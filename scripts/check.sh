@@ -12,7 +12,7 @@ cd "$(dirname "$0")/.."
 # names or data. The term list lives outside the repo so it never leaks either;
 # CI has none, so there this step is skipped. A push publishes commits, not the
 # working tree, so every commit since <base-ref> (or HEAD alone) is scanned too:
-# its files, paths, message, author and committer.
+# its files, paths, message, author and committer, plus the branch name.
 private_terms="${DEV_SKILLS_PRIVATE_TERMS:-$HOME/.config/dev-skills/private-terms}"
 if [ -n "${DEV_SKILLS_PRIVATE_TERMS:-}" ] && [ ! -f "$private_terms" ]; then
   echo "error: DEV_SKILLS_PRIVATE_TERMS names no file: $private_terms" >&2
@@ -36,11 +36,13 @@ if [ -f "$private_terms" ]; then
   if [ "${#term_args[@]}" -gt 0 ]; then
     revs=(HEAD)
     if [ -n "${1:-}" ] && git rev-parse --verify --quiet "$1^{commit}" >/dev/null; then
-      mapfile -t revs < <(git rev-list "$1..HEAD")
+      revs=()
+      while IFS= read -r rev; do revs+=("$rev"); done < <(git rev-list "$1..HEAD")
     fi
     paths_and_messages="$(
       git -c core.quotePath=false ls-files --cached --others --exclude-standard | sed 's|^|path: |'
-      for rev in "${revs[@]}"; do
+      git rev-parse --abbrev-ref HEAD | sed 's|^|branch: |'
+      for rev in ${revs[@]+"${revs[@]}"}; do
         git -c core.quotePath=false ls-tree -r --name-only "$rev" | sed "s|^|$rev path: |"
         git log -1 --format='%B%n%an <%ae>%n%cn <%ce>' "$rev" | sed "s|^|$rev message: |"
       done
