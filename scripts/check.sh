@@ -8,6 +8,57 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Skills learn from private repos, and a lesson copied back here could leak their
+# names or data. The term list lives outside the repo so it never leaks either;
+# CI has none, so there this step is skipped. A push publishes commits, not the
+# working tree, so every commit since <base-ref> (or HEAD alone) is scanned too:
+# its files, paths, message, author and committer, plus the branch name.
+private_terms="${DEV_SKILLS_PRIVATE_TERMS:-$HOME/.config/dev-skills/private-terms}"
+if [ -n "${DEV_SKILLS_PRIVATE_TERMS:-}" ] && [ ! -f "$private_terms" ]; then
+  echo "error: DEV_SKILLS_PRIVATE_TERMS names no file: $private_terms" >&2
+  exit 1
+fi
+found_terms() {
+  local status=0
+  "$@" || status=$?
+  if [ "$status" -gt 1 ]; then
+    echo "error: $1 failed searching for private terms" >&2
+    exit 1
+  fi
+  [ "$status" -eq 0 ]
+}
+if [ -f "$private_terms" ]; then
+  terms="$(sed -e 's/\r$//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' "$private_terms")"
+  term_args=()
+  while IFS= read -r term; do
+    [ -n "$term" ] && term_args+=(-e "$term")
+  done <<<"$terms"
+  if [ "${#term_args[@]}" -gt 0 ]; then
+    revs=(HEAD)
+    if [ -n "${1:-}" ] && git rev-parse --verify --quiet "$1^{commit}" >/dev/null; then
+      revs=()
+      while IFS= read -r rev; do revs+=("$rev"); done < <(git rev-list "$1..HEAD")
+    fi
+    paths_and_messages="$(
+      git -c core.quotePath=false ls-files --cached --others --exclude-standard | sed 's|^|path: |'
+      git rev-parse --abbrev-ref HEAD | sed 's|^|branch: |'
+      for rev in ${revs[@]+"${revs[@]}"}; do
+        git -c core.quotePath=false ls-tree -r --name-only "$rev" | sed "s|^|$rev path: |"
+        git log -1 --format='%B%n%an <%ae>%n%cn <%ce>' "$rev" | sed "s|^|$rev message: |"
+      done
+    )"
+    leaked=0
+    found_terms git grep -n -i -F "${term_args[@]}" --untracked && leaked=1
+    [ "${#revs[@]}" -gt 0 ] && found_terms git grep -n -i -F "${term_args[@]}" "${revs[@]}" && leaked=1
+    found_terms grep -i -F "${term_args[@]}" <<<"$paths_and_messages" && leaked=1
+    if [ "$leaked" -eq 1 ]; then
+      echo "error: the lines above contain a term from $private_terms" >&2
+      exit 1
+    fi
+    echo "no private terms found"
+  fi
+fi
+
 # Both are needed: on the repo root, validate checks only marketplace.json;
 # validating plugin.json is what parses each skill's SKILL.md frontmatter.
 claude plugin validate . --strict
