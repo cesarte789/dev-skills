@@ -11,32 +11,44 @@ cd "$(dirname "$0")/.."
 # Skills learn from private repos, and a lesson copied back here could leak their
 # names or data. The term list lives outside the repo so it never leaks either;
 # CI has none, so there this step is skipped. A push publishes commits, not the
-# working tree, so every commit since <base-ref> (or HEAD alone) is scanned too.
+# working tree, so every commit since <base-ref> (or HEAD alone) is scanned too:
+# its files, paths, message and author.
 private_terms="${DEV_SKILLS_PRIVATE_TERMS:-$HOME/.config/dev-skills/private-terms}"
 if [ -n "${DEV_SKILLS_PRIVATE_TERMS:-}" ] && [ ! -f "$private_terms" ]; then
   echo "error: DEV_SKILLS_PRIVATE_TERMS names no file: $private_terms" >&2
   exit 1
 fi
-grep_private_terms() {
+found_terms() {
   local status=0
-  git grep -n -i -F -f - "$@" <<<"$terms" || status=$?
+  "$@" || status=$?
   if [ "$status" -gt 1 ]; then
-    echo "error: git grep failed searching for private terms" >&2
+    echo "error: $1 failed searching for private terms" >&2
     exit 1
   fi
   [ "$status" -eq 0 ]
 }
 if [ -f "$private_terms" ]; then
   terms="$(sed -e 's/\r$//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' "$private_terms")"
-  terms="$(grep -v '^$' <<<"$terms" || true)"
-  if [ -n "$terms" ]; then
+  term_args=()
+  while IFS= read -r term; do
+    [ -n "$term" ] && term_args+=(-e "$term")
+  done <<<"$terms"
+  if [ "${#term_args[@]}" -gt 0 ]; then
     revs=(HEAD)
     if [ -n "${1:-}" ] && git rev-parse --verify --quiet "$1^{commit}" >/dev/null; then
       mapfile -t revs < <(git rev-list "$1..HEAD")
     fi
+    paths_and_messages="$(
+      git ls-files --cached --others --exclude-standard | sed 's|^|path: |'
+      for rev in "${revs[@]}"; do
+        git ls-tree -r --name-only "$rev" | sed "s|^|$rev path: |"
+        git log -1 --format='%B%n%an <%ae>' "$rev" | sed "s|^|$rev message: |"
+      done
+    )"
     leaked=0
-    grep_private_terms --untracked && leaked=1
-    [ "${#revs[@]}" -gt 0 ] && grep_private_terms "${revs[@]}" && leaked=1
+    found_terms git grep -n -i -F "${term_args[@]}" --untracked && leaked=1
+    [ "${#revs[@]}" -gt 0 ] && found_terms git grep -n -i -F "${term_args[@]}" "${revs[@]}" && leaked=1
+    found_terms grep -i -F "${term_args[@]}" <<<"$paths_and_messages" && leaked=1
     if [ "$leaked" -eq 1 ]; then
       echo "error: the lines above contain a term from $private_terms" >&2
       exit 1
