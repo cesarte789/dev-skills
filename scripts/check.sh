@@ -8,6 +8,27 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Skills learn from private repos, and a lesson copied back here could leak their
+# names or data. The term list lives outside the repo so it never leaks either;
+# CI has none, so there this step is skipped.
+private_terms="${DEV_SKILLS_PRIVATE_TERMS:-$HOME/.config/dev-skills/private-terms}"
+if [ -n "${DEV_SKILLS_PRIVATE_TERMS:-}" ] && [ ! -f "$private_terms" ]; then
+  echo "error: DEV_SKILLS_PRIVATE_TERMS names no file: $private_terms" >&2
+  exit 1
+fi
+if [ -f "$private_terms" ]; then
+  terms="$(tr -d '\r' < "$private_terms" | grep -v '^[[:space:]]*$' || true)"
+  if [ -n "$terms" ]; then
+    leak_status=0
+    git grep -n -i -F --untracked -f - <<<"$terms" || leak_status=$?
+    case "$leak_status" in
+      0) echo "error: the lines above contain a term from $private_terms" >&2; exit 1 ;;
+      1) echo "no private terms found" ;;
+      *) echo "error: git grep failed searching for private terms" >&2; exit 1 ;;
+    esac
+  fi
+fi
+
 # Both are needed: on the repo root, validate checks only marketplace.json;
 # validating plugin.json is what parses each skill's SKILL.md frontmatter.
 claude plugin validate . --strict
