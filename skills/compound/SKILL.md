@@ -18,7 +18,7 @@ each change leaves the next one cheaper.
 
 ## Boundary
 
-This plugin is public and runs in private repos. Hold these without exception:
+This plugin is public and runs in private repos. Hold these:
 
 - Write only to the repository this session runs in. Never open issues, PRs or
   comments anywhere else, the repository that ships this plugin included, even
