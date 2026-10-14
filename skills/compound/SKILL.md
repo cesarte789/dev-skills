@@ -78,8 +78,13 @@ git fetch origin --quiet && git checkout -b chore/compound-<source> origin/main
 never reuse a branch.
 
 Skip a lesson an existing lint rule, test or `CLAUDE.md` line already covers,
-or that an open guard PR proposes (`gh pr list --state open --search
-"head:chore/compound-"`): those wait on a human, not on another copy.
+or that an open guard PR proposes: those wait on a human, not on another copy.
+
+```bash
+gh pr list --state open --json number,headRefName \
+  --jq '.[] | select(.headRefName | startswith("chore/compound-"))'
+```
+
 If an existing guard was already on `main` when the source PR merged and did not
 stop it, the lesson is about the guard: fix that instead. Otherwise take the
 most deterministic guard that fits:
