@@ -42,7 +42,7 @@ Update with `claude plugin marketplace update dev-skills`, then `claude plugin u
 | `polish-pr` | `/dev-skills:polish-pr [<N>]` | Review → fix → verify loop until merge-ready; marks a draft PR ready once review is clean and posts an approving comment when CI is green. |
 | `review-diff` | `/dev-skills:review-diff [<N>]` | Read-only review of a PR or the local diff: fresh reviewer subagents report verified findings and nothing gets fixed. |
 | `update-readme` | `/dev-skills:update-readme [area]` | Bring the README, feature docs and ARCHITECTURE back in sync with the code, and trim the README to its core. |
-| `compound` | `/dev-skills:compound [<N> \| recent [<count>]]` | Turn what review and CI caught on a PR, or across recent merged PRs, into a lint rule, test or `CLAUDE.md` line, as one PR in the current repo. Never writes anywhere else. |
+| `compound` | `/dev-skills:compound [<N> \| recent [<count>]]` | Turn what review and CI caught on a merged PR, or across recent merged PRs, into a lint rule, test or `CLAUDE.md` line, as one PR in the current repo. Never writes anywhere else. |
 
 ## Orchestrators
 
