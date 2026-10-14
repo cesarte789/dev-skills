@@ -81,7 +81,7 @@ Skip a lesson an existing lint rule, test or `CLAUDE.md` line already covers,
 or that an open guard PR proposes: those wait on a human, not on another copy.
 
 ```bash
-gh pr list --state open --json number,headRefName \
+gh pr list --state open --limit 1000 --json number,headRefName \
   --jq '.[] | select(.headRefName | startswith("chore/compound-"))'
 ```
 
