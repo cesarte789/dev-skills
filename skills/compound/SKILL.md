@@ -65,9 +65,15 @@ PRs hit them; one that recurs outranks one seen once.
 
 ## 2. Pick a guard
 
-Skip a lesson an existing lint rule, test or `CLAUDE.md` line already covers;
-if that guard failed to stop it, the lesson is about the guard: fix that
-instead. Otherwise take the most deterministic guard that fits:
+Work on a fresh branch from here on:
+
+```bash
+git fetch origin --quiet && git checkout -b chore/compound-<slug> origin/main
+```
+
+Skip a lesson an existing lint rule, test or `CLAUDE.md` line already covers.
+If that guard was already on `main` when the source PR merged and still did not
+stop it, the lesson is about the guard: fix that instead. Otherwise take the most deterministic guard that fits:
 
 1. **Lint rule or config** — fails the build, costs no reading.
 2. **Test** — pins the behavior that broke, asserting public behavior.
@@ -76,8 +82,9 @@ instead. Otherwise take the most deterministic guard that fits:
    state the rule, not the story behind it.
 
 Prove a lint rule or test before keeping it: it must fail on the defect (revert
-the fix locally, or write the defect into a scratch file) and pass on `main`.
-One you cannot make fail drops to the next rung.
+the fix locally, or write the defect into a scratch file) and pass once that
+is undone. Undo it before going on, so only guards get committed. One you
+cannot make fail drops to the next rung.
 
 A new lint rule that flags existing code follows the repo's convention for
 existing violations (fix them, or baseline them if the repo keeps a baseline);
@@ -88,11 +95,9 @@ Then prune: delete any `CLAUDE.md` line a new check now enforces.
 ## 3. Ship
 
 All guards go in one PR, separate from the PR they came from. Run the checks
-`CLAUDE.md` requires before pushing:
+`CLAUDE.md` requires, and confirm `git status` shows only guard changes:
 
 ```bash
-git fetch origin --quiet && git checkout -b chore/compound-<slug> origin/main
-# add the guards
 git add -A && git commit -m "chore: guard against <classes>"
 git push -u origin chore/compound-<slug>
 gh pr create --draft --title "chore: guard against <classes>" --body "<lesson → guard, one line each>"
