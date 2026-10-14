@@ -51,7 +51,8 @@ Per PR, read all of:
 
 - the commits after the first: each review round's commit says what it fixed
   (`gh pr view <N> --json commits`);
-- failed check runs on those commits and the commit that turned them green
+- failed check runs on every commit of the PR, the first included, and the
+  commit that turned them green
   (`gh api repos/{owner}/{repo}/commits/<sha>/check-runs` per commit — `gh pr
   checks` shows only the final head);
 - review threads and PR comments
@@ -82,9 +83,11 @@ most deterministic guard that fits:
    only when no check can express it. Every line is read by every session, so
    state the rule, not the story behind it.
 
-Prove a lint rule or test before keeping it: it must fail on the defect (revert
-the fix locally, or write the defect into a scratch file) and pass once that
-is undone. Undo it before going on, so only guards get committed. One you
+Prove a lint rule or test before keeping it: it must fail on the defect and
+pass once that is undone. To bring the defect back, reverse the fix's diff
+(`git fetch origin pull/<N>/head`, since a squash merge leaves the fix commits
+off `main`, then `git show <sha> | git apply -R`), or write the defect into a
+scratch file. Undo it before going on, so only guards get committed. One you
 cannot make fail drops to the next rung.
 
 A new lint rule that flags existing code follows the repo's convention for
