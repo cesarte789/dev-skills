@@ -73,7 +73,8 @@ git fetch origin --quiet && git checkout -b chore/compound-<slug> origin/main
 
 Skip a lesson an existing lint rule, test or `CLAUDE.md` line already covers.
 If that guard was already on `main` when the source PR merged and still did not
-stop it, the lesson is about the guard: fix that instead. Otherwise take the most deterministic guard that fits:
+stop it, the lesson is about the guard: fix that instead. Otherwise take the
+most deterministic guard that fits:
 
 1. **Lint rule or config** — fails the build, costs no reading.
 2. **Test** — pins the behavior that broke, asserting public behavior.
