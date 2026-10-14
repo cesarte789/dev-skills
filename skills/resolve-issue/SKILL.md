@@ -12,7 +12,7 @@ description: >-
   triage to merge, however rough the issue is. Pass the issue number (e.g.
   "42"). Chains vet -> rewrite-issue (only when vague) -> evaluate-issue (only
   when it would grow the system) -> generate-pr-from-issue -> polish-pr ->
-  merge.
+  merge -> compound (only when polish fixed something).
 ---
 
 # Resolve issue
@@ -222,6 +222,19 @@ required check, a conflict, branch protection needing a human), **stop and
 report**; never force it. A moved head means the PR changed after its review,
 so it is a stop, not a retry.
 
+**Then compound** — only after a confirmed merge, and only when a polish round
+fixed at least one finding. Run the **compound** skill on the merged PR, passing
+the findings `polish-pr` reported as fixed or dismissed per round: this run is
+the only place they still exist. Leave the guard PR it opens as a draft for a
+human, unpolished and unmerged: new lint rules and `CLAUDE.md` lines change
+every later session, and polishing it here would loop back into `compound`.
+
+Whatever `compound` does, the outcome stays `merged`. Afterwards the tree must
+be clean on `main`: the merge left it so, so anything else is `compound`'s
+leftover work (a half-proven guard, a reversed fix). Discard it
+(`git reset --hard && git clean -fd`, then `git checkout main`), say in the
+report what was discarded, and end on `main` synced to the merge.
+
 ## Stage 5 — Reject: comment the verdict, then close
 
 An issue that doesn't make sense — or that isn't worth building — is closed, not
@@ -371,7 +384,8 @@ merged on observed green CI only (Stage 0), the issue URL, the vetting verdict
 and the evidence behind it, whether Stage 1b rewrote the issue before implementing it (and
 the sub-issues if it split), whether Stage 1c evaluated it (its verdict and
 comment URL) or why it was skipped, the PR URL and how many polish iterations ran,
-the final test/build status, and anything left open. When a *narrow it* verdict
+the final test/build status, the guard PR `compound` opened (or why none) and
+its **Plugin suggestions** verbatim, and anything left open. When a *narrow it* verdict
 was followed, say what was cut. On a rejection, say whether Stage 6 recorded the
 decision in code — with the file and the PR URL — or why nothing was worth
 anchoring. On the merge path, end on `main` synced to the merge.

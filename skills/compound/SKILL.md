@@ -71,11 +71,21 @@ PRs hit them; one that recurs outranks one seen once.
 Work on a fresh branch from here on:
 
 ```bash
-git fetch origin --quiet && git checkout -b chore/compound-<slug> origin/main
+git fetch origin --quiet && git checkout -b chore/compound-<source> origin/main
 ```
 
-Skip a lesson an existing lint rule, test or `CLAUDE.md` line already covers.
-If that guard was already on `main` when the source PR merged and still did not
+`<source>` is `pr-<N>`, or `recent-<UTC yyyyMMddHHmm>` for a sweep, so runs
+never reuse a branch.
+
+Skip a lesson an existing lint rule, test or `CLAUDE.md` line already covers,
+or that an open guard PR proposes: those wait on a human, not on another copy.
+
+```bash
+gh pr list --state open --limit 1000 --json number,headRefName \
+  --jq '.[] | select(.headRefName | startswith("chore/compound-"))'
+```
+
+If an existing guard was already on `main` when the source PR merged and did not
 stop it, the lesson is about the guard: fix that instead. Otherwise take the
 most deterministic guard that fits:
 
@@ -105,7 +115,7 @@ All guards go in one PR, separate from the PR they came from. Run the checks
 
 ```bash
 git add -A && git commit -m "chore: guard against <classes>"
-git push -u origin chore/compound-<slug>
+git push -u origin chore/compound-<source>
 gh pr create --draft --title "chore: guard against <classes>" --body "<lesson → guard, one line each>"
 ```
 
