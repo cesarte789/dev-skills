@@ -36,9 +36,11 @@ Sessions load the plugin from a local cache, and auto-update is off by default f
 Cloud sessions (`claude.ai/code`) skip the marketplaces and plugins a repo's `.claude/settings.json` declares, and each one starts on a fresh machine, so install the plugin from the cloud environment's **setup script**, which runs before Claude Code launches:
 
 ```bash
-claude plugin marketplace add cesarte789/dev-skills
-claude plugin install dev-skills@dev-skills
-claude plugin marketplace update dev-skills && claude plugin update dev-skills@dev-skills
+{
+  claude plugin marketplace add cesarte789/dev-skills
+  claude plugin install dev-skills@dev-skills
+  claude plugin marketplace update dev-skills && claude plugin update dev-skills@dev-skills
+} || true  # a failed fetch must not stop the session from starting
 ```
 
 The environment caches what the setup script produced and reuses it for about seven days, so cloud sessions keep that version until the cache is rebuilt. Editing the setup script rebuilds it, so to pick up a release sooner, change the script (even a comment).
