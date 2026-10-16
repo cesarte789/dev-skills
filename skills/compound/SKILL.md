@@ -89,7 +89,9 @@ If an existing guard was already on `main` when the source PR merged and did not
 stop it, the lesson is about the guard: fix that instead. Otherwise take the
 most deterministic guard that fits:
 
-1. **Lint rule or config** — fails the build, costs no reading.
+1. **Lint rule or config** — fails the build, costs no reading. Only in a
+   linter the repo's CI already runs: never add a linter, and a rule nothing in
+   CI enforces guards nothing, so without one take the next rung.
 2. **Test** — pins the behavior that broke, asserting public behavior.
 3. **One line in `CLAUDE.md`** (or wherever the repo keeps its agent rules) —
    only when no check can express it. Every line is read by every session, so
