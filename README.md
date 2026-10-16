@@ -33,21 +33,17 @@ Skills are namespaced by the plugin: `/dev-skills:resolve-issue 42`.
 
 Sessions load the plugin from a local cache, and auto-update is off by default for third-party marketplaces, so a new version only arrives when something refreshes that cache. `"autoUpdate": true` above does it for local sessions: once per session it refreshes the marketplace in the background, and the new version loads on the next launch (or after `/reload-plugins`).
 
-Cloud sessions (`claude.ai/code`) skip the marketplaces and plugins a repo's `.claude/settings.json` declares, so there the plugin has to be installed and updated explicitly. Add a SessionStart hook beside the settings above; every step is a no-op when already done:
+Cloud sessions (`claude.ai/code`) skip the marketplaces and plugins a repo's `.claude/settings.json` declares, and each one starts on a fresh machine, so install the plugin from the cloud environment's **setup script**, which runs before Claude Code launches:
 
-```json
-"hooks": {
-  "SessionStart": [{
-    "matcher": "startup",
-    "hooks": [{
-      "type": "command",
-      "command": "[ \"$CLAUDE_CODE_REMOTE\" = true ] || exit 0; claude plugin marketplace add cesarte789/dev-skills && claude plugin marketplace update dev-skills && claude plugin install dev-skills@dev-skills && claude plugin update dev-skills@dev-skills"
-    }]
-  }]
-}
+```bash
+claude plugin marketplace add cesarte789/dev-skills
+claude plugin install dev-skills@dev-skills
+claude plugin marketplace update dev-skills && claude plugin update dev-skills@dev-skills
 ```
 
-A plugin it updates lands on disk, so the version a session runs is the one cached when it started; the new one loads in the next session. By hand, anywhere: `claude plugin marketplace update dev-skills`, then `claude plugin update dev-skills@dev-skills`.
+The environment caches what the setup script produced and reuses it for about seven days, so cloud sessions keep that version until the cache is rebuilt. Editing the setup script rebuilds it, so to pick up a release sooner, change the script (even a comment).
+
+By hand, anywhere: `claude plugin marketplace update dev-skills`, then `claude plugin update dev-skills@dev-skills`.
 
 ## Building blocks
 
