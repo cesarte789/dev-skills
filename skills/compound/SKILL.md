@@ -79,6 +79,7 @@ never reuse a branch.
 
 Skip a lesson an existing lint rule, test or `CLAUDE.md` line already covers,
 or that an open guard PR proposes: those wait on a human, not on another copy.
+A lint rule or test covers a lesson only if CI runs it.
 
 ```bash
 gh pr list --state open --limit 1000 --json number,headRefName \
@@ -90,8 +91,8 @@ stop it, the lesson is about the guard: fix that instead. Otherwise take the
 most deterministic guard that fits:
 
 1. **Lint rule or config** — fails the build, costs no reading. Only in a
-   linter the repo's CI already runs: never add a linter, and a rule nothing in
-   CI enforces guards nothing, so without one take the next rung.
+   linter or build config the repo's CI already enforces, and never by adding a
+   tool, plugin or dependency; when there is none, take the next rung.
 2. **Test** — pins the behavior that broke, asserting public behavior.
 3. **One line in `CLAUDE.md`** (or wherever the repo keeps its agent rules) —
    only when no check can express it. Every line is read by every session, so
