@@ -6,9 +6,9 @@ description: >-
   to merge-ready, merge it, then re-analyze the now-simpler code and repeat. Use
   for an autonomous cleanup run. Optionally pass a max number of iterations and/or
   an area (e.g. "5 src/ui"). Chains propose-issues -> resolve-issue (vet -> PR
-  -> polish -> merge, or close with a verdict), in a loop. NOTE: merges to the default branch
-  and closes issues without human vetting of each idea or PR — use only where
-  that is acceptable.
+  -> polish -> merge, or close with a verdict), in a loop. NOTE: merges to the
+  default branch and closes issues without human vetting of each idea or PR —
+  use only where that is acceptable.
 ---
 
 # Simplify loop
@@ -19,8 +19,8 @@ description: >-
 > unprefixed.
 
 > `<default>` below is the repo's default branch, whatever its name. Resolve it
-> once per run: `git remote set-head origin --auto && git rev-parse --abbrev-ref origin/HEAD`
-> prints `origin/<default>`.
+> once per run: `git ls-remote --symref origin HEAD` names it in its
+> `ref: refs/heads/<default>` line (or `gh repo view --json defaultBranchRef`).
 
 Run an autonomous simplification loop. Each pass finds **one** worthwhile
 simplification, ships it through to a merged PR, then re-analyzes the updated
@@ -28,14 +28,15 @@ codebase for the next one. Sequential by design: the next proposal is made
 against the code *after* the previous simplification has landed, so each pass
 builds on a strictly simpler tree.
 
-> ⚠️ This runs unattended and **merges to the default branch** and **closes issues** on its
-> own, with everything `resolve-issue` warns about. No human vets each idea or
-> reviews each PR before it lands. Use it only on a repo/branch where that
-> is acceptable (e.g. low-stakes cleanup, or a protected default branch with required CI
-> gating the merge). On a default branch that requires no status check, only
-> `resolve-issue`'s own CI waits guard each merge, and GitHub will not stop a
-> merge that skips them. If you want to review before merge, use `propose-and-ship`
-> with kind `simplification` instead — it ships *to* a PR and stops.
+> ⚠️ This runs unattended and **merges to the default branch** and **closes
+> issues** on its own, with everything `resolve-issue` warns about. No human
+> vets each idea or reviews each PR before it lands. Use it only on a
+> repo/branch where that is acceptable (e.g. low-stakes cleanup, or a protected
+> default branch with required CI gating the merge). On a default branch that
+> requires no status check, only `resolve-issue`'s own CI waits guard each
+> merge, and GitHub will not stop a merge that skips them. If you want to review
+> before merge, use `propose-and-ship` with kind `simplification` instead — it
+> ships *to* a PR and stops.
 
 ## Arguments
 
@@ -52,8 +53,8 @@ builds on a strictly simpler tree.
 
 Run these stages in order. Capture the issue and PR numbers as you go.
 
-1. **Sync.** Make sure local `<default>` is current so the analysis sees the latest
-   merged state:
+1. **Sync.** Make sure local `<default>` is current so the analysis sees the
+   latest merged state:
 
    ```bash
    git checkout <default> && git pull --ff-only

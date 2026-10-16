@@ -26,8 +26,8 @@ description: >-
 > unprefixed.
 
 > `<default>` below is the repo's default branch, whatever its name. Resolve it
-> once per run: `git remote set-head origin --auto && git rev-parse --abbrev-ref origin/HEAD`
-> prints `origin/<default>`.
+> once per run: `git ls-remote --symref origin HEAD` names it in its
+> `ref: refs/heads/<default>` line (or `gh repo view --json defaultBranchRef`).
 
 Take one GitHub issue, however rough, and reach a definitive outcome: either a
 **merged PR** that fixes it, or a **closed issue** carrying a written verdict that
@@ -40,16 +40,17 @@ is worth its permanent cost, because a run this unattended should not be able to
 build things the project is better off without. Never leave the issue in an
 ambiguous state.
 
-> ⚠️ Both outcomes are unattended: the happy path **merges to the default branch** without a
-> human reviewing the PR, and the reject path **closes the issue** without a
-> human confirming the verdict, then merges a comment-only PR recording it. A
-> rough issue is also **rewritten in place** without anyone confirming the
-> clarified version, and a declined one is closed on the evaluation's judgement
-> alone. Use it where that is acceptable (low-stakes work, or a default branch protected
-> by required CI). On a default branch that requires no status check (a private repo on
-> GitHub Free cannot require one), the skill's own CI waits are the only guard on
-> the merge, and GitHub will not stop a merge that skips them. Either way, the
-> skill cannot tell whether the checks run real tests.
+> ⚠️ Both outcomes are unattended: the happy path **merges to the default
+> branch** without a human reviewing the PR, and the reject path **closes the
+> issue** without a human confirming the verdict, then merges a comment-only PR
+> recording it. A rough issue is also **rewritten in place** without anyone
+> confirming the clarified version, and a declined one is closed on the
+> evaluation's judgement alone. Use it where that is acceptable (low-stakes
+> work, or a default branch protected by required CI). On a default branch that
+> requires no status check (a private repo on GitHub Free cannot require one),
+> the skill's own CI waits are the only guard on the merge, and GitHub will not
+> stop a merge that skips them. Either way, the skill cannot tell whether the
+> checks run real tests.
 
 ## Arguments
 
@@ -60,11 +61,10 @@ ambiguous state.
 Every outcome past Stage 1 can merge unattended, and the skills' own CI waits
 are the only gate unless GitHub itself refuses a red PR. Before reading the
 issue, check whether the default branch requires at least one status check,
-through classic branch protection or a ruleset. All three calls need only read
+through classic branch protection or a ruleset. Both calls need only read
 access:
 
 ```bash
-gh api repos/{owner}/{repo} --jq .default_branch
 gh api repos/{owner}/{repo}/branches/<default> \
   --jq '(.protection.required_status_checks // {}) | (.contexts // []) + [(.checks // [])[].context] | length'
 gh api 'repos/{owner}/{repo}/rules/branches/<default>?per_page=100' \
@@ -108,8 +108,9 @@ gh pr list --search "<key terms>" --state all --limit 10
 
 An issue **makes sense** when all of these hold:
 
-1. **Real** — the described bug reproduces, or the described gap genuinely exists
-   in the current code. A bug report you cannot reproduce on `<default>` fails here.
+1. **Real** — the described bug reproduces, or the described gap genuinely
+   exists in the current code. A bug report you cannot reproduce on `<default>`
+   fails here.
 2. **Correct premise** — it isn't based on a misreading of the code, a stale
    version, or behavior that is intentional and documented.
 3. **Not already handled** — no duplicate open issue, no merged/open PR already
@@ -185,8 +186,8 @@ is the same unattended close Stage 5 already performs for an invalid one.
 ## Stage 2 — Implement as a PR
 
 Run the **generate-pr-from-issue** skill on the issue number. It branches off
-`<default>`, implements with tests per `CLAUDE.md`, and opens a PR that closes the
-issue.
+`<default>`, implements with tests per `CLAUDE.md`, and opens a PR that closes
+the issue.
 
 - If it opens a PR: capture the PR number and continue.
 - If it concludes on closer inspection that no code change is warranted: treat

@@ -12,8 +12,8 @@ description: >-
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
 
 > `<default>` below is the repo's default branch, whatever its name. Resolve it
-> once per run: `git remote set-head origin --auto && git rev-parse --abbrev-ref origin/HEAD`
-> prints `origin/<default>`.
+> once per run: `git ls-remote --symref origin HEAD` names it in its
+> `ref: refs/heads/<default>` line (or `gh repo view --json defaultBranchRef`).
 
 Implement a GitHub issue and open a draft PR for `polish-pr` to bring to
 merge-ready. One PR, one idea: solve the issue with the minimal set of changes.

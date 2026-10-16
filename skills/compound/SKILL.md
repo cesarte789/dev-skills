@@ -14,8 +14,8 @@ description: >-
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
 
 > `<default>` below is the repo's default branch, whatever its name. Resolve it
-> once per run: `git remote set-head origin --auto && git rev-parse --abbrev-ref origin/HEAD`
-> prints `origin/<default>`.
+> once per run: `git ls-remote --symref origin HEAD` names it in its
+> `ref: refs/heads/<default>` line (or `gh repo view --json defaultBranchRef`).
 
 Review fixes a defect once. This skill makes the repo refuse it from then on, so
 each change leaves the next one cheaper.
@@ -91,9 +91,9 @@ gh pr list --state open --limit 1000 --json number,headRefName \
   --jq '.[] | select(.headRefName | startswith("chore/compound-"))'
 ```
 
-If an existing guard was already on `<default>` when the source PR merged and did not
-stop it, the lesson is about the guard: fix that instead. Otherwise take the
-most deterministic guard that fits:
+If an existing guard was already on `<default>` when the source PR merged and
+did not stop it, the lesson is about the guard: fix that instead. Otherwise take
+the most deterministic guard that fits:
 
 1. **Lint rule or config** — fails the build, costs no reading. Only in a
    linter or build config CI already enforces; otherwise take the next rung.
@@ -103,10 +103,10 @@ most deterministic guard that fits:
    only when no check can express it. Every line is read by every session, so
    state the rule, not the story behind it.
 
-Prove a lint rule or test before keeping it: it must fail on the defect and
-pass once that is undone. To bring the defect back, reverse the fix's diff
-(`git fetch origin pull/<N>/head`, since a squash merge leaves the fix commits
-off `<default>`, then `git show <sha> | git apply -R`), or write the defect into a
+Prove a lint rule or test before keeping it: it must fail on the defect and pass
+once that is undone. To bring the defect back, reverse the fix's diff (`git
+fetch origin pull/<N>/head`, since a squash merge leaves the fix commits off
+`<default>`, then `git show <sha> | git apply -R`), or write the defect into a
 scratch file. Undo it before going on, so only guards get committed. One you
 cannot make fail drops to the next rung.
 
