@@ -25,6 +25,10 @@ description: >-
 > `dev-skills:polish-pr`), or the bare name where the skills are installed
 > unprefixed.
 
+> `<default>` below is the repo's default branch, whatever its name. Resolve it
+> once per run: `git remote set-head origin --auto && git rev-parse --abbrev-ref origin/HEAD`
+> prints `origin/<default>`.
+
 Take one GitHub issue, however rough, and reach a definitive outcome: either a
 **merged PR** that fixes it, or a **closed issue** carrying a written verdict that
 explains why it doesn't make sense to implement — plus, when the reason lives in
@@ -36,13 +40,13 @@ is worth its permanent cost, because a run this unattended should not be able to
 build things the project is better off without. Never leave the issue in an
 ambiguous state.
 
-> ⚠️ Both outcomes are unattended: the happy path **merges to `main`** without a
+> ⚠️ Both outcomes are unattended: the happy path **merges to the default branch** without a
 > human reviewing the PR, and the reject path **closes the issue** without a
 > human confirming the verdict, then merges a comment-only PR recording it. A
 > rough issue is also **rewritten in place** without anyone confirming the
 > clarified version, and a declined one is closed on the evaluation's judgement
-> alone. Use it where that is acceptable (low-stakes work, or a `main` protected
-> by required CI). On a `main` that requires no status check (a private repo on
+> alone. Use it where that is acceptable (low-stakes work, or a default branch protected
+> by required CI). On a default branch that requires no status check (a private repo on
 > GitHub Free cannot require one), the skill's own CI waits are the only guard on
 > the merge, and GitHub will not stop a merge that skips them. Either way, the
 > skill cannot tell whether the checks run real tests.
@@ -105,11 +109,11 @@ gh pr list --search "<key terms>" --state all --limit 10
 An issue **makes sense** when all of these hold:
 
 1. **Real** — the described bug reproduces, or the described gap genuinely exists
-   in the current code. A bug report you cannot reproduce on `main` fails here.
+   in the current code. A bug report you cannot reproduce on `<default>` fails here.
 2. **Correct premise** — it isn't based on a misreading of the code, a stale
    version, or behavior that is intentional and documented.
 3. **Not already handled** — no duplicate open issue, no merged/open PR already
-   doing it, not already fixed on `main`.
+   doing it, not already fixed on `<default>`.
 4. **In scope** — it belongs to this project and doesn't contradict `CLAUDE.md`
    or the documented architecture.
 5. **Actionable** — you can tell what "done" looks like well enough to implement
@@ -181,7 +185,7 @@ is the same unattended close Stage 5 already performs for an invalid one.
 ## Stage 2 — Implement as a PR
 
 Run the **generate-pr-from-issue** skill on the issue number. It branches off
-`main`, implements with tests per `CLAUDE.md`, and opens a PR that closes the
+`<default>`, implements with tests per `CLAUDE.md`, and opens a PR that closes the
 issue.
 
 - If it opens a PR: capture the PR number and continue.
@@ -211,7 +215,7 @@ the review:
 
 ```bash
 gh pr merge <PR> --squash --delete-branch --match-head-commit <sha from Stage 3>
-git checkout main && git pull --ff-only && git fetch --prune
+git checkout <default> && git pull --ff-only && git fetch --prune
 ```
 
 (The GitHub MCP merge tool takes the same pin as `expectedHeadSha`.)
@@ -230,10 +234,10 @@ human, unpolished and unmerged: new lint rules and `CLAUDE.md` lines change
 every later session, and polishing it here would loop back into `compound`.
 
 Whatever `compound` does, the outcome stays `merged`. Afterwards the tree must
-be clean on `main`: the merge left it so, so anything else is `compound`'s
+be clean on `<default>`: the merge left it so, so anything else is `compound`'s
 leftover work (a half-proven guard, a reversed fix). Discard it
-(`git reset --hard && git clean -fd`, then `git checkout main`), say in the
-report what was discarded, and end on `main` synced to the merge.
+(`git reset --hard && git clean -fd`, then `git checkout <default>`), say in the
+report what was discarded, and end on `<default>` synced to the merge.
 
 ## Stage 5 — Reject: comment the verdict, then close
 
@@ -292,7 +296,7 @@ suggestion, so the next reader meets the reasoning before proposing it again.
   building the declined thing.
 
 **Skip it** when the rejection says nothing about the code, where a comment
-would be noise: duplicate of another issue, already fixed on `main`, cannot
+would be noise: duplicate of another issue, already fixed on `<default>`, cannot
 reproduce, reported against a stale version, out of scope for the project, or
 too vague to act on. Skip it too when a comment already there says it — extend
 that one only if it states the decision but not the reason.
@@ -321,7 +325,7 @@ comment the one that is the real decision point and leave the others alone.
 **Land it** as a comment-only PR — no change escapes a PR:
 
 ```bash
-git fetch origin --quiet && git checkout -b docs/<short-slug> origin/main
+git fetch origin --quiet && git checkout -b docs/<short-slug> origin/<default>
 # add the comment(s)
 git status --short   # verify: only the files you meant to annotate
 git diff             # verify: comments only
@@ -334,7 +338,7 @@ Follows #<N>"
 gh pr checks; status=$?
 while [ "$status" -eq 8 ]; do sleep 15; gh pr checks; status=$?; done  # 8 = still pending
 [ "$status" -eq 0 ] && gh pr merge --squash --delete-branch --match-head-commit <sha from rev-parse>
-git checkout main && git pull --ff-only && git fetch --prune
+git checkout <default> && git pull --ff-only && git fetch --prune
 ```
 
 Right after `gh pr create`, CI may not have registered yet, and `gh pr checks`
@@ -388,4 +392,4 @@ the final test/build status, the guard PR `compound` opened (or why none) and
 its **Plugin suggestions** verbatim, and anything left open. When a *narrow it* verdict
 was followed, say what was cut. On a rejection, say whether Stage 6 recorded the
 decision in code — with the file and the PR URL — or why nothing was worth
-anchoring. On the merge path, end on `main` synced to the merge.
+anchoring. On the merge path, end on `<default>` synced to the merge.

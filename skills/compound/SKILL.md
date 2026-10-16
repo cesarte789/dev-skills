@@ -13,6 +13,10 @@ description: >-
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
 
+> `<default>` below is the repo's default branch, whatever its name. Resolve it
+> once per run: `git remote set-head origin --auto && git rev-parse --abbrev-ref origin/HEAD`
+> prints `origin/<default>`.
+
 Review fixes a defect once. This skill makes the repo refuse it from then on, so
 each change leaves the next one cheaper.
 
@@ -39,7 +43,7 @@ This plugin is public and runs in private repos. Hold these:
 
 - `<PR>` — one merged PR; defaults to the current branch's. If there is none,
   or it is not merged yet, stop and say so: its guards must be proven on
-  `main`, which only has its code after the merge.
+  `<default>`, which only has its code after the merge.
 - `recent [N]` — the last N merged PRs, default 20
   (`gh pr list --state merged --limit <N> --json number`). None merged: stop
   and say so.
@@ -71,7 +75,7 @@ PRs hit them; one that recurs outranks one seen once.
 Work on a fresh branch from here on:
 
 ```bash
-git fetch origin --quiet && git checkout -b chore/compound-<source> origin/main
+git fetch origin --quiet && git checkout -b chore/compound-<source> origin/<default>
 ```
 
 `<source>` is `pr-<N>`, or `recent-<UTC yyyyMMddHHmm>` for a sweep, so runs
@@ -87,7 +91,7 @@ gh pr list --state open --limit 1000 --json number,headRefName \
   --jq '.[] | select(.headRefName | startswith("chore/compound-"))'
 ```
 
-If an existing guard was already on `main` when the source PR merged and did not
+If an existing guard was already on `<default>` when the source PR merged and did not
 stop it, the lesson is about the guard: fix that instead. Otherwise take the
 most deterministic guard that fits:
 
@@ -102,7 +106,7 @@ most deterministic guard that fits:
 Prove a lint rule or test before keeping it: it must fail on the defect and
 pass once that is undone. To bring the defect back, reverse the fix's diff
 (`git fetch origin pull/<N>/head`, since a squash merge leaves the fix commits
-off `main`, then `git show <sha> | git apply -R`), or write the defect into a
+off `<default>`, then `git show <sha> | git apply -R`), or write the defect into a
 scratch file. Undo it before going on, so only guards get committed. One you
 cannot make fail drops to the next rung.
 

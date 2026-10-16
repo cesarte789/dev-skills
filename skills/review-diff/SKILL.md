@@ -12,6 +12,10 @@ description: >-
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
 
+> `<default>` below is the repo's default branch, whatever its name. Resolve it
+> once per run: `git remote set-head origin --auto && git rev-parse --abbrev-ref origin/HEAD`
+> prints `origin/<default>`.
+
 Report what is wrong with a diff without touching the code. The caller decides
 what to do with the findings.
 
@@ -30,7 +34,7 @@ Collect before spawning reviewers:
     and report `review failed: tree does not match the PR head (<why>)` so
     the caller reconciles (pushing local work is `polish-pr`'s Setup job);
     reviewers run `gh pr diff <N>` themselves;
-  - local work: `git fetch origin main`, then `git diff origin/main...HEAD`
+  - local work: `git fetch origin <default>`, then `git diff origin/<default>...HEAD`
     plus `git diff HEAD`, plus untracked files read in full
     (`git ls-files --others --exclude-standard` — `git diff HEAD` misses them).
 - **Intent** — the PR title, body, and linked issue (`gh pr view <N> --json

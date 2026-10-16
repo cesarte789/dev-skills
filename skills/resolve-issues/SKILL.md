@@ -6,7 +6,7 @@ description: >-
   polish -> merge, or close with a verdict), oldest first, until every one is
   resolved or a cap is reached. Use when you want the existing backlog cleared
   autonomously rather than resolving a single issue by number. Optionally pass a
-  max number of issues to resolve (e.g. "3"), default 5. NOTE: merges to main and
+  max number of issues to resolve (e.g. "3"), default 5. NOTE: merges to the default branch and
   closes issues without human vetting — use only where that is acceptable.
 ---
 
@@ -20,14 +20,18 @@ description: >-
 > `dev-skills:polish-pr`), or the bare name where the skills are installed
 > unprefixed.
 
+> `<default>` below is the repo's default branch, whatever its name. Resolve it
+> once per run: `git remote set-head origin --auto && git rev-parse --abbrev-ref origin/HEAD`
+> prints `origin/<default>`.
+
 Sweep the backlog. Take the issues that are open **now**, and give each one to
 `resolve-issue`, which reaches a definitive outcome for it — a merged PR, or the
 issue closed with a written verdict. One issue at a time, oldest first.
 
-> ⚠️ This runs unattended and both **merges to `main`** and **closes issues** on
+> ⚠️ This runs unattended and both **merges to the default branch** and **closes issues** on
 > its own. No human vets each issue or reviews each PR before it lands. Use it
-> only where that is acceptable (low-stakes work, or a `main` protected by
-> required CI). On a `main` that requires no status check, only
+> only where that is acceptable (low-stakes work, or a default branch protected by
+> required CI). On a default branch that requires no status check, only
 > `resolve-issue`'s own CI waits guard each merge, and GitHub will not stop a
 > merge that skips them.
 
@@ -42,15 +46,15 @@ issue closed with a written verdict. One issue at a time, oldest first.
 
 `[<max-issues>]` — optional leading integer, the hard cap on how many issues this
 sweep resolves. Default **5**. This is the safety stop on a sweep that merges to
-`main` on its own; never run it unbounded.
+`<default>` on its own; never run it unbounded.
 
 ## 1. Sync
 
-Make sure local `main` is current, so every issue is vetted — and every fix
+Make sure local `<default>` is current, so every issue is vetted — and every fix
 branches off — the landed state:
 
 ```bash
-git checkout main && git pull --ff-only
+git checkout <default> && git pull --ff-only
 ```
 
 ## 2. Collect the backlog
@@ -108,11 +112,11 @@ time. For each:
    code and then either implements, polishes and merges a PR, or closes the issue
    with a verdict comment.
 
-3. **Sync `main` again** (stage 1) before the next issue, so its vetting sees
+3. **Sync `<default>` again** (stage 1) before the next issue, so its vetting sees
    whatever just landed.
 
-Sequential, never in parallel: each resolution merges to `main`, and the next
-issue has to be vetted against that updated `main`. That is also what makes
+Sequential, never in parallel: each resolution merges to `<default>`, and the next
+issue has to be vetted against that updated `<default>`. That is also what makes
 overlapping issues safe — a request an earlier merge already satisfied is
 rejected by `resolve-issue` as already handled, instead of being built twice.
 
@@ -144,5 +148,5 @@ sweep, and everything left open or never attempted, so the user knows exactly
 what a rerun would pick up. After the per-issue lines, list every guard PR
 `compound` opened during the sweep (or say none did), then each **Plugin
 suggestions** entry `resolve-issue` reported, verbatim: in a consuming repo these
-are the only way a flaw in these skills reaches a human. End on `main`, synced to
+are the only way a flaw in these skills reaches a human. End on `<default>`, synced to
 the last merge.

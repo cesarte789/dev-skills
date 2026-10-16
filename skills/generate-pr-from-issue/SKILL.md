@@ -11,6 +11,10 @@ description: >-
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
 
+> `<default>` below is the repo's default branch, whatever its name. Resolve it
+> once per run: `git remote set-head origin --auto && git rev-parse --abbrev-ref origin/HEAD`
+> prints `origin/<default>`.
+
 Implement a GitHub issue and open a draft PR for `polish-pr` to bring to
 merge-ready. One PR, one idea: solve the issue with the minimal set of changes.
 
@@ -28,11 +32,11 @@ and stop — do not guess.
 
 ## 2. Branch
 
-Branch off `main` (never commit to `main`). Name it for the work, e.g.
+Branch off `<default>` (never commit to `<default>`). Name it for the work, e.g.
 `feat/<short-slug>` or `fix/<short-slug>`:
 
 ```bash
-git fetch origin --quiet && git checkout -b <branch> origin/main
+git fetch origin --quiet && git checkout -b <branch> origin/<default>
 ```
 
 ## 3. Implement
