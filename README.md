@@ -10,7 +10,8 @@ Commit this to the consuming repo's `.claude/settings.json`, so every session op
 {
   "extraKnownMarketplaces": {
     "dev-skills": {
-      "source": { "source": "github", "repo": "cesarte789/dev-skills" }
+      "source": { "source": "github", "repo": "cesarte789/dev-skills" },
+      "autoUpdate": true
     }
   },
   "enabledPlugins": {
@@ -28,7 +29,24 @@ claude plugin install dev-skills@dev-skills
 
 Skills are namespaced by the plugin: `/dev-skills:resolve-issue 42`.
 
-Update with `claude plugin marketplace update dev-skills`, then `claude plugin update dev-skills@dev-skills`.
+### Staying current
+
+Sessions load the plugin from a local cache, and auto-update is off by default for third-party marketplaces, so a new version only arrives when something refreshes that cache. `"autoUpdate": true` above does it for local sessions: once per session it refreshes the marketplace in the background, and the new version loads on the next launch (or after `/reload-plugins`).
+
+Cloud sessions (`claude.ai/code`) need it done explicitly. Add a SessionStart hook beside the settings above:
+
+```json
+"hooks": {
+  "SessionStart": [{
+    "hooks": [{
+      "type": "command",
+      "command": "[ \"$CLAUDE_CODE_REMOTE\" = true ] || exit 0; claude plugin marketplace update dev-skills && claude plugin update dev-skills@dev-skills"
+    }]
+  }]
+}
+```
+
+The update lands on disk; the session that ran it keeps the version it started with until `/reload-plugins`. By hand, anywhere: `claude plugin marketplace update dev-skills`, then `claude plugin update dev-skills@dev-skills`.
 
 ## Building blocks
 
