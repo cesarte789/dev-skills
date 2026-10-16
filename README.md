@@ -4,7 +4,7 @@ Claude Code skills that automate the issue → PR → review → merge loop, plu
 
 ## Install in a repo
 
-Commit this to the consuming repo's `.claude/settings.json`, so every session opened on that repo (local or `claude.ai/code`) offers the plugin:
+Commit this to the consuming repo's `.claude/settings.json`, so every local session opened on that repo offers the plugin (cloud sessions on `claude.ai/code` ignore it; see [Staying current](#staying-current)):
 
 ```json
 {
@@ -33,20 +33,21 @@ Skills are namespaced by the plugin: `/dev-skills:resolve-issue 42`.
 
 Sessions load the plugin from a local cache, and auto-update is off by default for third-party marketplaces, so a new version only arrives when something refreshes that cache. `"autoUpdate": true` above does it for local sessions: once per session it refreshes the marketplace in the background, and the new version loads on the next launch (or after `/reload-plugins`).
 
-Cloud sessions (`claude.ai/code`) need it done explicitly. Add a SessionStart hook beside the settings above:
+Cloud sessions (`claude.ai/code`) skip the marketplaces and plugins a repo's `.claude/settings.json` declares, so there the plugin has to be installed and updated explicitly. Add a SessionStart hook beside the settings above; every step is a no-op when already done:
 
 ```json
 "hooks": {
   "SessionStart": [{
+    "matcher": "startup",
     "hooks": [{
       "type": "command",
-      "command": "[ \"$CLAUDE_CODE_REMOTE\" = true ] || exit 0; claude plugin marketplace update dev-skills && claude plugin update dev-skills@dev-skills"
+      "command": "[ \"$CLAUDE_CODE_REMOTE\" = true ] || exit 0; claude plugin marketplace add cesarte789/dev-skills && claude plugin marketplace update dev-skills && claude plugin install dev-skills@dev-skills && claude plugin update dev-skills@dev-skills"
     }]
   }]
 }
 ```
 
-The update lands on disk; the session that ran it keeps the version it started with until `/reload-plugins`. By hand, anywhere: `claude plugin marketplace update dev-skills`, then `claude plugin update dev-skills@dev-skills`.
+A plugin it updates lands on disk, so the version a session runs is the one cached when it started; the new one loads in the next session. By hand, anywhere: `claude plugin marketplace update dev-skills`, then `claude plugin update dev-skills@dev-skills`.
 
 ## Building blocks
 
