@@ -141,4 +141,8 @@ candidates, then per candidate its number, title and outcome (`resolve-issue`'s
 outcome name with the PR or verdict, or skipped and why) with URLs. Then the totals — how many changes landed,
 how many issues were rejected, how many skipped — which stop condition ended the
 sweep, and everything left open or never attempted, so the user knows exactly
-what a rerun would pick up. End on `main`, synced to the last merge.
+what a rerun would pick up. After the per-issue lines, list every guard PR
+`compound` opened during the sweep (or say none did), then each **Plugin
+suggestions** entry `resolve-issue` reported, verbatim: in a consuming repo these
+are the only way a flaw in these skills reaches a human. End on `main`, synced to
+the last merge.

@@ -90,8 +90,11 @@ Summarize the whole run: each iteration's issue and outcome with URLs — merged
 PR, or closed with a verdict (plus any comment-only PR it merged) — how many
 simplifications landed and how many proposals were rejected, which stop
 condition ended the loop, and anything left open (a PR that stalled in polish,
-a blocked merge, sub-issues from a split). End on `main`, synced to the last
-merge.
+a blocked merge, sub-issues from a split). After the per-iteration lines, list
+every guard PR `compound` opened during the run (or say none did), then each
+**Plugin suggestions** entry `resolve-issue` reported, verbatim: in a consuming
+repo these are the only way a flaw in these skills reaches a human. End on
+`main`, synced to the last merge.
 
 ## Tip
 
