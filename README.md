@@ -43,7 +43,7 @@ claude plugin marketplace update dev-skills && claude plugin update dev-skills@d
 
 The environment caches what the setup script produced and reuses it for about seven days, so cloud sessions keep that version until the cache is rebuilt. Editing the setup script rebuilds it, so to pick up a release sooner, change the script (even a comment).
 
-By hand, anywhere: `claude plugin marketplace update dev-skills`, then `claude plugin update dev-skills@dev-skills`.
+To update a local install by hand: `claude plugin marketplace update dev-skills`, then `claude plugin update dev-skills@dev-skills`.
 
 ## Building blocks
 
