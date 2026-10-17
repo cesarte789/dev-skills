@@ -13,6 +13,10 @@ description: >-
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
 
+> `<default>` below is the repo's default branch, whatever its name. Resolve it
+> once per run: `git ls-remote --symref origin HEAD` names it in its
+> `ref: refs/heads/<default>` line (or `gh repo view --json defaultBranchRef`).
+
 The goal is docs that say what the code actually does, and nothing else. Every
 claim in the README and the feature docs must match something that exists in the
 code today: fix what is stale, delete what describes code that is gone, and do not
@@ -79,11 +83,11 @@ stale and the README is already its core, say so and change nothing.
 
 ## 4. Land it via a PR
 
-Every change goes through a PR. If you are on `main`,
+Every change goes through a PR. If you are on `<default>`,
 branch first:
 
 ```bash
-git fetch origin --quiet && git checkout -b docs/refresh-readme origin/main
+git fetch origin --quiet && git checkout -b docs/refresh-readme origin/<default>
 ```
 
 Commit with a conventional-commit message (`docs: ...`), push, and open the PR:

@@ -9,11 +9,13 @@ export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 export GIT_DEFAULT_REF_FORMAT=files
 export GIT_AUTHOR_DATE="2026-01-01T00:00:00Z" GIT_COMMITTER_DATE="2026-01-01T00:00:00Z"
 git init -q -b main
-# A local bare repo stands in for origin: review-diff runs `git fetch origin main`.
+# A local bare repo stands in for origin, with HEAD on main so `git ls-remote
+# --symref origin HEAD` names main as the default branch review-diff diffs against.
 echo origin.git >> .git/info/exclude
 printf '# pager\n\nSmall list helpers.\n' > README.md
 git add -A && git commit -qm "initial commit"
 git init -q --bare origin.git && git remote add origin "$PWD/origin.git"
+git -C origin.git symbolic-ref HEAD refs/heads/main
 git push -q origin main
 git checkout -qb feat/pagination
 cat > pager.py <<'PY'
