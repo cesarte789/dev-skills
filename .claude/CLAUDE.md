@@ -30,6 +30,10 @@ claude plugin eval . --case 'review-diff/*' --scaffold --trust-plugin --allow-to
 
 `--ablation none` skips the default no-plugin baseline arm, which cannot run the skill and would double the cost. `review-diff` needs Bash for `git`. With Bash granted, a run is refused unless Claude Code's sandbox backend is installed (`bubblewrap` and `socat` on Linux). CI holds no secrets, so it never runs this. Results land in `evals/results/` (git-ignored). Installs copy `evals/` with the rest of the repo but never load it, so changing it needs no version bump.
 
+## Writing skills
+
+Text a skill hands to a subagent (a contract, a checklist, a prompt) must stand on its own: the subagent sees only what it is given, so never name a term, file or command there that only another part of the skill defines.
+
 ## Versioning
 
 Raise `version` in `.claude-plugin/plugin.json` in the same change as any edit to what the plugin ships (`skills/`, `output-styles/`, `plugin.json` itself): patch for a fix or simplification, minor for a new or changed behavior. Claude Code compares that field, not the git commit, so an unbumped change never reaches existing installs. Docs-only changes need no bump.
