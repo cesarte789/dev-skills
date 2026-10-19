@@ -336,15 +336,16 @@ git push -u origin docs/<short-slug>
 gh pr create --title "docs: <what the comment records>" --body "<summary>
 
 Follows #<N>"
-# wait for CI as polish-pr's done condition does, then, only if it ended green:
-gh pr merge --squash --delete-branch --match-head-commit <sha from rev-parse>
+# wait for CI as polish-pr's done condition does (below); green=1 only if it ended green
+[ "$green" = 1 ] && gh pr merge --squash --delete-branch --match-head-commit <sha from rev-parse>
 git checkout <default> && git pull --ff-only && git fetch --prune
 ```
 
 Wait exactly as `polish-pr`'s done condition does — its re-check while the
-checks register, its `gh pr checks` poll, and its rule that a head whose checks
-are all `skipping`, or that has none, is not green — and merge only when that
-wait ends green: this PR skips `polish-pr`, so CI is its only gate. A failed
+checks register, counted here from `gh pr create` since there is no ready mark,
+its `gh pr checks` poll, and its rule that a head whose checks are all
+`skipping`, or that has none, is not green — and merge only when that wait
+ends green: this PR skips `polish-pr`, so CI is its only gate. A failed
 check, or no checks at all, leaves the PR open and the run `stopped`, which
 also halts `resolve-issues` and `simplify-loop`.
 On a default branch that requires no check, this wait is the only thing
