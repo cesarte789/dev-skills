@@ -34,12 +34,10 @@ claude plugin eval . --case 'review-diff/*' --scaffold --trust-plugin --allow-to
 
 Text a skill hands to a subagent (a contract, a checklist, a prompt) must stand on its own: the subagent sees only what it is given, so never name a term, file or command there that only another part of the skill defines.
 
-## Versioning
-
-Raise `version` in `.claude-plugin/plugin.json` in the same change as any edit to what the plugin ships (`skills/`, `output-styles/`, `plugin.json` itself): patch for a fix or simplification, minor for a new or changed behavior. Claude Code compares that field, not the git commit, so an unbumped change never reaches existing installs. Docs-only changes need no bump.
-
-## Changing skills
-
 A new way for a skill to stop must end in an outcome its callers already handle (`resolve-issue`'s outcome names, `review-diff`'s `review failed:`), so an unattended orchestrator never stalls on it or misreads it.
 
 Text inlined into several skills must hold in each one: read every skill it lands in for an instruction it contradicts or forbids.
+
+## Versioning
+
+Raise `version` in `.claude-plugin/plugin.json` in the same change as any edit to what the plugin ships (`skills/`, `output-styles/`, `plugin.json` itself): patch for a fix or simplification, minor for a new or changed behavior. Claude Code compares that field, not the git commit, so an unbumped change never reaches existing installs. Docs-only changes need no bump.
