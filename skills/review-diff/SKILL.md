@@ -9,46 +9,63 @@ description: >-
 
 # Review Diff
 
-> Commands below use the `gh` CLI. If `gh` isn't available in this session, do
-> the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
-
 Report what is wrong with a diff without touching the code. The caller decides
 what to do with the findings.
+
+## Operations (GitHub + git + Claude Code)
+
+The steps below name these operations in **bold**; no other part of this skill
+holds a platform command, so porting it to another forge or agent means
+rewriting this section alone. If `gh` isn't available in this session, do the
+same GitHub operations with the GitHub MCP tools (`mcp__github__*`) instead.
+
+- **check out the PR head** — `gh pr checkout <N>` (it fetches first, fork
+  heads included)
+- **PR head commit** — `gh pr view <N> --json headRefOid`
+- **tree state** — `git status` is clean and `git rev-parse HEAD` is the
+  checked-out commit
+- **PR diff** — `gh pr diff <N>`
+- **PR intent** — `gh pr view <N> --json title,body`
+- **read the issue** — `gh issue view <M>`; the PR body links it, e.g.
+  `Closes #M`
+- **default branch** — `git ls-remote --symref origin HEAD` names it in its
+  `ref: refs/heads/<default>` line
+- **local diff** — `git fetch origin <default>`, then
+  `git diff origin/<default>...HEAD` plus `git diff HEAD`, plus untracked
+  files read in full (`git ls-files --others --exclude-standard` —
+  `git diff HEAD` misses them)
+- **spawn a fresh reviewer** — a subagent, via the `Agent` tool
+- **agent-instructions file** — the repo's `CLAUDE.md`
 
 ## Inputs
 
 Collect before spawning reviewers:
 
 - **Diff source** —
-  - a PR: check out its head branch (`gh pr checkout <N>` — it fetches first,
-    fork heads included; skip when the caller already checked it out, as
-    `polish-pr`'s Setup does), then confirm the tree is the PR head: a clean
-    `git status` and `git rev-parse HEAD` equal to the PR's `headRefOid`
-    (`gh pr view <N> --json headRefOid`). Never review a tree that differs
-    from the diff, and never fix the mismatch here — this skill is read-only:
-    retry once when the API merely lags a just-pushed head, otherwise stop
-    and report `review failed: tree does not match the PR head (<why>)` so
-    the caller reconciles (pushing local work is `polish-pr`'s Setup job);
-    reviewers run `gh pr diff <N>` themselves;
-  - local work: resolve the default branch `<default>` (`git ls-remote
-    --symref origin HEAD` names it in its `ref: refs/heads/<default>` line),
-    `git fetch origin <default>`, then `git diff origin/<default>...HEAD`
-    plus `git diff HEAD`, plus untracked files read in full
-    (`git ls-files --others --exclude-standard` — `git diff HEAD` misses them).
-- **Intent** — the PR title, body, and linked issue (`gh pr view <N> --json
-  title,body`, then `gh issue view <M>` on the issue the body links, e.g.
-  `Closes #M`), or the caller's stated goal. Without it a reviewer cannot
-  tell a deliberate removal from a regression, or notice the diff misses a
-  requirement stated only in the issue.
+  - a PR: **check out the PR head** (skip when the caller already checked it
+    out, as `polish-pr`'s Setup does), then confirm the tree is the PR head:
+    the **tree state** is clean and its commit equals the **PR head commit**.
+    Never review a tree that differs from the diff, and never fix the
+    mismatch here — this skill is read-only: retry once when the API merely
+    lags a just-pushed head, otherwise stop and report `review failed: tree
+    does not match the PR head (<why>)` so the caller reconciles (pushing
+    local work is `polish-pr`'s Setup job); reviewers get the **PR diff**
+    themselves;
+  - local work: resolve the **default branch** `<default>`, then take the
+    **local diff** against it.
+- **Intent** — the **PR intent** (title and body) and the issue it links
+  (**read the issue**), or the caller's stated goal. Without it a reviewer
+  cannot tell a deliberate removal from a regression, or notice the diff
+  misses a requirement stated only in the issue.
 - **Prior-findings digest** — when reviewing in a loop: what earlier rounds
   found and how each finding was resolved or why it was dismissed, so settled
   points are not re-litigated.
 
 ## Spawn reviewers
 
-Spawn a fresh reviewer subagent (the `Agent` tool) — a clean context reads the
-change on its own merits, without the reasoning that produced it. It runs in
-the repo checkout; give it the inputs above and this contract verbatim:
+**Spawn a fresh reviewer** — a clean context reads the change on its own
+merits, without the reasoning that produced it. It runs in the
+repo checkout; give it the inputs above and this contract verbatim:
 
 - Report only findings **verified against the tree** — open the touched files;
   a diff hunk alone is not evidence. Prefix anything you could not verify with
@@ -80,8 +97,8 @@ Checklist for each reviewer:
 - **Tests** — changed behavior is covered, asserting public behavior.
 - **Reuse & efficiency** — the diff reimplements a helper the codebase
   already has, or does needless work a simpler form avoids.
-- **`CLAUDE.md`** — the diff against every rule in it. The subagent loads the
-  file itself; do not paraphrase rules into the prompt.
+- **Agent-instructions file** — the diff against every rule in it. The
+  reviewer loads the file itself; do not paraphrase rules into the prompt.
 - **UI** — any UI guidelines the repo documents (e.g. `docs/ui-guidelines.md`).
 
 ## Thorough mode

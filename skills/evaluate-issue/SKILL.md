@@ -12,8 +12,19 @@ description: >-
 
 # Evaluate issue
 
-> Commands below use the `gh` CLI. If `gh` isn't available in this session, do
-> the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
+## Operations (GitHub)
+
+The steps below name these operations in **bold**; no other part of this skill
+holds a platform command, so porting it to another tracker means rewriting this
+section alone. If `gh` isn't available in this session, do the same operations
+with the GitHub MCP tools (`mcp__github__*`) instead.
+
+- **read the issue** —
+  `gh issue view <N> --json number,title,body,state,labels,comments,url`
+- **search issues** —
+  `gh issue list --search "<key terms>" --state all --limit 10`
+- **comment on the issue** — `gh issue comment <N> --body "<verdict>"`
+- **agent-instructions file** — the repo's `CLAUDE.md`
 
 Answer one question about an issue: **is this worth building?** Not "is it a
 valid request" — whether the project is better off with it than without it, once
@@ -21,7 +32,7 @@ the code it adds has to be maintained forever.
 
 Every feature is permanent. A migration cannot be un-run in a database of record,
 a public endpoint must keep its contract, a new screen or tab stays on screen, and every
-file added is a file that must keep passing CI, keep matching `CLAUDE.md`, and be
+file added is a file that must keep passing CI, keep matching the **agent-instructions file**, and be
 read by whoever touches that area next. For a solo owner or a small team the scarce
 resource is rarely time — it is how much system the people (and the agents
 working for them) can keep coherent.
@@ -48,22 +59,14 @@ state, its labels and its title, and a human decides.
 
 ## 1. Read the issue, then read what it would touch
 
-```bash
-gh issue view <N> --json number,title,body,state,labels,comments,url
-```
-
-Take the issue at its word about *what* it wants, never about what it costs. Go
+**Read the issue.** Take the issue at its word about *what* it wants, never about what it costs. Go
 find that out in the code:
 
 - Which module does it land in, and how big is that module already?
 - Does it need a new table or migration, a new endpoint, a new route, screen or
   tab, a new dependency?
-- Is there something in the repo that already does most of it? Search before
-  believing the gap is real:
-
-```bash
-gh issue list --search "<key terms>" --state all --limit 10
-```
+- Is there something in the repo that already does most of it? **Search
+  issues** before believing the gap is real.
 
 An evaluation written without opening the code is a guess, and a guess is worse
 than no verdict at all.
@@ -122,11 +125,7 @@ easy. Say which it is and why, in the fewest words that carry the reasoning.
 One comment, standing on its own for a reader who hasn't seen your analysis: the
 verdict, what the feature is worth, what it costs (with the files, tables and
 endpoints you actually found), the alternative you'd take instead, and the fact
-that would change your mind.
-
-```bash
-gh issue comment <N> --body "<verdict>"
-```
+that would change your mind. Post it with **comment on the issue**.
 
 Then **stop**. Do not close, label, retitle or rewrite the issue, and do not
 start implementing a "build it" verdict — those are separate skills, run
