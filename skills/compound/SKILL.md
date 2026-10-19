@@ -21,7 +21,8 @@ description: >-
 > **The repo conventions** are this repo's standards and commands. Find them in
 > this order, and never create or edit an instructions file just to get them:
 >
-> 1. `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`, if one exists.
+> 1. Every `CLAUDE.md`, `AGENTS.md` and `GEMINI.md` the repo has: at its root,
+>    in `.claude/`, or in a directory the work touches.
 > 2. CI: the test, lint and build steps of the workflows that run on pull
 >    requests (`.github/workflows/*.yml` or `*.yaml`). These are the source of
 >    truth for what has to pass, whatever step 1 says; take from here any
