@@ -336,20 +336,17 @@ git push -u origin docs/<short-slug>
 gh pr create --title "docs: <what the comment records>" --body "<summary>
 
 Follows #<N>"
-gh pr checks; status=$?
-while [ "$status" -eq 8 ]; do sleep 15; gh pr checks; status=$?; done  # 8 = still pending
-[ "$status" -eq 0 ] && gh pr merge --squash --delete-branch --match-head-commit <sha from rev-parse>
+# wait for CI as polish-pr's done condition does, then, only if it ended green:
+gh pr merge --squash --delete-branch --match-head-commit <sha from rev-parse>
 git checkout <default> && git pull --ff-only && git fetch --prune
 ```
 
-Right after `gh pr create`, CI may not have registered yet, and `gh pr checks`
-then prints "no checks reported" and exits 1. Re-check every 15 seconds for up
-to about two minutes before taking that as the answer, then run the wait.
-
-Merge only when the wait ends with `status` 0 and not every check is
-`skipping` (`polish-pr`'s done condition says why): this PR skips `polish-pr`,
-so CI is its only gate. A failed check, or no checks at all, leaves the PR open
-and the run `stopped`, which also halts `resolve-issues` and `simplify-loop`.
+Wait exactly as `polish-pr`'s done condition does — its re-check while the
+checks register, its `gh pr checks` poll, and its rule that a head whose checks
+are all `skipping`, or that has none, is not green — and merge only when that
+wait ends green: this PR skips `polish-pr`, so CI is its only gate. A failed
+check, or no checks at all, leaves the PR open and the run `stopped`, which
+also halts `resolve-issues` and `simplify-loop`.
 On a default branch that requires no check, this wait is the only thing
 standing between a repo with no CI and an unchecked merge; required checks that
 path filters skip on a comment-only diff end here too. The pin, as in Stage 4
