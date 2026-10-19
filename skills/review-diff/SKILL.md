@@ -14,9 +14,9 @@ what to do with the findings.
 
 ## Operations (GitHub + git + Claude Code)
 
-The steps below name these operations in **bold**; no other part of this skill
-holds a platform command, so porting it to another forge or agent means
-rewriting this section alone. If `gh` isn't available in this session, do the
+The steps below refer to these entries by name; no other part of this skill
+holds a platform command or file name, so porting it to another forge or agent
+means rewriting this section alone. If `gh` isn't available in this session, do the
 same GitHub operations with the GitHub MCP tools (`mcp__github__*`) instead.
 
 - **check out the PR head** — `gh pr checkout <N>` (it fetches first, fork
@@ -50,7 +50,7 @@ Collect before spawning reviewers:
     lags a just-pushed head, otherwise stop and report `review failed: tree
     does not match the PR head (<why>)` so the caller reconciles (pushing
     local work is `polish-pr`'s Setup job); reviewers get the **PR diff**
-    themselves;
+    themselves, so give them its command;
   - local work: resolve the **default branch** `<default>`, then take the
     **local diff** against it.
 - **Intent** — the **PR intent** (title and body) and the issue it links
@@ -97,8 +97,9 @@ Checklist for each reviewer:
 - **Tests** — changed behavior is covered, asserting public behavior.
 - **Reuse & efficiency** — the diff reimplements a helper the codebase
   already has, or does needless work a simpler form avoids.
-- **Agent-instructions file** — the diff against every rule in it. The
-  reviewer loads the file itself; do not paraphrase rules into the prompt.
+- **Agent-instructions file** — the diff against every rule in it. Name the
+  file to the reviewer by its path; the reviewer loads it itself, so do not
+  paraphrase rules into the prompt.
 - **UI** — any UI guidelines the repo documents (e.g. `docs/ui-guidelines.md`).
 
 ## Thorough mode
