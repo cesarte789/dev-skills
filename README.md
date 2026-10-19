@@ -85,4 +85,5 @@ To update a local install by hand: `claude plugin marketplace update dev-skills`
 ## More
 
 - Contributing (checks, versioning, evals): [`.claude/CLAUDE.md`](.claude/CLAUDE.md).
+- License: MIT ([`LICENSE`](LICENSE)).
 - `output-styles/i-have-adhd.md` is adapted from [ayghri/i-have-adhd@4c76175](https://github.com/ayghri/i-have-adhd/tree/4c76175) by Ayoub Ghriss, under its MIT license (`output-styles/LICENSE`).

@@ -1,9 +1,10 @@
 {
   "name": "dev-skills",
   "description": "Issue → PR → review → merge skills for Claude Code, plus the i-have-adhd output style. Repo-agnostic: each skill takes its standards from the consuming repo's CLAUDE.md.",
-  "version": "0.12.3",
+  "version": "0.12.4",
   "author": {
     "name": "cesarte789"
   },
-  "repository": "https://github.com/cesarte789/dev-skills"
+  "repository": "https://github.com/cesarte789/dev-skills",
+  "license": "MIT"
 }
