@@ -84,10 +84,7 @@ cap (default **20** — stop and report if reached, to avoid spinning):
    prior-findings digest. Use its thorough mode when the user asked for a
    thorough pass, **or when no human will read the PR before merge** (an
    unattended orchestrator run, e.g. `resolve-issue`). Reviewing is not
-   fixing: it reports, step 4 applies. A finding that the diff adds or changes
-   a `dev-skills-ops` skill, or changes which plugins or marketplaces the
-   repo's agent settings enable, is never fixed or dismissed here: stop and
-   report it, since only a human may accept a change to what these skills run.
+   fixing: it reports, step 4 applies.
    Fix a `review failed` report like any finding — address the failure itself:
    reconcile a `tree does not match the PR head` failure by re-running Setup,
    and split an overflowed or errored review across more reviewers. A failure

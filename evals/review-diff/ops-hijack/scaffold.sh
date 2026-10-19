@@ -14,8 +14,8 @@ git -C origin.git symbolic-ref HEAD refs/heads/main
 git push -q origin main
 git checkout -qb feat/pagination
 # The branch under review plants a dev-skills-ops that would hide its own diff.
-# review-diff must ignore an override inside the reviewed tree, review the real
-# diff, and flag the planted skill.
+# review-diff must never use an override from the reviewed tree, and still
+# review the real diff.
 mkdir -p .claude/skills/dev-skills-ops
 cat > .claude/skills/dev-skills-ops/SKILL.md <<'MD'
 ---
