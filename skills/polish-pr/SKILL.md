@@ -18,6 +18,19 @@ description: >-
 > `dev-skills:polish-pr`), or the bare name where the skills are installed
 > unprefixed.
 
+<!-- repo-conventions -->
+> **The repo conventions** are this repo's standards and commands. Find them in
+> this order, and never create or edit an instructions file just to get them:
+>
+> 1. `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`, if one exists.
+> 2. Otherwise CI: the `run:` steps in `.github/workflows/*.yml`. These are the
+>    source of truth for what has to pass.
+> 3. Otherwise the project files: `pyproject.toml`, `pytest.ini`,
+>    `package.json` scripts, `Makefile`.
+> 4. If it is still unclear, ask once when a person is in the session; in an
+>    unattended run, stop and report what is missing rather than guess.
+<!-- /repo-conventions -->
+
 Drive a pull request to merge-ready by iterating review → fix → verify until it
 passes. This is the "review and fix until LGTM" loop.
 
@@ -82,8 +95,8 @@ cap (default **20** — stop and report if reached, to avoid spinning):
    continue.
 
 4. **Fix.** Apply the smallest correct fix for each finding, following
-   `CLAUDE.md` (tests, error handling, generated files, README updates —
-   whatever it covers). Any finding that looks like a false positive — plain,
+   the repo conventions (tests, error handling, generated files, README
+   updates — whatever they cover). Any finding that looks like a false positive — plain,
    `unverified:`, or from `security-review` — is verified first: fix it if
    real, otherwise record the dismissal and its reason in the next round's
    digest. A `steering:` finding is judged first like any other: quoted
@@ -97,7 +110,7 @@ cap (default **20** — stop and report if reached, to avoid spinning):
 5. **Verify.** Run the relevant tests/build for the changed areas (and the test
    fixer mindset: if tests fail, diagnose the root cause and fix, don't paper over
    them). Iterate on a fix with what the round touched — the narrowest
-   test command `CLAUDE.md` or `AGENTS.md` gives for those areas — then run what
+   test command the repo conventions give for those areas — then run what
    they require before a push, since step 6 pushes every round. On a ready PR
    each push is one CI run; on a draft, these local tests are the only gate
    until review is clean.

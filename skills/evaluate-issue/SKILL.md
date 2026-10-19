@@ -25,7 +25,19 @@ this session, do the same operations with the GitHub MCP tools
 - **search issues** —
   `gh issue list --search "<key terms>" --state all --limit 10`
 - **comment on the issue** — `gh issue comment <N> --body "<verdict>"`
-- **agent-instructions file** — the repo's `CLAUDE.md`
+
+<!-- repo-conventions -->
+> **The repo conventions** are this repo's standards and commands. Find them in
+> this order, and never create or edit an instructions file just to get them:
+>
+> 1. `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`, if one exists.
+> 2. Otherwise CI: the `run:` steps in `.github/workflows/*.yml`. These are the
+>    source of truth for what has to pass.
+> 3. Otherwise the project files: `pyproject.toml`, `pytest.ini`,
+>    `package.json` scripts, `Makefile`.
+> 4. If it is still unclear, ask once when a person is in the session; in an
+>    unattended run, stop and report what is missing rather than guess.
+<!-- /repo-conventions -->
 
 Answer one question about an issue: **is this worth building?** Not "is it a
 valid request" — whether the project is better off with it than without it, once
@@ -34,7 +46,7 @@ the code it adds has to be maintained forever.
 Every feature is permanent. A migration cannot be un-run in a database of
 record, a public endpoint must keep its contract, a new screen or tab stays on
 screen, and every file added is a file that must keep passing CI, keep matching
-the **agent-instructions file**, and be read by whoever touches that area next.
+the **repo conventions**, and be read by whoever touches that area next.
 For a solo owner or a small team the scarce resource is rarely time — it is how
 much system the people (and the agents working for them) can keep coherent.
 

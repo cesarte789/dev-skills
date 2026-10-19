@@ -12,6 +12,19 @@ description: >-
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
 
+<!-- repo-conventions -->
+> **The repo conventions** are this repo's standards and commands. Find them in
+> this order, and never create or edit an instructions file just to get them:
+>
+> 1. `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`, if one exists.
+> 2. Otherwise CI: the `run:` steps in `.github/workflows/*.yml`. These are the
+>    source of truth for what has to pass.
+> 3. Otherwise the project files: `pyproject.toml`, `pytest.ini`,
+>    `package.json` scripts, `Makefile`.
+> 4. If it is still unclear, ask once when a person is in the session; in an
+>    unattended run, stop and report what is missing rather than guess.
+<!-- /repo-conventions -->
+
 Address the open review comments on a PR, then reply so the reviewer can see what
 changed.
 
@@ -36,7 +49,7 @@ editing.
 ## 2. Triage each comment
 
 For every actionable comment, decide:
-- **Apply** — make the change. Follow `CLAUDE.md` standards (tests for changed
+- **Apply** — make the change. Follow the repo conventions (tests for changed
   behavior, minimal diff, regenerate any generated files it names, etc.).
 - **Discuss** — if you disagree or the request is ambiguous, don't silently skip
   it: reply asking for clarification or explaining the tradeoff.

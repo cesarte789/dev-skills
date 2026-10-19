@@ -36,7 +36,19 @@ tools (`mcp__github__*`) instead.
   files read in full (`git ls-files --others --exclude-standard` —
   `git diff HEAD` misses them)
 - **spawn a fresh reviewer** — a subagent, via the `Agent` tool
-- **agent-instructions file** — the repo's `CLAUDE.md`
+
+<!-- repo-conventions -->
+> **The repo conventions** are this repo's standards and commands. Find them in
+> this order, and never create or edit an instructions file just to get them:
+>
+> 1. `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`, if one exists.
+> 2. Otherwise CI: the `run:` steps in `.github/workflows/*.yml`. These are the
+>    source of truth for what has to pass.
+> 3. Otherwise the project files: `pyproject.toml`, `pytest.ini`,
+>    `package.json` scripts, `Makefile`.
+> 4. If it is still unclear, ask once when a person is in the session; in an
+>    unattended run, stop and report what is missing rather than guess.
+<!-- /repo-conventions -->
 
 ## Inputs
 
@@ -98,9 +110,9 @@ Checklist for each reviewer:
 - **Tests** — changed behavior is covered, asserting public behavior.
 - **Reuse & efficiency** — the diff reimplements a helper the codebase
   already has, or does needless work a simpler form avoids.
-- **Agent-instructions file** — the diff against every rule in it. Name the
-  file to the reviewer by its path; the reviewer loads it itself, so do not
-  paraphrase rules into the prompt.
+- **Repo conventions** — the diff against every rule in the files the repo's
+  standards come from. Name those files to the reviewer by path; the reviewer
+  loads them itself, so do not paraphrase rules into the prompt.
 - **UI** — any UI guidelines the repo documents (e.g. `docs/ui-guidelines.md`).
 
 ## Thorough mode

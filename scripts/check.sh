@@ -95,6 +95,41 @@ for path in sorted(glob.glob("output-styles/*.md")):
 sys.exit(1 if failed else 0)
 PY
 
+# Each skill loads on its own, so the repo-conventions rule is inlined in every
+# skill that uses it rather than shared from one file. Keep the copies identical,
+# and present wherever a skill relies on the term.
+python3 - <<'PY'
+import glob
+import re
+import sys
+
+BLOCK = re.compile(r"<!-- repo-conventions -->\n.*?\n<!-- /repo-conventions -->", re.S)
+
+failed = False
+blocks = {}
+for path in sorted(glob.glob("skills/*/SKILL.md")):
+    text = open(path, encoding="utf-8").read()
+    found = BLOCK.findall(text)
+    opens, closes = text.count("<!-- repo-conventions -->"), text.count("<!-- /repo-conventions -->")
+    if len(found) > 1 or opens != len(found) or closes != len(found):
+        print(f"error: {path}: needs exactly one balanced repo-conventions block", file=sys.stderr)
+        failed = True
+    elif found:
+        blocks[path] = found[0]
+    elif "repo conventions" in text:
+        print(f"error: {path}: says 'repo conventions' but carries no repo-conventions block", file=sys.stderr)
+        failed = True
+if len(set(blocks.values())) > 1:
+    first = next(iter(blocks))
+    for path, block in blocks.items():
+        if block != blocks[first]:
+            print(f"error: {path}: repo-conventions block differs from {first}'s; copy it word for word", file=sys.stderr)
+    failed = True
+if not failed:
+    print(f"repo-conventions block identical in {len(blocks)} skills")
+sys.exit(1 if failed else 0)
+PY
+
 # evals/ ships alongside the plugin but is never loaded at install time, and CI
 # never runs the cases (they bill real sessions and need a sandbox), so a broken
 # case.yaml would sit undetected until the next by-hand run. Shape-check them here

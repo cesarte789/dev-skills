@@ -59,7 +59,7 @@ To update a local install by hand: `claude plugin marketplace update dev-skills`
 | `polish-pr` | `/dev-skills:polish-pr [<N>]` | Review → fix → verify loop until merge-ready; marks a draft PR ready once review is clean and posts an approving comment when CI is green. |
 | `review-diff` | `/dev-skills:review-diff [<N>]` | Read-only review of a PR or the local diff: fresh reviewer subagents report verified findings and nothing gets fixed. |
 | `update-readme` | `/dev-skills:update-readme [area]` | Bring the README, feature docs and ARCHITECTURE back in sync with the code, and trim the README to its core. |
-| `compound` | `/dev-skills:compound [<N> \| recent [<count>]]` | Turn what review and CI caught on a merged PR, or across recent merged PRs, into a lint rule, test or `CLAUDE.md` line, as one PR in the current repo. Never writes anywhere else. |
+| `compound` | `/dev-skills:compound [<N> \| recent [<count>]]` | Turn what review and CI caught on a merged PR, or across recent merged PRs, into a lint rule, test or instructions-file line (`CLAUDE.md`, `AGENTS.md` or `GEMINI.md`; in the PR description when the repo has none), as one PR in the current repo. Never writes anywhere else. |
 
 ## Orchestrators
 
@@ -76,11 +76,11 @@ To update a local install by hand: `claude plugin marketplace update dev-skills`
 
 ## What the consuming repo must provide
 
-- A `CLAUDE.md` stating the conventions and **the exact test/build commands**, including a narrow per-area command if there is one. `polish-pr` and `generate-pr-from-issue` run whatever it names.
 - Anything that must be regenerated alongside a change (generated types, schema snapshots) and the command that does it.
 - Where docs live and which doc owns which fact, if there is more than a README.
 - CI that runs real tests on every PR, before running any merging orchestrator, ideally required on the default branch by branch protection or a ruleset. Without a required check (e.g. a private repo on GitHub Free), `resolve-issue` warns and merges only on green CI it has observed itself, so GitHub won't stop a merge that skips that wait. Either way it cannot tell whether the checks test anything, and with no meaningful checks everything is green.
 - Optionally, CI that skips draft PRs and runs on `ready_for_review`. `generate-pr-from-issue` opens PRs as drafts and `polish-pr` marks them ready only once review is clean, so such CI runs once per PR rather than once per review round.
+- Optionally, but it speeds things up: a `CLAUDE.md`, `AGENTS.md` or `GEMINI.md` stating the conventions and **the exact test/build commands**, including a narrow per-area command if there is one. `polish-pr` and `generate-pr-from-issue` run whatever it names. Without one, the skills take the commands from CI's `run:` steps, then from the project files (`pyproject.toml`, `pytest.ini`, `package.json` scripts, `Makefile`), and never create the file to get them.
 
 ## More
 
