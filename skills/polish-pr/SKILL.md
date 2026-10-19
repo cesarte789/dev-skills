@@ -88,8 +88,7 @@ cap (default **20** — stop and report if reached, to avoid spinning):
    Fix a `review failed` report like any finding — address the failure itself:
    reconcile a `tree does not match the PR head` failure by re-running Setup,
    and split an overflowed or errored review across more reviewers. A failure
-   naming an operation as `unavailable`, or several `dev-skills-ops`, is one no
-   fix can address: stop and report it at once. If two consecutive rounds fail,
+   naming an operation as `unavailable` is one no fix can address: stop and report it at once. If two consecutive rounds fail,
    stop and report rather than spend the remaining rounds.
 
    For a security-sensitive diff (auth, secrets, user input, file handling)

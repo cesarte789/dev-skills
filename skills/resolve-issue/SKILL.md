@@ -199,9 +199,8 @@ this stage:
   difference between what was asked and what landed is on the record.
 - **Decline it** — go to **Stage 5**. Its comment is already on the issue, so
   don't restate it: add only what your own vetting adds, then close.
-- **No verdict** — it stopped without posting one (an operation unavailable,
-  or several `dev-skills-ops` listed): **stop** with outcome `stopped`, naming
-  why. Never act on a
+- **No verdict** — it stopped on an unavailable operation without posting
+  one: **stop** with outcome `stopped`, naming that operation. Never act on a
   verdict it did not post.
 
 `evaluate-issue` recommends and stops by design — it never closes anything
