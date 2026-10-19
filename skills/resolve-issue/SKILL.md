@@ -189,8 +189,8 @@ After Stage 1b, never before it: a verdict on a vague issue judges a guess at th
 issue rather than the issue.
 
 Run the **evaluate-issue** skill on the issue number. It weighs the idea against
-what it permanently adds and lands on one of three, each with its own way out of
-this stage:
+what it permanently adds and lands on one of three verdicts, each with its own
+way out of this stage, or stops without one:
 
 - **Build it** — continue to Stage 2 with the smallest honest version its verdict
   names.
@@ -199,8 +199,9 @@ this stage:
   difference between what was asked and what landed is on the record.
 - **Decline it** — go to **Stage 5**. Its comment is already on the issue, so
   don't restate it: add only what your own vetting adds, then close.
-- **No verdict** — it stopped on an unavailable operation without posting
-  one: **stop** with outcome `stopped`, naming that operation. Never act on a
+- **No verdict** — it stopped without posting one, on an unavailable
+  operation or a `dev-skills-ops` that was not the user's: **stop** with
+  outcome `stopped`, naming why. Never act on a
   verdict it did not post.
 
 `evaluate-issue` recommends and stops by design — it never closes anything
