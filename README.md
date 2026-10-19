@@ -74,6 +74,13 @@ To update a local install by hand: `claude plugin marketplace update dev-skills`
 
 `i-have-adhd` is an [output style](https://code.claude.com/docs/en/output-styles), not a skill: it shapes every reply for an ADHD reader (next action first, numbered steps, no tangents). Turn it on for a repo by adding `"outputStyle": "dev-skills:i-have-adhd"` to the `.claude/settings.json` above, or for yourself under `/config` → Output style.
 
+## Platform overrides
+
+`review-diff` and `evaluate-issue` keep every platform command in an **Operations** section. To run them somewhere other than GitHub, git and Claude Code, install a skill named `dev-skills-ops` (in your repo or your own plugin) that defines any of these operations by name: they use its entries in place of their own, keep their own for the rest, and stop (`review-diff` with `review failed: <operation> unavailable`) at an operation it marks unavailable. No adapter ships here.
+
+- `evaluate-issue`: read the issue, search issues, comment on the issue
+- `review-diff`: check out the PR head, PR head commit, tree state, PR diff, PR intent, read the issue, default branch, local diff, spawn a fresh reviewer
+
 ## What the consuming repo must provide
 
 - Anything that must be regenerated alongside a change (generated types, schema snapshots) and the command that does it.

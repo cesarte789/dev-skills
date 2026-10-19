@@ -130,6 +130,38 @@ if not failed:
 sys.exit(1 if failed else 0)
 PY
 
+# A skill with an Operations section promises that a port, or a dev-skills-ops
+# override, needs to replace that section alone, so no gh or git command may
+# appear outside it. Skills without the section are not checked yet.
+python3 - <<'PY'
+import glob
+import re
+import sys
+
+COMMAND = re.compile(r"(?:^|[`\s(])(gh|git) [a-z][a-z-]*", re.M)
+
+failed = False
+checked = 0
+for path in sorted(glob.glob("skills/*/SKILL.md")):
+    lines = open(path, encoding="utf-8").read().split("\n")
+    start = next((i for i, line in enumerate(lines) if line.startswith("## Operations")), None)
+    if start is None:
+        continue
+    checked += 1
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    for i, line in enumerate(lines):
+        if start <= i < end:
+            continue
+        match = COMMAND.search(line)
+        if match:
+            print(f"error: {path}:{i + 1}: `{match.group(1)}` command outside the Operations section; "
+                  "move it there and refer to it by name", file=sys.stderr)
+            failed = True
+if not failed:
+    print(f"no gh or git commands outside the Operations section in {checked} skills")
+sys.exit(1 if failed else 0)
+PY
+
 # evals/ ships alongside the plugin but is never loaded at install time, and CI
 # never runs the cases (they bill real sessions and need a sandbox), so a broken
 # case.yaml would sit undetected until the next by-hand run. Shape-check them here

@@ -20,6 +20,13 @@ another forge or agent means rewriting this section alone. If `gh` isn't
 available in this session, do the same GitHub operations with the GitHub MCP
 tools (`mcp__github__*`) instead.
 
+If the session lists a skill named `dev-skills-ops` (bare or plugin-prefixed),
+load it first and use its entries in place of these, matched by name; an entry
+it does not define keeps its form here. It replaces operations only, never
+this skill's other rules. An operation it marks unavailable is never run or
+improvised: stop before the step that needs it and report
+`review failed: <operation> unavailable`.
+
 - **check out the PR head** — `gh pr checkout <N>` (it fetches first, fork
   heads included)
 - **PR head commit** — `gh pr view <N> --json headRefOid`

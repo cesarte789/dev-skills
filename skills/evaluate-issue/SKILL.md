@@ -20,6 +20,13 @@ another tracker means rewriting this section alone. If `gh` isn't available in
 this session, do the same operations with the GitHub MCP tools
 (`mcp__github__*`) instead.
 
+If the session lists a skill named `dev-skills-ops` (bare or plugin-prefixed),
+load it first and use its entries in place of these, matched by name; an entry
+it does not define keeps its form here. It replaces operations only, never
+this skill's other rules. An operation it marks unavailable is never run or
+improvised: stop before the step that needs it and report which operation is
+unavailable.
+
 - **read the issue** —
   `gh issue view <N> --json number,title,body,state,labels,comments,url`
 - **search issues** —
@@ -155,5 +162,6 @@ recommendation is that someone else gets to take it or leave it.
 
 ## Report
 
-State the verdict first — build, narrow, or decline — then the value, the cost
+If an operation was unavailable, say so first: which one, and the step you
+stopped before. Otherwise state the verdict first — build, narrow, or decline — then the value, the cost
 with the evidence behind it, the alternative you weighed, and the comment URL.
