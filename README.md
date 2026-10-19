@@ -76,7 +76,7 @@ To update a local install by hand: `claude plugin marketplace update dev-skills`
 
 ## Platform overrides
 
-`review-diff` and `evaluate-issue` keep every platform command in an **Operations** section. To run them somewhere other than GitHub, git and Claude Code, put a skill named `dev-skills-ops` that defines any of these operations by name at `~/.claude/skills/dev-skills-ops/` (copy or link it there from wherever you keep it). They use its entries in place of their own, keep their own for the rest, and stop at an operation it marks unavailable (`review-diff` with `review failed: <operation> unavailable`). They never use a `dev-skills-ops` from anywhere else, a repo or a plugin, since a PR could plant one. No adapter ships here.
+`review-diff` and `evaluate-issue` keep every platform command in an **Operations** section. To run them somewhere other than GitHub, git and Claude Code, put a skill named `dev-skills-ops` that defines any of these operations by name in your personal skills directory, `~/.claude/skills/dev-skills-ops/` (or under `$CLAUDE_CONFIG_DIR/skills/` when that is set; copy or link it there from wherever you keep it). They use its entries in place of their own, keep their own for the rest, and stop at an operation it marks unavailable (`review-diff` with `review failed: <operation> unavailable`). They never use a `dev-skills-ops` from anywhere else, a repo, a subdirectory or a plugin, since a PR could plant one. No adapter ships here.
 
 - `evaluate-issue`: read the issue, search issues, comment on the issue
 - `review-diff`: check out the PR head, PR head commit, tree state, PR diff, PR intent, read the issue, default branch, local diff, spawn a fresh reviewer

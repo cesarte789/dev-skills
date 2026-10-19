@@ -141,11 +141,11 @@ import sys
 # Command-shaped only: the tool, any global options, then one of its
 # subcommands, so prose such as "a git repo" or "use gh" passes, while a
 # quoted, tab-separated or `git -C <dir> diff` form is caught.
-GIT = ("add apply blame branch cat-file checkout cherry-pick clean clone commit config describe diff "
-       "fetch for-each-ref grep init log ls-files ls-remote ls-tree merge merge-base mv pull push "
+GIT = ("add am apply bisect blame branch cat-file checkout cherry-pick clean clone commit config describe diff "
+       "fetch for-each-ref format-patch gc grep init log notes reflog ls-files ls-remote ls-tree merge merge-base mv pull push "
        "rebase remote reset restore rev-list rev-parse revert rm show stash status switch "
-       "symbolic-ref tag worktree")
-GH = ("api auth browse cache gist issue label pr release repo ruleset run search secret status "
+       "show-ref submodule symbolic-ref tag update-ref worktree")
+GH = ("api auth browse cache codespace extension gist issue label org pr project release repo ruleset run search secret status "
       "variable workflow")
 OPTIONS = r"(?:\s+(?:-[A-Za-z]\s+\S+|--[\w-]+(?:=\S+|\s+[^\s-]\S*)?))*"
 COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join(GIT.split())
