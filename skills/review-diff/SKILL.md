@@ -15,9 +15,10 @@ what to do with the findings.
 ## Operations (GitHub + git + Claude Code)
 
 The steps below refer to these entries by name; no other part of this skill
-holds a platform command or file name, so porting it to another forge or agent
-means rewriting this section alone. If `gh` isn't available in this session, do the
-same GitHub operations with the GitHub MCP tools (`mcp__github__*`) instead.
+holds a platform command or an agent-specific file name, so porting it to
+another forge or agent means rewriting this section alone. If `gh` isn't
+available in this session, do the same GitHub operations with the GitHub MCP
+tools (`mcp__github__*`) instead.
 
 - **check out the PR head** — `gh pr checkout <N>` (it fetches first, fork
   heads included)

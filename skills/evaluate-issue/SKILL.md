@@ -15,9 +15,10 @@ description: >-
 ## Operations (GitHub)
 
 The steps below refer to these entries by name; no other part of this skill
-holds a platform command or file name, so porting it to another tracker means
-rewriting this section alone. If `gh` isn't available in this session, do the
-same operations with the GitHub MCP tools (`mcp__github__*`) instead.
+holds a platform command or an agent-specific file name, so porting it to
+another tracker means rewriting this section alone. If `gh` isn't available in
+this session, do the same operations with the GitHub MCP tools
+(`mcp__github__*`) instead.
 
 - **read the issue** —
   `gh issue view <N> --json number,title,body,state,labels,comments,url`
