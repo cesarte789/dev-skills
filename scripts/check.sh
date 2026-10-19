@@ -116,7 +116,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
         failed = True
     elif found:
         blocks[path] = found[0]
-    elif "repo conventions" in text:
+    elif re.search(r"repo\s+conventions", text, re.I):
         print(f"error: {path}: says 'repo conventions' but carries no repo-conventions block", file=sys.stderr)
         failed = True
 if len(set(blocks.values())) > 1:
