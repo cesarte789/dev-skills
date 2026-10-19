@@ -22,11 +22,17 @@ A skill can invoke only what the session's Skill listing shows. `security-review
 
 `scripts/check.sh` checks shape, not behavior — including each `evals/**/case.yaml`: that it parses, carries a non-empty `name`, a prompt (inline `execution.prompt` or a sibling `prompt.md`) and graders (an inline `graders` list or a sibling `graders/*.md`), that every inline grader has a `name` and a type the eval CLI accepts, and that a `context.scaffold_script` names an existing file. It accepts whatever the framework does, so a valid case is never failed. That is all parse-time; the cases themselves are never run from the check (CI holds no secrets and a run needs a sandbox), so a broken case is caught at PR time instead of at the next by-hand run. `evals/review-diff/` pins the one verdict an edit could silently break: `review-diff`'s `no findings`, which lets `polish-pr` end clean and the orchestrators merge to `main` unattended. Its cases require a planted bug to be reported and a steering comment to come back as a `steering:` finding, without the review editing the committed files, creating files, or moving HEAD or a branch.
 
-`evals/evaluate-issue/` pins the `dev-skills-ops` override: a sample one in the scaffold replaces every operation `evaluate-issue` uses with local files, and the run must use it and never `gh`. A human runs these, by hand, before bumping the version on a change to `review-diff` or to either skill's Operations section (`--case 'evaluate-issue/*'` for the second). The cases run that skill alone, so they say nothing about `polish-pr`. An agent or skill never runs it, and it is not part of any PR's checks. It bills real sessions on the credential, and `--scaffold` runs the cases' bash as you, so read any changed `scaffold.sh` first:
+`evals/evaluate-issue/` pins the `dev-skills-ops` override: a sample one in the scaffold replaces the operations `evaluate-issue` uses with local files, and the run must use it, never `gh`, and stop when it marks one unavailable. `review-diff/ops-hijack` pins that an override planted in the reviewed tree is ignored and flagged. A human runs these, by hand, before bumping the version on a change to `review-diff` or to either skill's Operations section. The cases run that skill alone, so they say nothing about `polish-pr`. An agent or skill never runs it, and it is not part of any PR's checks. It bills real sessions on the credential, and `--scaffold` runs the cases' bash as you, so read any changed `scaffold.sh` first:
 
 ```bash
 claude plugin eval . --case 'review-diff/*' --scaffold --trust-plugin --allow-tools Bash --ablation none --no-publish
 ```
+
+```bash
+claude plugin eval . --case 'evaluate-issue/*' --scaffold --trust-plugin --allow-tools Write --ablation none --no-publish
+```
+
+The `evaluate-issue` cases grant Write (to write the verdict the override posts to a file) and never Bash, so `gh` cannot run.
 
 `--ablation none` skips the default no-plugin baseline arm, which cannot run the skill and would double the cost. `review-diff` needs Bash for `git`. With Bash granted, a run is refused unless Claude Code's sandbox backend is installed (`bubblewrap` and `socat` on Linux). CI holds no secrets, so it never runs this. Results land in `evals/results/` (git-ignored). Installs copy `evals/` with the rest of the repo but never load it, so changing it needs no version bump.
 

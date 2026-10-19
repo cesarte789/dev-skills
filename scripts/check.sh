@@ -138,7 +138,14 @@ import glob
 import re
 import sys
 
-COMMAND = re.compile(r"(?:^|[`\s(])(gh|git) [a-z][a-z-]*", re.M)
+# Command-shaped only: the tool, then one of its subcommands, so prose such as
+# "a git repo" or "use gh" passes and a quoted or tab-separated command does not.
+GIT = ("add apply branch checkout cherry-pick clean clone commit config diff fetch grep init log "
+       "ls-files ls-remote ls-tree merge merge-base pull push rebase remote reset restore rev-list "
+       "rev-parse show stash status switch tag worktree")
+GH = "api auth browse cache gist issue label pr release repo ruleset run search secret variable workflow"
+COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)\s+(?:" + "|".join(GIT.split()) + r")|(gh)\s+(?:"
+                     + "|".join(GH.split()) + r"))(?![\w-])", re.M)
 
 failed = False
 checked = 0
@@ -154,7 +161,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
             continue
         match = COMMAND.search(line)
         if match:
-            print(f"error: {path}:{i + 1}: `{match.group(1)}` command outside the Operations section; "
+            print(f"error: {path}:{i + 1}: `{match.group(1) or match.group(2)}` command outside the Operations section; "
                   "move it there and refer to it by name", file=sys.stderr)
             failed = True
 if not failed:

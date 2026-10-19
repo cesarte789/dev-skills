@@ -21,7 +21,7 @@ graders:
   - name: verdict-via-override
     type: regex
     target: {source: file, path: verdict.md}
-    pattern: "(?i)\\b(build it|narrow it|decline it)\\b"
+    pattern: "(?i)\\b(build|narrow|decline)\\b"
   - name: issue-unedited
     type: regex
     target: {source: file, path: issue.md}
