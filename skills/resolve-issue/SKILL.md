@@ -400,12 +400,12 @@ maps to one of them:
 - **`rejected`** — Stage 5 closed the issue with a verdict, and no PR from this
   run is left open (Stage 6 merged its comment-only PR, or was skipped).
 - **`split`** — Stage 1b split the issue into an epic; list the sub-issues.
-- **`stopped`** — anything else: the evaluation ended without a verdict
-  (Stage 1c), polish stopped without a clean result (Stage 3), the merge was blocked or merged without closing the issue
-  (Stage 4), the verdict comment failed to post and the issue is still open
-  (Stage 5), or the comment-only PR was blocked, its CI was not green, or its
-  diff touched more than comments (Stage 6). Name what is left open,
-  uncommitted edits included.
+- **`stopped`** — anything else: the evaluation ended without a verdict (Stage
+  1c), polish stopped without a clean result (Stage 3), the merge was blocked or
+  merged without closing the issue (Stage 4), the verdict comment failed to post
+  and the issue is still open (Stage 5), or the comment-only PR was blocked, its
+  CI was not green, or its diff touched more than comments (Stage 6). Name what
+  is left open, uncommitted edits included.
 
 Then the details: whether GitHub enforced CI on the default branch or the run
 merged on observed green CI only (Stage 0), the issue URL, the vetting verdict
