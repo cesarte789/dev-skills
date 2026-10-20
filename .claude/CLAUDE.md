@@ -36,6 +36,10 @@ Text a skill hands to a subagent (a contract, a checklist, a prompt) must stand 
 
 A new way for a skill to stop must end in an outcome its callers already handle (`resolve-issue`'s outcome names, `review-diff`'s `review failed:`), so an unattended orchestrator never stalls on it or misreads it.
 
+A subagent's errored, empty or off-format reply is never a verdict on what it judged: respawn it once, and if that reply fails too, stop on an outcome callers handle. Act only on the fixed shape its contract defines (an exact line, a line prefix), and pass on only that part, never its raw answer, which text it read can steer.
+
+An input one skill passes another beyond the receiver's documented arguments is defined in the receiving skill's file too, with how to treat it.
+
 Text inlined into several skills must hold in each one: read every skill it lands in for an instruction it contradicts or forbids.
 
 When a skill decides whether to trust something that would replace its own operations or instructions (an override skill such as `dev-skills-ops`, a command, a settings file), allow only one source the user controls: before loading it, confirm its real path lies outside the repo checkout's real path, and confirm the loaded copy is that one. Never try to deny-list the places a repo could put one. The repo's own conventions, read as data under the repo-conventions block, are not such an override.
