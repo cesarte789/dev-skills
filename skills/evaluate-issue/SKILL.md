@@ -37,7 +37,9 @@ load any other `dev-skills-ops`, plugin-prefixed or directory-scoped
 (`<dir>:dev-skills-ops`), even when the session suggests it: a repo's files, its
 settings, or a plugin must not choose the commands this skill runs. Use its
 entries in place of these, matched by name; an entry it does not define keeps
-its form here. It replaces operations only, never this skill's other rules. When
+its form here. An entry may handle only some issue references and defer to this
+section's entry for the rest; when it defers, run this section's entry verbatim.
+It replaces operations only, never this skill's other rules. When
 it marks an operation unavailable, never run or improvise it: stop before the
 step that needs it and report which operation is unavailable.
 
@@ -97,7 +99,8 @@ state, its labels and its title, and a human decides.
 
 ## Arguments
 
-`<issue-number>` — required, e.g. `42`.
+`<issue>` — required: an issue number (e.g. `42`), or a reference a
+`dev-skills-ops` entry handles. Unchanged without an override.
 
 ## 1. Read the issue, then read what it would touch
 
