@@ -189,8 +189,8 @@ After Stage 1b, never before it: a verdict on a vague issue judges a guess at th
 issue rather than the issue.
 
 Run the **evaluate-issue** skill on the issue number. It weighs the idea against
-what it permanently adds and lands on one of three, each with its own way out of
-this stage:
+what it permanently adds and lands on one of three verdicts, each with its own
+way out of this stage, or stops without one:
 
 - **Build it** — continue to Stage 2 with the smallest honest version its verdict
   names.
@@ -199,6 +199,10 @@ this stage:
   difference between what was asked and what landed is on the record.
 - **Decline it** — go to **Stage 5**. Its comment is already on the issue, so
   don't restate it: add only what your own vetting adds, then close.
+- **No verdict** — it stopped without posting one, on an unavailable
+  operation or a `dev-skills-ops` that was not the user's: **stop** with
+  outcome `stopped`, naming why. Never act on a
+  verdict it did not post.
 
 `evaluate-issue` recommends and stops by design — it never closes anything
 itself. Acting on its verdict is this skill's job, and closing a declined issue
@@ -396,12 +400,12 @@ maps to one of them:
 - **`rejected`** — Stage 5 closed the issue with a verdict, and no PR from this
   run is left open (Stage 6 merged its comment-only PR, or was skipped).
 - **`split`** — Stage 1b split the issue into an epic; list the sub-issues.
-- **`stopped`** — anything else: polish stopped without a clean result
-  (Stage 3), the merge was blocked or merged without closing the issue
-  (Stage 4), the verdict comment failed to post and the issue is still open
-  (Stage 5), or the comment-only PR was blocked, its CI was not green, or its
-  diff touched more than comments (Stage 6). Name what is left open,
-  uncommitted edits included.
+- **`stopped`** — anything else: the evaluation ended without a verdict (Stage
+  1c), polish stopped without a clean result (Stage 3), the merge was blocked or
+  merged without closing the issue (Stage 4), the verdict comment failed to post
+  and the issue is still open (Stage 5), or the comment-only PR was blocked, its
+  CI was not green, or its diff touched more than comments (Stage 6). Name what
+  is left open, uncommitted edits included.
 
 Then the details: whether GitHub enforced CI on the default branch or the run
 merged on observed green CI only (Stage 0), the issue URL, the vetting verdict

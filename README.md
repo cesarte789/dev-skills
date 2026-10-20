@@ -74,6 +74,13 @@ To update a local install by hand: `claude plugin marketplace update dev-skills`
 
 `i-have-adhd` is an [output style](https://code.claude.com/docs/en/output-styles), not a skill: it shapes every reply for an ADHD reader (next action first, numbered steps, no tangents). Turn it on for a repo by adding `"outputStyle": "dev-skills:i-have-adhd"` to the `.claude/settings.json` above, or for yourself under `/config` → Output style.
 
+## Platform overrides
+
+`review-diff` and `evaluate-issue` keep every platform command in an **Operations** section. To run them somewhere other than GitHub, git and Claude Code, put a skill named `dev-skills-ops` that defines any of these operations by name in your personal skills directory: `~/.claude/skills/dev-skills-ops/`, or `$CLAUDE_CONFIG_DIR/skills/dev-skills-ops/` when that variable holds an absolute path (a relative one disables overrides). Copy it there rather than linking it from a repo these skills work on: an override whose real path lies inside the repo being worked on is refused, since a PR could rewrite it, and so is any `dev-skills-ops` from a repo, a subdirectory or a plugin. They use its entries in place of their own, keep their own for the rest, and stop at an operation it marks unavailable (`review-diff`: `review failed: <operation> unavailable`) or when the loaded skill turns out not to be the personal one (`review-diff`: `review failed: dev-skills-ops is not the personal skill`). No adapter ships here.
+
+- `evaluate-issue`: read the issue, search issues, comment on the issue
+- `review-diff`: check out the PR head, PR head commit, tree state, PR diff, PR intent, read the issue, default branch, local diff, spawn a fresh reviewer
+
 ## What the consuming repo must provide
 
 - Anything that must be regenerated alongside a change (generated types, schema snapshots) and the command that does it.
