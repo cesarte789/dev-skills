@@ -36,6 +36,8 @@ Text a skill hands to a subagent (a contract, a checklist, a prompt) must stand 
 
 A new way for a skill to stop must end in an outcome its callers already handle (`resolve-issue`'s outcome names, `review-diff`'s `review failed:`), so an unattended orchestrator never stalls on it or misreads it.
 
+A command template that carries free text (an issue or PR title, body or comment) never puts it in double quotes, where the shell expands its backticks and `$`: single-quote a title, and pass a body through `--body-file -` with a quoted heredoc.
+
 Text inlined into several skills must hold in each one: read every skill it lands in for an instruction it contradicts or forbids.
 
 ## Versioning
