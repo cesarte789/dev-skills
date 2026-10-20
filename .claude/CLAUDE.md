@@ -38,7 +38,7 @@ A new way for a skill to stop must end in an outcome its callers already handle 
 
 Text inlined into several skills must hold in each one: read every skill it lands in for an instruction it contradicts or forbids.
 
-When a skill decides whether to trust something that would choose what it runs (a skill, a command, a settings file), allow only one source the user controls and check its real path before loading it; never try to deny-list the places a repo could put one.
+When a skill decides whether to trust something that would replace its own operations or instructions (an override skill such as `dev-skills-ops`, a command, a settings file), allow only one source the user controls: before loading it, confirm its real path lies outside the repo checkout's real path, and confirm the loaded copy is that one. Never try to deny-list the places a repo could put one. The repo's own conventions, read as data under the repo-conventions block, are not such an override.
 
 ## Versioning
 
