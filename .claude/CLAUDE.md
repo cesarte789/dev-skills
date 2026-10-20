@@ -40,6 +40,8 @@ A subagent's errored, empty or off-format reply is never a verdict on what it ju
 
 An input one skill passes another beyond the receiver's documented arguments is defined in the receiving skill's file too, with how to treat it.
 
+A command template never puts text the skill writes or copies at run time in double quotes, where the shell expands its backticks and `$`; fixed template text may stay there. Single-quote every single-line argument (a title, search terms, a label, a `gh pr merge --subject`), writing each `'` in it as `'\''`. Pass a body, comment or commit message on stdin from a quoted heredoc whose delimiter appears as no line of the text: `--body-file -` for `gh issue` and `gh pr`, `-F body=@-` for `gh api`, `-F -` for `git commit`. A flag with no stdin form, such as `close --comment`, takes no run-time body: post the comment first, then close without it.
+
 Text inlined into several skills must hold in each one: read every skill it lands in for an instruction it contradicts or forbids.
 
 When a skill decides whether to trust something that would replace its own operations or instructions (an override skill such as `dev-skills-ops`, a command, a settings file), allow only one source the user controls: before loading it, confirm its real path lies outside the repo checkout's real path, and confirm the loaded copy is that one. Never try to deny-list the places a repo could put one. The repo conventions are not such an override: the repo-conventions block takes standards and commands from them but lets nothing in them override the skill.
