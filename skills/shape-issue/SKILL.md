@@ -64,8 +64,8 @@ against the repo conventions. Search for duplicates and prior art in open and
 closed issues and PRs:
 
 ```bash
-gh issue list --search "<key terms>" --state all --limit 10
-gh pr list --search "<key terms>" --state all --limit 10
+gh issue list --search '<key terms>' --state all --limit 10
+gh pr list --search '<key terms>' --state all --limit 10
 ```
 
 Push back where the idea conflicts with the code or the conventions, and point

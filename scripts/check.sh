@@ -173,6 +173,74 @@ if not failed:
 sys.exit(1 if failed else 0)
 PY
 
+# Run-time text in a command template is single-quoted or on stdin, never in
+# double quotes (.claude/CLAUDE.md, Writing skills).
+python3 - <<'PY'
+import glob
+import re
+import sys
+
+# A placeholder such as <title> stands for text the skill fills in at run time.
+# Inside double quotes the shell expands its backticks and $, so a command
+# template may carry one only single-quoted or on stdin from a quoted heredoc.
+# Fenced blocks are read as shell, quotes spanning lines; outside them, only
+# from a gh or git command on to the end of its line.
+COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:git|gh)\s+[a-z]")
+PLACEHOLDER = re.compile(r"<[A-Za-z][^<>]*>")
+HEREDOC = re.compile(r"<<-?\s*'?([A-Za-z_]+)'?")
+
+def scan(text, quote, report):
+    i = 0
+    while i < len(text):
+        c = text[i]
+        if quote is None and c == "#" and (i == 0 or text[i - 1].isspace()):
+            break
+        if quote == '"' and c == "\\":
+            i += 2
+            continue
+        if quote is None and c in "'\"":
+            quote = c
+        elif c == quote:
+            quote = None
+        elif quote == '"' and c == "<" and PLACEHOLDER.match(text, i):
+            report(PLACEHOLDER.match(text, i).group(0))
+            i = PLACEHOLDER.match(text, i).end()
+            continue
+        i += 1
+    return quote
+
+failed = False
+checked = 0
+for path in sorted(glob.glob("skills/*/SKILL.md")):
+    checked += 1
+    fence, quote, heredoc = False, None, None
+    for n, line in enumerate(open(path, encoding="utf-8").read().split("\n"), 1):
+        def report(placeholder):
+            global failed
+            print(f"error: {path}:{n}: run-time text {placeholder} in double quotes; single-quote it, "
+                  "or pass it on stdin from a quoted heredoc", file=sys.stderr)
+            failed = True
+        if line.lstrip().startswith("```"):
+            fence, quote, heredoc = not fence, None, None
+            continue
+        if fence and heredoc:
+            heredoc = None if line.strip() == heredoc else heredoc
+        elif fence:
+            quote = scan(line, quote, report)
+            opened = HEREDOC.search(line) if quote is None else None
+            heredoc = opened.group(1) if opened else None
+        else:
+            match = COMMAND.search(line)
+            if match:
+                command = line[match.start() + 1:] if not match.group(0)[0].isalpha() else line
+                if match.group(0)[0] == "`":
+                    command = command.split("`")[0]
+                scan(command, None, report)
+if not failed:
+    print(f"no run-time text in double-quoted command arguments in {checked} skills")
+sys.exit(1 if failed else 0)
+PY
+
 # evals/ ships alongside the plugin but is never loaded at install time, and CI
 # never runs the cases (they bill real sessions and need a sandbox), so a broken
 # case.yaml would sit undetected until the next by-hand run. Shape-check them here

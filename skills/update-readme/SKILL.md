@@ -12,6 +12,9 @@ description: >-
 
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
+> Text filled in at run time goes in single quotes (each `'` in it written
+> `'\''`) or on stdin from a quoted heredoc whose delimiter is no line of the
+> text, never in double quotes, where the shell expands its backticks and `$`.
 
 > `<default>` below is the repo's default branch, whatever its name. Resolve it
 > once per run: `git ls-remote --symref origin HEAD` names it in its
@@ -115,7 +118,9 @@ Commit with a conventional-commit message (`docs: ...`), push, and open the PR:
 
 ```bash
 git push -u origin <branch>
-gh pr create --title "docs: refresh the docs to match current behavior" --body "<what drifted and was corrected, and what was cut or moved>"
+gh pr create --title "docs: refresh the docs to match current behavior" --body-file - <<'BODY'
+<what drifted and was corrected, and what was cut or moved>
+BODY
 ```
 
 End the commit message with the repo's Co-Authored-By trailer. Report the PR URL

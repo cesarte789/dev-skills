@@ -11,6 +11,9 @@ description: >-
 
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
+> Text filled in at run time goes in single quotes (each `'` in it written
+> `'\''`) or on stdin from a quoted heredoc whose delimiter is no line of the
+> text, never in double quotes, where the shell expands its backticks and `$`.
 
 <!-- repo-conventions -->
 > **The repo conventions** are this repo's standards and commands. Find them in
@@ -68,7 +71,9 @@ affected tests/build after your edits.
 ## 3. Commit and push
 
 ```bash
-git add -A && git commit -m "<conventional message describing the fixes>"
+git add -A && git commit -F - <<'MSG'
+<conventional message describing the fixes>
+MSG
 git push
 ```
 
@@ -78,15 +83,18 @@ Reply to each addressed inline comment so the reviewer has context (use the
 comment id from the API list):
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/<N>/comments/<comment_id>/replies \
-  -f body="Done — <what changed> (commit <sha>)."
+gh api repos/{owner}/{repo}/pulls/<N>/comments/<comment_id>/replies -F body=@- <<'BODY'
+Done — <what changed> (commit <sha>).
+BODY
 ```
 
 Post a short summary comment on the PR listing what you addressed and anything you
 pushed back on. Re-request review if appropriate:
 
 ```bash
-gh pr comment <N> --body "<summary of changes made>"
+gh pr comment <N> --body-file - <<'BODY'
+<summary of changes made>
+BODY
 ```
 
 Report which comments you resolved and which you left for the reviewer to weigh in
