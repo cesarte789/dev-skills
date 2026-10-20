@@ -129,13 +129,14 @@ go to step 5.
 Show the final draft, then file it:
 
 ```bash
-gh issue create --title "<title>" --body-file - <<'BODY'
+gh issue create --title '<title>' --body-file - <<'BODY'
 <body>
 BODY
 ```
 
-The quoted heredoc keeps the shell from expanding the backticks and `$` a
-markdown body carries.
+Single quotes around the title (each `'` in it written `'\''`) and the quoted
+heredoc keep the shell from expanding the backticks and `$` that titles and
+markdown bodies carry.
 
 Report the issue URL. **Stop there.** Never go on to implementation. Suggest
 the next step instead: `/dev-skills:resolve-issue <N>` takes it from vetting to
