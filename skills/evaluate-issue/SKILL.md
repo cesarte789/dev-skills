@@ -50,8 +50,16 @@ operation is unavailable.
 - **read the issue** —
   `gh issue view <N> --json number,title,body,state,labels,comments,url`
 - **search issues** —
-  `gh issue list --search "<key terms>" --state all --limit 10`
-- **comment on the issue** — `gh issue comment <N> --body "<verdict>"`
+  `gh issue list --search '<key terms>' --state all --limit 10`, writing each
+  `'` in the terms as `'\''`
+- **comment on the issue** — the verdict on stdin, from a quoted heredoc whose
+  delimiter is no line of the verdict:
+
+  ```bash
+  gh issue comment <N> --body-file - <<'VERDICT'
+  <verdict>
+  VERDICT
+  ```
 
 <!-- repo-conventions -->
 > **The repo conventions** are this repo's standards and commands. Find them in
