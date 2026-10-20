@@ -38,6 +38,8 @@ A new way for a skill to stop must end in an outcome its callers already handle 
 
 Text inlined into several skills must hold in each one: read every skill it lands in for an instruction it contradicts or forbids.
 
+When a skill decides whether to trust something that would choose what it runs (a skill, a command, a settings file), allow only one source the user controls and check its real path before loading it; never try to deny-list the places a repo could put one.
+
 ## Versioning
 
 Raise `version` in `.claude-plugin/plugin.json` in the same change as any edit to what the plugin ships (`skills/`, `output-styles/`, `plugin.json` itself): patch for a fix or simplification, minor for a new or changed behavior. Claude Code compares that field, not the git commit, so an unbumped change never reaches existing installs. Docs-only changes need no bump.
