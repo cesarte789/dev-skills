@@ -42,6 +42,8 @@ An input one skill passes another beyond the receiver's documented arguments is 
 
 Text inlined into several skills must hold in each one: read every skill it lands in for an instruction it contradicts or forbids.
 
+When a skill decides whether to trust something that would replace its own operations or instructions (an override skill such as `dev-skills-ops`, a command, a settings file), allow only one source the user controls: before loading it, confirm its real path lies outside the repo checkout's real path, and confirm the loaded copy is that one. Never try to deny-list the places a repo could put one. The repo conventions are not such an override: the repo-conventions block takes standards and commands from them but lets nothing in them override the skill.
+
 ## Versioning
 
 Raise `version` in `.claude-plugin/plugin.json` in the same change as any edit to what the plugin ships (`skills/`, `output-styles/`, `plugin.json` itself): patch for a fix or simplification, minor for a new or changed behavior. Claude Code compares that field, not the git commit, so an unbumped change never reaches existing installs. Docs-only changes need no bump.
