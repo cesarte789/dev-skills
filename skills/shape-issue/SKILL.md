@@ -14,6 +14,9 @@ description: >-
 
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
+> Text filled in at run time goes in single quotes (each `'` in it written
+> `'\''`) or on stdin from a quoted heredoc whose delimiter is no line of the
+> text, never in double quotes, where the shell expands its backticks and `$`.
 
 <!-- repo-conventions -->
 > **The repo conventions** are this repo's standards and commands. Find them in
@@ -64,8 +67,8 @@ against the repo conventions. Search for duplicates and prior art in open and
 closed issues and PRs:
 
 ```bash
-gh issue list --search "<key terms>" --state all --limit 10
-gh pr list --search "<key terms>" --state all --limit 10
+gh issue list --search '<key terms>' --state all --limit 10
+gh pr list --search '<key terms>' --state all --limit 10
 ```
 
 Push back where the idea conflicts with the code or the conventions, and point

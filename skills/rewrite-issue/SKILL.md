@@ -10,6 +10,9 @@ description: >-
 
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
+> Text filled in at run time goes in single quotes (each `'` in it written
+> `'\''`) or on stdin from a quoted heredoc whose delimiter is no line of the
+> text, never in double quotes, where the shell expands its backticks and `$`.
 
 Clarify an issue without changing its intent. **Preserve the original author's
 meaning** — clarify and structure, don't add new requirements.
@@ -40,12 +43,16 @@ cannot reasonably land in one pull request.
   update the issue.
 
 ```bash
-gh issue comment <N> --body "_Original issue, preserved before rewrite:_
+gh issue comment <N> --body-file - <<'BODY'
+_Original issue, preserved before rewrite:_
 
 **<original title>**
 
-<original body>"
-gh issue edit <N> --title "<new title>" --body "<rewritten body>"
+<original body>
+BODY
+gh issue edit <N> --title '<new title>' --body-file - <<'BODY'
+<rewritten body>
+BODY
 ```
 
 ## 3b. If it's an epic — split into sub-tasks
@@ -57,9 +64,11 @@ gh issue edit <N> --title "<new title>" --body "<rewritten body>"
   no longer holds standalone work.
 
 ```bash
-gh issue create --title "<sub-task title>" --body "<body>
+gh issue create --title '<sub-task title>' --body-file - <<'BODY'
+<body>
 
-Part of #<N>."
+Part of #<N>.
+BODY
 # repeat per sub-task, then update the parent body with the checklist of new issues
 ```
 

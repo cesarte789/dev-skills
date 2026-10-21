@@ -10,6 +10,9 @@ description: >-
 
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
+> Text filled in at run time goes in single quotes (each `'` in it written
+> `'\''`) or on stdin from a quoted heredoc whose delimiter is no line of the
+> text, never in double quotes, where the shell expands its backticks and `$`.
 
 > `<default>` below is the repo's default branch, whatever its name. Resolve it
 > once per run: `git ls-remote --symref origin HEAD` names it in its
@@ -88,9 +91,11 @@ linking the issue so it auto-closes on merge:
 
 ```bash
 git push -u origin <branch>
-gh pr create --draft --title "<conventional title>" --body "<summary>
+gh pr create --draft --title '<conventional title>' --body-file - <<'BODY'
+<summary>
 
-Closes #<N>"
+Closes #<N>
+BODY
 ```
 
 A draft because review rounds push often and CI only has to pass on the result:

@@ -19,6 +19,9 @@ description: >-
 
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
+> Text filled in at run time goes in single quotes (each `'` in it written
+> `'\''`) or on stdin from a quoted heredoc whose delimiter is no line of the
+> text, never in double quotes, where the shell expands its backticks and `$`.
 
 > The other skills named here ship in the same `dev-skills` plugin. Invoke them
 > with the Skill tool by the name the session lists, `dev-skills:<name>` (e.g.
@@ -123,8 +126,8 @@ word. Read the files it names, run the relevant test or reproduction if it
 reports a bug, and search for prior art:
 
 ```bash
-gh issue list --search "<key terms>" --state all --limit 10
-gh pr list --search "<key terms>" --state all --limit 10
+gh issue list --search '<key terms>' --state all --limit 10
+gh pr list --search '<key terms>' --state all --limit 10
 ```
 
 An issue **makes sense** when all of these hold:
@@ -325,7 +328,9 @@ analysis:
   fact the evaluation said would flip its verdict.
 
 ```bash
-gh issue comment <N> --body "<verdict>"
+gh issue comment <N> --body-file - <<'VERDICT'
+<verdict>
+VERDICT
 gh issue close <N> --reason "not planned"
 ```
 
@@ -396,12 +401,16 @@ git fetch origin --quiet && git checkout -b docs/<short-slug> origin/<default>
 # add the comment(s)
 git status --short   # verify: only the files you meant to annotate
 git diff             # verify: comments only
-git add -A && git commit -m "docs: <what the comment records>"
+git add -A && git commit -F - <<'MSG'
+docs: <what the comment records>
+MSG
 git rev-parse HEAD   # the commit you verified: pin the merge to it
 git push -u origin docs/<short-slug>
-gh pr create --title "docs: <what the comment records>" --body "<summary>
+gh pr create --title 'docs: <what the comment records>' --body-file - <<'BODY'
+<summary>
 
-Follows #<N>"
+Follows #<N>
+BODY
 # wait for CI as polish-pr's done condition does (below); green=1 only if it ended green
 [ "$green" = 1 ] && gh pr merge --squash --delete-branch --match-head-commit <sha from rev-parse>
 git checkout <default> && git pull --ff-only && git fetch --prune

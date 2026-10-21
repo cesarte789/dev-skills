@@ -14,6 +14,9 @@ description: >-
 
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
+> Text filled in at run time goes in single quotes (each `'` in it written
+> `'\''`) or on stdin from a quoted heredoc whose delimiter is no line of the
+> text, never in double quotes, where the shell expands its backticks and `$`.
 
 <!-- repo-conventions -->
 > **The repo conventions** are this repo's standards and commands. Find them in
@@ -106,8 +109,8 @@ it. Before filing, search the issues, both open ones and those closed as not
 planned, for the same idea:
 
 ```bash
-gh issue list --state open --search "<key terms>" --json number,title,url
-gh issue list --state closed --search "<key terms> reason:\"not planned\"" --json number,title,url
+gh issue list --state open --search '<key terms>' --json number,title,url
+gh issue list --state closed --search '<key terms> reason:"not planned"' --json number,title,url
 ```
 
 Read the body and the closing comments of every close match. The candidate is
@@ -122,8 +125,10 @@ old issue and say what changed.
 Ensure the label exists, then create the issue:
 
 ```bash
-gh label create "<label>" --color BFD4F2 --description "AI-proposed <kind>" 2>/dev/null || true
-gh issue create --title "<title>" --body "<body>" --label "<label>"
+gh label create '<label>' --color BFD4F2 --description 'AI-proposed <kind>' 2>/dev/null || true
+gh issue create --title '<title>' --label '<label>' --body-file - <<'BODY'
+<body>
+BODY
 ```
 
 Report the created issue URL. If you genuinely cannot find a worthwhile proposal

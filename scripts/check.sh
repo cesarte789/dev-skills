@@ -173,6 +173,107 @@ if not failed:
 sys.exit(1 if failed else 0)
 PY
 
+# Run-time text in a command template is single-quoted or in a quoted heredoc,
+# never in double quotes (.claude/CLAUDE.md, Writing skills).
+python3 - <<'PY'
+import glob
+import re
+import sys
+
+# A placeholder such as <title> stands for text the skill fills in at run time.
+# Inside double quotes, or in the body of an unquoted heredoc, the shell expands
+# its backticks and $. Shell fences are read whole, as the shell would (quotes and
+# placeholders spanning lines, backslash escapes, comments, heredoc bodies);
+# outside them, every inline code span that holds a gh or git command, read as
+# one line even when the prose wraps it.
+COMMAND = re.compile(r"(?:^|[\s(])(?:git|gh)\s+[a-z]")
+PLACEHOLDER = re.compile(r"<[A-Za-z][^<>]*>")
+HEREDOC = re.compile(r"(?<!<)<<(?!<)-?[ \t]*(?:'([^'\n]+)'|\"([^\"\n]+)\"|(\\?[A-Za-z0-9_]+))")
+FENCE = re.compile(r"[ \t]*(```+|~~~+)[ \t]*([\w-]*)")
+SHELL = {"bash", "sh", "shell", "zsh"}
+
+
+def scan(text):
+    """Yield (offset, placeholder, where) for each placeholder the shell would expand."""
+    i, n, pending = 0, len(text), []
+    while i < n:
+        c = text[i]
+        if c == "\n":
+            i += 1
+            for delimiter, quoted in pending:
+                end = i
+                while end < n:
+                    eol = text.find("\n", end)
+                    eol = n if eol < 0 else eol
+                    if text[end:eol].strip() == delimiter:
+                        break
+                    end = eol + 1
+                if not quoted:
+                    for m in PLACEHOLDER.finditer(text, i, min(end, n)):
+                        yield m.start(), m.group(0), "an unquoted heredoc"
+                eol = text.find("\n", end)
+                i = n if eol < 0 else eol + 1
+            pending = []
+        elif c == "#" and (i == 0 or text[i - 1].isspace()):
+            eol = text.find("\n", i)
+            i = n if eol < 0 else eol
+        elif c == "\\":
+            i += 2
+        elif c == "'":
+            close = text.find("'", i + 1)
+            i = n if close < 0 else close + 1
+        elif c == '"':
+            j = i + 1
+            while j < n and text[j] != '"':
+                j += 2 if text[j] == "\\" else 1
+            for m in PLACEHOLDER.finditer(text, i + 1, min(j, n)):
+                yield m.start(), m.group(0), "double quotes"
+            i = j + 1
+        elif HEREDOC.match(text, i):
+            m = HEREDOC.match(text, i)
+            word = m.group(3)
+            pending.append(((m.group(1) or m.group(2) or word).lstrip("\\"), word is None or word.startswith("\\")))
+            i = m.end()
+        else:
+            i += 1
+
+
+failed = False
+checked = 0
+for path in sorted(glob.glob("skills/*/SKILL.md")):
+    checked += 1
+    lines = open(path, encoding="utf-8").read().split("\n")
+    found = []
+    prose = list(lines)
+    k = 0
+    while k < len(lines):
+        fence = FENCE.match(lines[k])
+        if fence:
+            mark = fence.group(1)
+            end = next((j for j in range(k + 1, len(lines))
+                        if lines[j].strip().startswith(mark) and set(lines[j].strip()) == {mark[0]}), len(lines))
+            if fence.group(2) in SHELL:
+                text = "\n".join(lines[k + 1:end])
+                found += [(k + 2 + text.count("\n", 0, off), p, w) for off, p, w in scan(text)]
+            prose[k:end + 1] = [""] * (min(end, len(lines) - 1) + 1 - k)
+            k = end + 1
+            continue
+        k += 1
+    text = "\n".join(prose)
+    for span in re.finditer(r"`([^`]+)`", text):
+        if "\n\n" not in span.group(1) and COMMAND.search(span.group(1)):
+            line = text.count("\n", 0, span.start()) + 1
+            found += [(line, p, w) for _, p, w in scan(" ".join(span.group(1).split()))]
+    found.sort()
+    for line, placeholder, where in found:
+        print(f"error: {path}:{line}: run-time text {' '.join(placeholder.split())} in {where}; single-quote it, "
+              "or pass it on stdin from a quoted heredoc", file=sys.stderr)
+        failed = True
+if not failed:
+    print(f"no run-time text in double quotes or unquoted heredocs in {checked} skills")
+sys.exit(1 if failed else 0)
+PY
+
 # evals/ ships alongside the plugin but is never loaded at install time, and CI
 # never runs the cases (they bill real sessions and need a sandbox), so a broken
 # case.yaml would sit undetected until the next by-hand run. Shape-check them here

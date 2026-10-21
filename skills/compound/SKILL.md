@@ -12,6 +12,9 @@ description: >-
 
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
+> Text filled in at run time goes in single quotes (each `'` in it written
+> `'\''`) or on stdin from a quoted heredoc whose delimiter is no line of the
+> text, never in double quotes, where the shell expands its backticks and `$`.
 
 > `<default>` below is the repo's default branch, whatever its name. Resolve it
 > once per run: `git ls-remote --symref origin HEAD` names it in its
@@ -146,9 +149,13 @@ All guards go in one PR, separate from the PR they came from. Run the checks
 the repo conventions require, and confirm `git status` shows only guard changes:
 
 ```bash
-git add -A && git commit -m "chore: guard against <classes>"
+git add -A && git commit -F - <<'MSG'
+chore: guard against <classes>
+MSG
 git push -u origin chore/compound-<source>
-gh pr create --draft --title "chore: guard against <classes>" --body "<lesson → guard, one line each>"
+gh pr create --draft --title 'chore: guard against <classes>' --body-file - <<'BODY'
+<lesson → guard, one line each>
+BODY
 ```
 
 End the commit message with the Co-Authored-By trailer used in this repo. Open
