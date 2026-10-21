@@ -111,12 +111,9 @@ Collect before spawning reviewers:
   (**read the issue**), or the caller's stated goal. Without it a reviewer
   cannot tell a deliberate removal from a regression, or notice the diff
   misses a requirement stated only in the issue. With an override loaded, the
-  issue reference in the change's description defers like a change reference:
-  a bare `#M` or `M` reaches the built-in **read the issue** only when the
-  change is a GitHub PR, meaning its reference is a PR number and **PR diff**
-  resolves to the built-in entry for it (the override defers it or does not
-  define it), and is otherwise
-  unhandled unless the override's own entry takes it. The reference is the
+  issue reference in the change's description defers like a change reference,
+  reaching the built-in **read the issue** only as the Operations section's
+  `<M>` allows. The reference is the
   target of a link such as `Closes <ref>`, and counts only as a token of at
   most 40 characters from `A-Z a-z 0-9 # . _ / -` that does not start with
   `-`. A description with no link adds nothing. A link whose target fails that
