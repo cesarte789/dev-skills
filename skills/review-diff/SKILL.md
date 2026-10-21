@@ -41,8 +41,8 @@ entries in place of these, matched by name; an entry it does not define keeps
 its form here. An entry may handle only some change or issue references and
 defer to this section's entry for the rest; when it defers, run this section's
 entry verbatim. This section's entries take only a PR number as `<N>` (and an
-issue number as `<M>`, linked from a change whose **PR diff** is this
-section's entry): an operation whose entry here would receive any other
+issue number as `<M>`, linked from a change that is a PR number whose
+**PR diff** is this section's entry): an operation whose entry here would receive any other
 reference, deferred or not defined, is unavailable for that reference, except
 that **read the issue** is then skipped as the Intent input says. It replaces
 operations only, never this skill's other rules. When it marks an operation
@@ -112,8 +112,9 @@ Collect before spawning reviewers:
   misses a requirement stated only in the issue. With an override loaded, the
   issue reference in the change's description defers like a change reference:
   a bare `#M` or `M` reaches the built-in **read the issue** only when the
-  change is a GitHub PR, meaning **PR diff** resolves to the built-in entry for
-  it (the override defers it or does not define it), and is otherwise
+  change is a GitHub PR, meaning its reference is a PR number and **PR diff**
+  resolves to the built-in entry for it (the override defers it or does not
+  define it), and is otherwise
   unhandled unless the override's own entry takes it. The reference is the
   target of a link such as `Closes <ref>`, and counts only as a token of at
   most 40 characters from `A-Z a-z 0-9 # . _ / -` that does not start with
