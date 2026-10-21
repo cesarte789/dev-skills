@@ -59,8 +59,8 @@ stop before the step that needs it and report
 - **PR diff** — `gh pr diff <N>`
 - **PR intent** — `gh pr view <N> --json title,body`
 - **read the issue** — `gh issue view <M>`; the PR body links it, e.g.
-  `Closes #M`, and `<M>` is that link's digits only (any other target is no
-  issue number)
+  `Closes #M`; `<M>` is the digits after `#` only when the target is exactly
+  `#` plus digits, never digits stripped out of any other target
 - **default branch** — `git ls-remote --symref origin HEAD` names it in its
   `ref: refs/heads/<default>` line
 - **local diff** — `git fetch origin <default>`, then
