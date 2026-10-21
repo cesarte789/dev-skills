@@ -44,7 +44,7 @@ State each rule once in a skill and point to it from elsewhere in the file; two 
 
 An input one skill passes another beyond the receiver's documented arguments is defined in the receiving skill's file too, with how to treat it.
 
-A command template never puts text the skill writes or copies at run time in double quotes, where the shell expands its backticks and `$`; fixed template text may stay there. Single-quote every single-line argument (a title, search terms, a label, a `gh pr merge --subject`), writing each `'` in it as `'\''`; only a value checked to be digits only, such as an issue number, may stay unquoted. Pass a body, comment or commit message on stdin from a quoted heredoc whose delimiter appears as no line of the text: `--body-file -` for `gh issue` and `gh pr`, `-F body=@-` for `gh api`, `-F -` for `git commit`. A flag with no stdin form, such as `close --comment`, takes no run-time body: post the comment first, then close without it.
+A command template never puts text the skill writes or copies at run time in double quotes, where the shell expands its backticks and `$`; fixed template text may stay there. Single-quote every single-line argument (a title, search terms, a label, a `gh pr merge --subject`), writing each `'` in it as `'\''`. Pass a body, comment or commit message on stdin from a quoted heredoc whose delimiter appears as no line of the text: `--body-file -` for `gh issue` and `gh pr`, `-F body=@-` for `gh api`, `-F -` for `git commit`. A flag with no stdin form, such as `close --comment`, takes no run-time body: post the comment first, then close without it.
 
 Text inlined into several skills must hold in each one: read every skill it lands in for an instruction it contradicts or forbids.
 
