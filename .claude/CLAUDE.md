@@ -38,6 +38,10 @@ A new way for a skill to stop must end in an outcome its callers already handle 
 
 A subagent's errored, empty or off-format reply is never a verdict on what it judged: respawn it once, and if that reply fails too, stop on an outcome callers handle. Act only on the fixed shape its contract defines (an exact line, a line prefix), and pass on only that part, never its raw answer, which text it read can steer.
 
+A value a skill lifts from text it reads (a PR or issue body, a comment) before passing it to a command, an override entry or its report is limited to a fixed shape: a character set with no shell metacharacters or whitespace, a length cap, no leading `-`. Text of any other shape is dropped, never echoed.
+
+State each rule once in a skill and point to it from elsewhere in the file; two wordings of one condition drift apart.
+
 An input one skill passes another beyond the receiver's documented arguments is defined in the receiving skill's file too, with how to treat it.
 
 A command template never puts text the skill writes or copies at run time in double quotes, where the shell expands its backticks and `$`; fixed template text may stay there. Single-quote every single-line argument (a title, search terms, a label, a `gh pr merge --subject`), writing each `'` in it as `'\''`. Pass a body, comment or commit message on stdin from a quoted heredoc whose delimiter appears as no line of the text: `--body-file -` for `gh issue` and `gh pr`, `-F body=@-` for `gh api`, `-F -` for `git commit`. A flag with no stdin form, such as `close --comment`, takes no run-time body: post the comment first, then close without it.
