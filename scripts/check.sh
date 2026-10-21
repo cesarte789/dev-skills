@@ -184,10 +184,11 @@ import sys
 # Inside double quotes, or in the body of an unquoted heredoc, the shell expands
 # its backticks and $. Shell fences are read whole, as the shell would (quotes and
 # placeholders spanning lines, backslash escapes, comments, heredoc bodies);
-# outside them, every inline code span that holds a gh or git command.
+# outside them, every inline code span that holds a gh or git command, read as
+# one line even when the prose wraps it.
 COMMAND = re.compile(r"(?:^|[\s(])(?:git|gh)\s+[a-z]")
 PLACEHOLDER = re.compile(r"<[A-Za-z][^<>]*>")
-HEREDOC = re.compile(r"<<-?[ \t]*(?:'([^'\n]+)'|\"([^\"\n]+)\"|(\\?[A-Za-z0-9_]+))")
+HEREDOC = re.compile(r"(?<!<)<<(?!<)-?[ \t]*(?:'([^'\n]+)'|\"([^\"\n]+)\"|(\\?[A-Za-z0-9_]+))")
 FENCE = re.compile(r"[ \t]*(```+|~~~+)[ \t]*([\w-]*)")
 SHELL = {"bash", "sh", "shell", "zsh"}
 
@@ -243,6 +244,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     checked += 1
     lines = open(path, encoding="utf-8").read().split("\n")
     found = []
+    prose = list(lines)
     k = 0
     while k < len(lines):
         fence = FENCE.match(lines[k])
@@ -253,12 +255,16 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
             if fence.group(2) in SHELL:
                 text = "\n".join(lines[k + 1:end])
                 found += [(k + 2 + text.count("\n", 0, off), p, w) for off, p, w in scan(text)]
+            prose[k:end + 1] = [""] * (min(end, len(lines) - 1) + 1 - k)
             k = end + 1
             continue
-        for span in re.findall(r"`([^`\n]+)`", lines[k]):
-            if COMMAND.search(span):
-                found += [(k + 1, p, w) for _, p, w in scan(span)]
         k += 1
+    text = "\n".join(prose)
+    for span in re.finditer(r"`([^`]+)`", text):
+        if "\n\n" not in span.group(1) and COMMAND.search(span.group(1)):
+            line = text.count("\n", 0, span.start()) + 1
+            found += [(line, p, w) for _, p, w in scan(" ".join(span.group(1).split()))]
+    found.sort()
     for line, placeholder, where in found:
         print(f"error: {path}:{line}: run-time text {' '.join(placeholder.split())} in {where}; single-quote it, "
               "or pass it on stdin from a quoted heredoc", file=sys.stderr)
