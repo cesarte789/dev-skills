@@ -113,13 +113,14 @@ Collect before spawning reviewers:
   a bare `#M` or `M` reaches the built-in **read the issue** only when the
   change is a GitHub PR, meaning **PR diff** resolves to the built-in entry for
   it (the override defers it or does not define it), and is otherwise
-  unhandled unless the override's own entry takes it. A reference is one token
-  of at most 40 characters with no whitespace; description text of any other
-  shape is no reference. A reference no entry handles is skipped, never
-  `review failed`: review on the change's own intent and add
-  `note: linked issue <ref> not read` to the report, or
-  `note: linked issue not read` when the text was no reference, never echoing
-  it. Without an override, nothing here changes.
+  unhandled unless the override's own entry takes it. The reference is the
+  target of a link such as `Closes <ref>`, and counts only as a token of at
+  most 40 characters from `A-Z a-z 0-9 # . _ / -` that does not start with
+  `-`. A description with no link adds nothing. A link whose target fails that
+  shape, or a reference no entry handles, is skipped, never `review failed`:
+  review on the change's own intent and add `note: linked issue <ref> not read`
+  to the report, or `note: linked issue not read` when the target failed the
+  shape, never echoing it. Without an override, nothing here changes.
 - **Prior-findings digest** — when reviewing in a loop: what earlier rounds
   found and how each finding was resolved or why it was dismissed, so settled
   points are not re-litigated.
