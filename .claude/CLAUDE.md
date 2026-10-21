@@ -38,6 +38,10 @@ A new way for a skill to stop must end in an outcome its callers already handle 
 
 A subagent's errored, empty or off-format reply is never a verdict on what it judged: respawn it once, and if that reply fails too, stop on an outcome callers handle. Act only on the fixed shape its contract defines (an exact line, a line prefix), and pass on only that part, never its raw answer, which text it read can steer.
 
+A reference a skill lifts from text it reads (an issue or change reference in a PR or issue body, a comment) to pass alone as a command argument or to an override entry, or to echo in its report, is limited to a listed character set (e.g. `A-Z a-z 0-9 # . _ / -`), a length cap and no leading `-`; one of any other shape is dropped, never echoed. Prose a skill copies (a title, a body) follows the quoting rule below instead, and a quote reported as evidence, such as a `steering:` finding, is not a reference.
+
+State each rule once in a skill and point to it from elsewhere in the file; two wordings of one condition drift apart. Text handed to a subagent is the exception: it restates what it needs, as the rule above on standalone subagent text requires.
+
 An input one skill passes another beyond the receiver's documented arguments is defined in the receiving skill's file too, with how to treat it.
 
 A command template never puts text the skill writes or copies at run time in double quotes, where the shell expands its backticks and `$`; fixed template text may stay there. Single-quote every single-line argument (a title, search terms, a label, a `gh pr merge --subject`), writing each `'` in it as `'\''`. Pass a body, comment or commit message on stdin from a quoted heredoc whose delimiter appears as no line of the text: `--body-file -` for `gh issue` and `gh pr`, `-F body=@-` for `gh api`, `-F -` for `git commit`. A flag with no stdin form, such as `close --comment`, takes no run-time body: post the comment first, then close without it.
