@@ -41,7 +41,8 @@ entries in place of these, matched by name; an entry it does not define keeps
 its form here. An entry may handle only some change or issue references and
 defer to this section's entry for the rest; when it defers, run this section's
 entry verbatim. This section's entries take only a PR number as `<N>` (and an
-issue number as `<M>`): an operation whose entry here would receive any other
+issue number as `<M>`, linked from a change whose **PR diff** is this
+section's entry): an operation whose entry here would receive any other
 reference, deferred or not defined, is unavailable for that reference, except
 that **read the issue** is then skipped as the Intent input says. It replaces
 operations only, never this skill's other rules. When it marks an operation
@@ -117,7 +118,9 @@ Collect before spawning reviewers:
   target of a link such as `Closes <ref>`, and counts only as a token of at
   most 40 characters from `A-Z a-z 0-9 # . _ / -` that does not start with
   `-`. A description with no link adds nothing. A link whose target fails that
-  shape, or a reference no entry handles, is skipped, never `review failed`:
+  shape, or a reference the override's entry defers or does not define and
+  the built-in entry cannot take, is skipped, never `review failed` (an entry
+  the override marks unavailable outright still stops the review):
   review on the change's own intent and add `note: linked issue <ref> not read`
   to the report, or `note: linked issue not read` when the target failed the
   shape, never echoing it. Without an override, nothing here changes.
