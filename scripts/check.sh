@@ -173,71 +173,98 @@ if not failed:
 sys.exit(1 if failed else 0)
 PY
 
-# Run-time text in a command template is single-quoted or on stdin, never in
-# double quotes (.claude/CLAUDE.md, Writing skills).
+# Run-time text in a command template is single-quoted or in a quoted heredoc,
+# never in double quotes (.claude/CLAUDE.md, Writing skills).
 python3 - <<'PY'
 import glob
 import re
 import sys
 
 # A placeholder such as <title> stands for text the skill fills in at run time.
-# Inside double quotes the shell expands its backticks and $, so a command
-# template may carry one only single-quoted or on stdin from a quoted heredoc.
-# Fenced blocks are read as shell, quotes spanning lines; outside them, only
-# from a gh or git command on to the end of its line.
-COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:git|gh)\s+[a-z]")
+# Inside double quotes, or in the body of an unquoted heredoc, the shell expands
+# its backticks and $. Shell fences are read whole, as the shell would (quotes and
+# placeholders spanning lines, backslash escapes, comments, heredoc bodies);
+# outside them, every inline code span that holds a gh or git command.
+COMMAND = re.compile(r"(?:^|[\s(])(?:git|gh)\s+[a-z]")
 PLACEHOLDER = re.compile(r"<[A-Za-z][^<>]*>")
-HEREDOC = re.compile(r"<<-?\s*'?([A-Za-z_]+)'?")
+HEREDOC = re.compile(r"<<-?[ \t]*(?:'([^'\n]+)'|\"([^\"\n]+)\"|(\\?[A-Za-z0-9_]+))")
+FENCE = re.compile(r"[ \t]*(```+|~~~+)[ \t]*([\w-]*)")
+SHELL = {"bash", "sh", "shell", "zsh"}
 
-def scan(text, quote, report):
-    i = 0
-    while i < len(text):
+
+def scan(text):
+    """Yield (offset, placeholder, where) for each placeholder the shell would expand."""
+    i, n, pending = 0, len(text), []
+    while i < n:
         c = text[i]
-        if quote is None and c == "#" and (i == 0 or text[i - 1].isspace()):
-            break
-        if quote == '"' and c == "\\":
+        if c == "\n":
+            i += 1
+            for delimiter, quoted in pending:
+                end = i
+                while end < n:
+                    eol = text.find("\n", end)
+                    eol = n if eol < 0 else eol
+                    if text[end:eol].strip() == delimiter:
+                        break
+                    end = eol + 1
+                if not quoted:
+                    for m in PLACEHOLDER.finditer(text, i, min(end, n)):
+                        yield m.start(), m.group(0), "an unquoted heredoc"
+                eol = text.find("\n", end)
+                i = n if eol < 0 else eol + 1
+            pending = []
+        elif c == "#" and (i == 0 or text[i - 1].isspace()):
+            eol = text.find("\n", i)
+            i = n if eol < 0 else eol
+        elif c == "\\":
             i += 2
-            continue
-        if quote is None and c in "'\"":
-            quote = c
-        elif c == quote:
-            quote = None
-        elif quote == '"' and c == "<" and PLACEHOLDER.match(text, i):
-            report(PLACEHOLDER.match(text, i).group(0))
-            i = PLACEHOLDER.match(text, i).end()
-            continue
-        i += 1
-    return quote
+        elif c == "'":
+            close = text.find("'", i + 1)
+            i = n if close < 0 else close + 1
+        elif c == '"':
+            j = i + 1
+            while j < n and text[j] != '"':
+                j += 2 if text[j] == "\\" else 1
+            for m in PLACEHOLDER.finditer(text, i + 1, min(j, n)):
+                yield m.start(), m.group(0), "double quotes"
+            i = j + 1
+        elif HEREDOC.match(text, i):
+            m = HEREDOC.match(text, i)
+            word = m.group(3)
+            pending.append(((m.group(1) or m.group(2) or word).lstrip("\\"), word is None or word.startswith("\\")))
+            i = m.end()
+        else:
+            i += 1
+
 
 failed = False
 checked = 0
 for path in sorted(glob.glob("skills/*/SKILL.md")):
     checked += 1
-    fence, quote, heredoc = False, None, None
-    for n, line in enumerate(open(path, encoding="utf-8").read().split("\n"), 1):
-        def report(placeholder):
-            global failed
-            print(f"error: {path}:{n}: run-time text {placeholder} in double quotes; single-quote it, "
-                  "or pass it on stdin from a quoted heredoc", file=sys.stderr)
-            failed = True
-        if line.lstrip().startswith("```"):
-            fence, quote, heredoc = not fence, None, None
+    lines = open(path, encoding="utf-8").read().split("\n")
+    found = []
+    k = 0
+    while k < len(lines):
+        fence = FENCE.match(lines[k])
+        if fence:
+            mark = fence.group(1)
+            end = next((j for j in range(k + 1, len(lines))
+                        if lines[j].strip().startswith(mark) and set(lines[j].strip()) == {mark[0]}), len(lines))
+            if fence.group(2) in SHELL:
+                text = "\n".join(lines[k + 1:end])
+                found += [(k + 2 + text.count("\n", 0, off), p, w) for off, p, w in scan(text)]
+            k = end + 1
             continue
-        if fence and heredoc:
-            heredoc = None if line.strip() == heredoc else heredoc
-        elif fence:
-            quote = scan(line, quote, report)
-            opened = HEREDOC.search(line) if quote is None else None
-            heredoc = opened.group(1) if opened else None
-        else:
-            match = COMMAND.search(line)
-            if match:
-                command = line[match.start() + 1:] if not match.group(0)[0].isalpha() else line
-                if match.group(0)[0] == "`":
-                    command = command.split("`")[0]
-                scan(command, None, report)
+        for span in re.findall(r"`([^`\n]+)`", lines[k]):
+            if COMMAND.search(span):
+                found += [(k + 1, p, w) for _, p, w in scan(span)]
+        k += 1
+    for line, placeholder, where in found:
+        print(f"error: {path}:{line}: run-time text {' '.join(placeholder.split())} in {where}; single-quote it, "
+              "or pass it on stdin from a quoted heredoc", file=sys.stderr)
+        failed = True
 if not failed:
-    print(f"no run-time text in double-quoted command arguments in {checked} skills")
+    print(f"no run-time text in double quotes or unquoted heredocs in {checked} skills")
 sys.exit(1 if failed else 0)
 PY
 

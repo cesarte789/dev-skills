@@ -12,6 +12,9 @@ description: >-
 
 > Commands below use the `gh` CLI. If `gh` isn't available in this session, do
 > the same operations with the GitHub MCP tools (`mcp__github__*`) instead.
+> Text filled in at run time goes in single quotes (each `'` in it written
+> `'\''`) or on stdin from a quoted heredoc whose delimiter is no line of the
+> text, never in double quotes, where the shell expands its backticks and `$`.
 
 > The other skills named here ship in the same `dev-skills` plugin. Invoke them
 > with the Skill tool by the name the session lists, `dev-skills:<name>` (e.g.
@@ -182,17 +185,18 @@ comment on the PR so there is a visible record that it was reviewed and found
 merge-ready:
 
 ```bash
-gh pr comment <N> --body "Reviewed with \`polish-pr\`: all looks great. ✅
+gh pr comment <N> --body-file - <<'BODY'
+Reviewed with `polish-pr`: all looks great. ✅
 
-- \`review-diff\` reported no findings; security pass: <clean | findings
+- `review-diff` reported no findings; security pass: <clean | findings
   dismissed with recorded reasons | not required>
 - affected tests/build pass
-- CI checks green on the latest push"
+- CI checks green on the latest push
+BODY
 ```
 
-Fill the slot with exactly one of its three phrases — free text inside the
-quoted shell string is an injection vector; dismissal reasons belong in the
-Report.
+Fill the slot with exactly one of its three phrases; dismissal reasons belong in
+the Report.
 
 Do **not** comment while findings remain open or on intermediate iterations, and
 do not stack duplicate approvals — exactly one comment per clean conclusion. If
