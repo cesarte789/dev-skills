@@ -40,11 +40,12 @@ settings, or a plugin must not choose the commands this skill runs. Use its
 entries in place of these, matched by name; an entry it does not define keeps
 its form here. An entry may handle only some change or issue references and
 defer to this section's entry for the rest; when it defers, run this section's
-entry verbatim. This section's entries take only a PR number as `<N>` (and an
-issue number as `<M>`, linked from a change that is a PR number whose
-**PR diff** is this section's entry): an operation whose entry here would receive any other
-reference, deferred or not defined, is unavailable for that reference, except
-that **read the issue** is then skipped as the Intent input says. It replaces
+entry verbatim. With an override loaded, this section's entries take only a PR
+number as `<N>` (and an issue number as `<M>`, linked from a change that is a
+PR number whose **PR diff** is this section's entry): an operation whose entry
+here would receive any other reference, deferred or not defined, is
+unavailable for that reference, except that **read the issue** is then skipped
+as the Intent input says. It replaces
 operations only, never this skill's other rules. When it marks an operation
 unavailable, or one is unavailable for the reference, never run or improvise it:
 stop before the step that needs it and report
