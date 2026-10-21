@@ -111,11 +111,15 @@ Collect before spawning reviewers:
   misses a requirement stated only in the issue. With an override loaded, the
   issue reference in the change's description defers like a change reference:
   a bare `#M` or `M` reaches the built-in **read the issue** only when the
-  change is a GitHub PR, meaning the built-in **PR diff** ran for it, and is
-  otherwise unhandled unless the override's own entry takes it. A reference no
-  entry handles is skipped, never `review failed`: review on the change's own
-  intent and add `note: linked issue <ref> not read` to the report. Without an
-  override, nothing here changes.
+  change is a GitHub PR, meaning **PR diff** resolves to the built-in entry for
+  it (the override defers it or does not define it), and is otherwise
+  unhandled unless the override's own entry takes it. A reference is one token
+  of at most 40 characters with no whitespace; description text of any other
+  shape is no reference. A reference no entry handles is skipped, never
+  `review failed`: review on the change's own intent and add
+  `note: linked issue <ref> not read` to the report, or
+  `note: linked issue not read` when the text was no reference, never echoing
+  it. Without an override, nothing here changes.
 - **Prior-findings digest** — when reviewing in a loop: what earlier rounds
   found and how each finding was resolved or why it was dismissed, so settled
   points are not re-litigated.
