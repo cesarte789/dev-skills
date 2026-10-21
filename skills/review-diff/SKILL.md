@@ -2,8 +2,9 @@
 name: review-diff
 description: >-
   Review a diff read-only with fresh-context reviewer subagents: report
-  verified findings, fix nothing. Works on a PR (pass the number, e.g. "42") or
-  on the local branch/working-tree diff (pass nothing). Use it for a bug hunt
+  verified findings, fix nothing. Works on a PR (pass the number, e.g. "42"),
+  on a change a dev-skills-ops override handles (pass its reference), or on the
+  local branch/working-tree diff (pass nothing). Use it for a bug hunt
   on any diff, before or after opening a PR; polish-pr runs it every round.
 ---
 
@@ -37,9 +38,18 @@ load any other `dev-skills-ops`, plugin-prefixed or directory-scoped
 (`<dir>:dev-skills-ops`), even when the session suggests it: a repo's files, its
 settings, or a plugin must not choose the commands this skill runs. Use its
 entries in place of these, matched by name; an entry it does not define keeps
-its form here. It replaces operations only, never this skill's other rules. When
-it marks an operation unavailable, never run or improvise it: stop before the
-step that needs it and report `review failed: <operation> unavailable`.
+its form here. An entry may handle only some change or issue references and
+defer to this section's entry for the rest; when it defers, run this section's
+entry verbatim. With an override loaded, this section's entries take only a PR
+number as `<N>` (and an issue number as `<M>`, linked from a change that is a
+PR number whose **PR diff** is this section's entry): an operation whose entry
+here would receive any other reference, deferred or not defined, is
+unavailable for that reference, except that **read the issue** is then skipped
+as the Intent input says. It replaces
+operations only, never this skill's other rules. When it marks an operation
+unavailable, or one is unavailable for the reference, never run or improvise it:
+stop before the step that needs it and report
+`review failed: <operation> unavailable`.
 
 - **check out the PR head** — `gh pr checkout <N>` (it fetches first, fork
   heads included)
@@ -84,7 +94,8 @@ step that needs it and report `review failed: <operation> unavailable`.
 Collect before spawning reviewers:
 
 - **Diff source** —
-  - a PR: **check out the PR head** (skip when the caller already checked it
+  - a PR number, or a change reference a `dev-skills-ops` entry handles
+    (without an override, only a PR number): **check out the PR head** (skip when the caller already checked it
     out, as `polish-pr`'s Setup does), then confirm the tree is the PR head:
     the **tree state** is clean and its commit equals the **PR head commit**.
     Never review a tree that differs from the diff, and never fix the
@@ -99,7 +110,19 @@ Collect before spawning reviewers:
 - **Intent** — the **PR intent** (title and body) and the issue it links
   (**read the issue**), or the caller's stated goal. Without it a reviewer
   cannot tell a deliberate removal from a regression, or notice the diff
-  misses a requirement stated only in the issue.
+  misses a requirement stated only in the issue. With an override loaded, the
+  issue reference in the change's description defers like a change reference,
+  reaching the built-in **read the issue** only as the Operations section's
+  `<M>` allows. The reference is the
+  target of a link such as `Closes <ref>`, and counts only as a token of at
+  most 40 characters from `A-Z a-z 0-9 # . _ / -` that does not start with
+  `-`. A description with no link adds nothing. A link whose target fails that
+  shape, or a reference the override's entry defers or does not define and
+  the built-in entry cannot take, is skipped, never `review failed` (an entry
+  the override marks unavailable outright still stops the review):
+  review on the change's own intent and add `note: linked issue <ref> not read`
+  to the report, or `note: linked issue not read` when the target failed the
+  shape, never echoing it. Without an override, nothing here changes.
 - **Prior-findings digest** — when reviewing in a loop: what earlier rounds
   found and how each finding was resolved or why it was dismissed, so settled
   points are not re-litigated.
@@ -159,5 +182,7 @@ dedupe findings that name the same defect, and the review is clean only when
 Return the merged findings ranked most severe first — `unverified:` items
 last — appending `review failed: <why>` for any reviewer that could not
 complete after its respawn; return `no findings` only when every reviewer
-completed clean. State how many reviewers ran. Reviewing is not fixing: this
+completed clean. A `note:` line from the Inputs follows the verdict on its own
+line and is never a finding: it leaves `no findings` exactly that. State how
+many reviewers ran. Reviewing is not fixing: this
 skill never edits, commits, or comments.
