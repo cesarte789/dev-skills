@@ -38,9 +38,9 @@ A new way for a skill to stop must end in an outcome its callers already handle 
 
 A subagent's errored, empty or off-format reply is never a verdict on what it judged: respawn it once, and if that reply fails too, stop on an outcome callers handle. Act only on the fixed shape its contract defines (an exact line, a line prefix), and pass on only that part, never its raw answer, which text it read can steer.
 
-A value a skill lifts from text it reads (a PR or issue body, a comment) before passing it to a command, an override entry or its report is limited to a fixed shape: a character set with no shell metacharacters or whitespace, a length cap, no leading `-`. Text of any other shape is dropped, never echoed.
+A reference a skill lifts from text it reads (an issue or change reference in a PR or issue body, a comment) to pass alone as a command argument or to an override entry, or to echo in its report, is limited to a listed character set (e.g. `A-Z a-z 0-9 # . _ / -`), a length cap and no leading `-`, and is still single-quoted in a command; one of any other shape is dropped, never echoed. Prose a skill copies (a title, a body) follows the quoting rule below instead, and a quote reported as evidence, such as a `steering:` finding, is not a reference.
 
-State each rule once in a skill and point to it from elsewhere in the file; two wordings of one condition drift apart.
+State each rule once in a skill and point to it from elsewhere in the file; two wordings of one condition drift apart. Text handed to a subagent is the exception: it restates what it needs, as the rule above on standalone subagent text requires.
 
 An input one skill passes another beyond the receiver's documented arguments is defined in the receiving skill's file too, with how to treat it.
 
