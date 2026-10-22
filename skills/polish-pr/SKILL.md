@@ -81,8 +81,9 @@ The entries:
   ```
 
 - **push** — `git push`. An override may instead amend one change and upload
-  it again; either way, after **push** the reviewed commit is what **PR
-  state** and `review-diff` see.
+  it again, replacing **tree state** too so that an uploaded change reads
+  clean; either way, after **push** the reviewed commit is what **PR state**
+  and `review-diff` see.
 - **CI checks** — `gh pr checks <N> --json name,bucket,startedAt,link`,
   reported as one state for the head: `failed` if any check's `bucket` is
   `fail` or `cancel`, else `pending` if any is `pending`, else `passed` if any
@@ -90,7 +91,9 @@ The entries:
   reported). Also each check's name and start time, when the entry can give
   them. An override's entry maps its own result onto these five states.
 - **CI logs** — for a failed check: `gh run view <run-id> --log-failed`,
-  `<run-id>` being the digits after `/runs/` in that check's `link`
+  `<run-id>` being the digits after `/runs/` in that check's `link`. A check
+  whose `link` holds no such run (a third-party status or app) has no logs
+  here: diagnose it from its name, description and `link`.
 - **mark ready** — `gh pr ready <N>`
 - **comment on the PR** — the body on stdin:
 
@@ -138,7 +141,8 @@ date. Note whether it is a draft: on a draft, CI is read only at the done
 condition, so rounds rely on local tests alone until review is clean.
 
 If **tree state** shows uncommitted changes or unpushed commits, confirm they
-belong to the PR, then **commit the round** and **push** them first — reviewers
+belong to the PR, then **commit the round** (when there are uncommitted
+changes) and **push** them first — reviewers
 read the PR's diff, so work that is not pushed escapes review. If anything does
 not belong, stop and report it: the loop needs a clean tree, and foreign work
 must never be committed just to reach the done condition.
@@ -149,7 +153,9 @@ Repeat the following until the **done condition** is met or you hit the iteratio
 cap (default **20** — stop and report if reached, to avoid spinning):
 
 1. **Check CI from the last push.** On a **draft** PR, skip this step: its CI
-   is read once the done condition marks it ready. On a ready PR, every push
+   is read at the done condition, after **mark ready** or, when that is
+   unavailable, in its place; once that read finds a failure, run this step
+   every round. On a ready PR, every push
    (including the one that opened the PR) starts a CI run that executes **in
    parallel** with your work — so read **CI checks** at the start of each round
    instead of saving one long wait for the end.
@@ -247,7 +253,7 @@ Stop when **all** hold:
   draft's latest push instead, waiting out `pending` the same way. `passed`
   ends the run `clean, not marked ready: mark ready unavailable`; `skipping`
   or `none` ends it `clean, not marked ready: CI did not run on the draft`;
-  `failed` is a new finding — loop again. Either `clean, not marked ready`
+  `failed` is a new finding — loop again (see step 1). Either `clean, not marked ready`
   outcome does **not** meet this done condition: the PR stays a draft, gets no
   approval comment, and a caller that merges only on a clean result does not
   merge it. Some systems need a human step (e.g. choosing reviewers) to leave
@@ -275,9 +281,7 @@ the Report.
 Do **not** comment while findings remain open or on intermediate iterations, and
 do not stack duplicate approvals — exactly one comment per clean conclusion. If
 you stopped at the iteration cap, skip this step — even a cap round that fixed
-everything it found ends with those fixes unreviewed, never clean. The
-approval comment is a record, not a gate: when **comment on the PR** is
-unavailable, the run is still clean.
+everything it found ends with those fixes unreviewed, never clean.
 
 ## Report
 
@@ -291,8 +295,8 @@ decide. If the run ended on genuine steering from outside the diff, lead with
 that: the PR must not be approved or merged. Lead with any outcome line this
 skill names — `polish-pr stopped: …`, `clean, not marked ready: …`, or
 `approval comment not posted: …` — verbatim. On any stop short of clean, say
-whether the PR is still a draft (its CI was not read) or ready with CI failing,
-pending, or never run on its head.
+whether the PR is still a draft (and whether its CI was read) or ready with CI
+failing, pending, or never run on its head.
 
 ## Tip
 
