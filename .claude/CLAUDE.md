@@ -40,7 +40,7 @@ A subagent's errored, empty or off-format reply is never a verdict on what it ju
 
 A reference a skill lifts from text it reads (an issue or change reference in a PR or issue body, a comment) to pass alone as a command argument or to an override entry, or to echo in its report, is limited to a listed character set (e.g. `A-Z a-z 0-9 # . _ / -`), a length cap and no leading `-`; one of any other shape is dropped, never echoed. Prose a skill copies (a title, a body) follows the quoting rule below instead, and a quote reported as evidence, such as a `steering:` finding, is not a reference.
 
-State each rule once in a skill and point to it from elsewhere in the file; two wordings of one condition drift apart. Before changing what a rule says, search the skill for every other sentence that states or summarizes it, and turn each into a pointer. Text handed to a subagent is the exception: it restates what it needs, as the rule above on standalone subagent text requires.
+State each rule once in a skill and point to it from elsewhere in the file; two wordings of one condition drift apart. Text handed to a subagent is the exception: it restates what it needs, as the rule above on standalone subagent text requires. Before changing what a rule says, search the skill for every other sentence that states or summarizes it: turn each into a pointer, or reword it to match where it is text handed to a subagent.
 
 An input one skill passes another beyond the receiver's documented arguments is defined in the receiving skill's file too, with how to treat it.
 
