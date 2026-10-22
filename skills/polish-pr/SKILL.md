@@ -69,7 +69,9 @@ The entries:
 - **check out the PR head** — `gh pr checkout <N>` (it fetches first, fork
   heads included)
 - **tree state** — clean when `git status --short --branch` lists no changed
-  or untracked file and no `ahead` count (no unpushed commits)
+  or untracked file and no `ahead` count (no unpushed commits). `review-diff`'s
+  entry of this name asks only for a clean tree at the checked-out commit, so
+  an override entry serving both skills reports unpushed commits too.
 - **commit the round** — the round's changes, with a conventional-commit
   message on stdin:
 
@@ -84,12 +86,14 @@ The entries:
   it again, replacing **tree state** too so that an uploaded change reads
   clean; either way, after **push** the reviewed commit is what **PR state**
   and `review-diff` see.
-- **CI checks** — `gh pr checks <N> --json name,bucket,startedAt,link`,
-  reported as one state for the head: `failed` if any check's `bucket` is
+- **CI checks** —
+  `gh pr checks <N> --json name,bucket,startedAt,link,description`, reported
+  as one state for the head: `failed` if any check's `bucket` is
   `fail` or `cancel`, else `pending` if any is `pending`, else `passed` if any
-  is `pass`, else `skipping` (every check skipped), else `none` (no checks
-  reported). Also each check's name and start time, when the entry can give
-  them. An override's entry maps its own result onto these five states.
+  is `pass`, else `skipping` (every check skipped), else `none` (no checks,
+  including the `no checks reported` error). Also each check's name and start
+  time, when the entry can give them. An override's entry maps its own
+  result onto these five states.
 - **CI logs** — for a failed check: `gh run view <run-id> --log-failed`,
   `<run-id>` being the digits after `/runs/` in that check's `link`. A check
   whose `link` holds no such run (a third-party status or app) has no logs
@@ -137,8 +141,7 @@ given.
 ## Setup
 
 Resolve the change with **PR state**, then **check out the PR head**, up to
-date. Note whether it is a draft: on a draft, CI is read only at the done
-condition, so rounds rely on local tests alone until review is clean.
+date. Note whether it is a draft: step 1 says when a draft's CI is read.
 
 If **tree state** shows uncommitted changes or unpushed commits, confirm they
 belong to the PR, then **commit the round** (when there are uncommitted
@@ -208,8 +211,8 @@ cap (default **20** — stop and report if reached, to avoid spinning):
    them). Iterate on a fix with what the round touched — the narrowest
    test command the repo conventions give for those areas — then run what
    they require before a push, since step 6 pushes every round. On a ready PR
-   each push is one CI run; on a draft, these local tests are the only gate
-   until review is clean.
+   each push is one CI run; on a draft whose CI step 1 skips, these local
+   tests are the only gate.
 
 6. **Commit the round** with a conventional-commit message, then **push**, then
    loop. On a ready PR the push kicks off the next CI run, which runs while you
@@ -250,11 +253,12 @@ Stop when **all** hold:
   merging. Stop short of clean and report either.
 
   When **mark ready** is unavailable on a draft, read **CI checks** on the
-  draft's latest push instead, waiting out `pending` the same way. `passed`
-  ends the run `clean, not marked ready: mark ready unavailable`; `skipping`
-  or `none` ends it `clean, not marked ready: CI did not run on the draft`;
-  `failed` is a new finding — loop again (see step 1). Either `clean, not marked ready`
-  outcome does **not** meet this done condition: the PR stays a draft, gets no
+  draft's latest push instead, waiting out `pending` the same way and, as
+  above, taking `none` as final only once about two minutes have passed since
+  that push. `passed` ends the run `clean, not marked ready: mark ready
+  unavailable`; `skipping` or `none` ends it `clean, not marked ready: CI did
+  not run on the draft`; `failed` is a new finding — loop again (see step 1).
+  Either `clean, not marked ready` outcome does **not** meet this done condition: the PR stays a draft, gets no
   approval comment, and a caller that merges only on a clean result does not
   merge it. Some systems need a human step (e.g. choosing reviewers) to leave
   draft.
