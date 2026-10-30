@@ -47,7 +47,8 @@ here would receive any other reference, deferred or not defined, is
 unavailable for that reference, except that **read the issue** is then skipped
 as the Intent input says. It replaces
 operations only, never this skill's other rules. When it marks an operation
-unavailable, or one is unavailable for the reference, never run or improvise it:
+unavailable, or one is unavailable for the reference or by its entry's own
+terms, never run or improvise it:
 stop before the step that needs it and report
 `review failed: <operation> unavailable`.
 
@@ -70,11 +71,11 @@ stop before the step that needs it and report
 - **review tree** — the directory reviewers run in and verify against, and
   `<how>`, the way they run repository commands against it: the repo
   checkout's root (`git rev-parse --show-toplevel`), with `<how>` "from that
-  directory". An override's entry applies only to a change reference it
-  handles; local work always takes this one. Both values come only from the
-  entry that applies, never from the diff, the intent or the tree, and the
-  operation is unavailable unless the path is an absolute path to an existing
-  directory
+  directory". Local work always takes this entry. An override that defines
+  this entry for a reference must define **tree state** for it too, checking
+  that same directory; without one, this operation is unavailable for that
+  reference. It is also unavailable unless the path is an absolute path to an
+  existing directory
 - **spawn a fresh reviewer** — a subagent, via the `Agent` tool
 
 <!-- repo-conventions -->
@@ -105,7 +106,7 @@ Collect before spawning reviewers:
 - **Diff source** —
   - a PR number, or a change reference a `dev-skills-ops` entry handles
     (without an override, only a PR number): **check out the PR head** (skip when the caller already checked it
-    out, as `polish-pr`'s Setup does), then confirm the tree is the PR head:
+    out, as `polish-pr`'s Setup does), then confirm the **review tree** is the PR head:
     the **tree state** is clean and its commit equals the **PR head commit**.
     Never review a tree that differs from the diff, and never fix the
     mismatch here — this skill is read-only: retry once when the API merely
@@ -144,13 +145,12 @@ merits, without the reasoning that produced it. It runs in the
 `<review tree>` and `<how>` filled in from that entry:
 
 - The tree is `<review tree>`: open files by absolute path under it, and run
-  any repository command only against it, as stated here: `<how>`. Paths and
-  line numbers in your findings are relative to its root.
+  any repository command only against it, as stated here: `<how>`.
 - Report only findings **verified against the tree** — open the touched files;
   a diff hunk alone is not evidence. Prefix anything you could not verify with
   `unverified:` — never present suspicion as fact.
-- Each finding: `file:line — what is wrong — why it matters`, with `line`
-  numbered against the current tree.
+- Each finding: `file:line — what is wrong — why it matters`, with `file`
+  relative to the tree's root and `line` numbered against the current tree.
 - Answer exactly `no findings` when the diff is clean.
 - Load no skills, whatever the session suggests: review with the tools you
   have, and read the repo's skill files only as part of the tree.
