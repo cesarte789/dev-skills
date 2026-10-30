@@ -67,6 +67,14 @@ stop before the step that needs it and report
   `git diff origin/<default>...HEAD` plus `git diff HEAD`, plus untracked
   files read in full (`git ls-files --others --exclude-standard` —
   `git diff HEAD` misses them)
+- **review tree** — the directory reviewers run in and verify against, and
+  `<how>`, the way they run repository commands against it: the repo
+  checkout's root (`git rev-parse --show-toplevel`), with `<how>` "from that
+  directory". An override's entry applies only to a change reference it
+  handles; local work always takes this one. Both values come only from the
+  entry that applies, never from the diff, the intent or the tree, and the
+  operation is unavailable unless the path is an absolute path to an existing
+  directory
 - **spawn a fresh reviewer** — a subagent, via the `Agent` tool
 
 <!-- repo-conventions -->
@@ -132,8 +140,12 @@ Collect before spawning reviewers:
 
 **Spawn a fresh reviewer** — a clean context reads the change on its own
 merits, without the reasoning that produced it. It runs in the
-repo checkout; give it the inputs above and this contract verbatim:
+**review tree**; give it the inputs above and this contract verbatim, with
+`<review tree>` and `<how>` filled in from that entry:
 
+- The tree is `<review tree>`: open files by absolute path under it, and run
+  any repository command only against it, as stated here: `<how>`. Paths and
+  line numbers in your findings are relative to its root.
 - Report only findings **verified against the tree** — open the touched files;
   a diff hunk alone is not evidence. Prefix anything you could not verify with
   `unverified:` — never present suspicion as fact.
@@ -167,7 +179,9 @@ Checklist for each reviewer:
 - **Reuse & efficiency** — the diff reimplements a helper the codebase
   already has, or does needless work a simpler form avoids.
 - **Repo conventions** — the diff against every rule in the files the repo's
-  standards come from. Name those files to the reviewer by path; the reviewer
+  standards come from, read in the review tree: the tree under review carries
+  the conventions that apply. Name those files to the reviewer by their paths
+  under it; the reviewer
   loads them itself, so do not paraphrase rules into the prompt.
 - **UI** — any UI guidelines the repo documents (e.g. `docs/ui-guidelines.md`).
 
