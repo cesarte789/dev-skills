@@ -47,7 +47,8 @@ here would receive any other reference, deferred or not defined, is
 unavailable for that reference, except that **read the issue** is then skipped
 as the Intent input says. It replaces
 operations only, never this skill's other rules. When it marks an operation
-unavailable, or one is unavailable for the reference, never run or improvise it:
+unavailable, or one is unavailable for the reference or under a condition
+this section sets on it, never run or improvise it:
 stop before the step that needs it and report
 `review failed: <operation> unavailable`.
 
@@ -67,6 +68,15 @@ stop before the step that needs it and report
   `git diff origin/<default>...HEAD` plus `git diff HEAD`, plus untracked
   files read in full (`git ls-files --others --exclude-standard` —
   `git diff HEAD` misses them)
+- **review tree** — the directory reviewers run in and verify against, and
+  `<how>`, the way they run repository commands against it: the repo
+  checkout's root (`git rev-parse --show-toplevel`), with `<how>` "from that
+  directory". Local work always takes this entry. Whichever **review tree**
+  applies, an override's included, is unavailable when its path is not an
+  absolute path to an existing directory, when the loaded override's
+  `dev-skills-ops/` or its `SKILL.md` lies inside it (real paths compared as
+  above for the repo checkout), or, for anything but local work, when the
+  **tree state** that applies checks a different directory
 - **spawn a fresh reviewer** — a subagent, via the `Agent` tool
 
 <!-- repo-conventions -->
@@ -97,7 +107,7 @@ Collect before spawning reviewers:
 - **Diff source** —
   - a PR number, or a change reference a `dev-skills-ops` entry handles
     (without an override, only a PR number): **check out the PR head** (skip when the caller already checked it
-    out, as `polish-pr`'s Setup does), then confirm the tree is the PR head:
+    out, as `polish-pr`'s Setup does), then confirm the **review tree** is the PR head:
     the **tree state** is clean and its commit equals the **PR head commit**.
     Never review a tree that differs from the diff, and never fix the
     mismatch here — this skill is read-only: retry once when the API merely
@@ -132,13 +142,16 @@ Collect before spawning reviewers:
 
 **Spawn a fresh reviewer** — a clean context reads the change on its own
 merits, without the reasoning that produced it. It runs in the
-repo checkout; give it the inputs above and this contract verbatim:
+**review tree**; give it the inputs above and this contract verbatim, with
+`<review tree>` and `<how>` filled in from that entry:
 
+- The tree is `<review tree>`: open files by absolute path under it, and run
+  any repository command only against it, as stated here: `<how>`.
 - Report only findings **verified against the tree** — open the touched files;
   a diff hunk alone is not evidence. Prefix anything you could not verify with
   `unverified:` — never present suspicion as fact.
-- Each finding: `file:line — what is wrong — why it matters`, with `line`
-  numbered against the current tree.
+- Each finding: `file:line — what is wrong — why it matters`, with `file`
+  relative to the tree's root and `line` numbered against the current tree.
 - Answer exactly `no findings` when the diff is clean.
 - Load no skills, whatever the session suggests: review with the tools you
   have, and read the repo's skill files only as part of the tree.
@@ -167,8 +180,9 @@ Checklist for each reviewer:
 - **Reuse & efficiency** — the diff reimplements a helper the codebase
   already has, or does needless work a simpler form avoids.
 - **Repo conventions** — the diff against every rule in the files the repo's
-  standards come from. Name those files to the reviewer by path; the reviewer
-  loads them itself, so do not paraphrase rules into the prompt.
+  standards come from, read in the review tree. Name those files to the
+  reviewer by their paths under it; the reviewer loads them itself, so do not
+  paraphrase rules into the prompt.
 - **UI** — any UI guidelines the repo documents (e.g. `docs/ui-guidelines.md`).
 
 ## Thorough mode
