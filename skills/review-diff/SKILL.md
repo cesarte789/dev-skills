@@ -71,12 +71,14 @@ stop before the step that needs it and report
 - **review tree** — the directory reviewers run in and verify against, and
   `<how>`, the way they run repository commands against it: the repo
   checkout's root (`git rev-parse --show-toplevel`), with `<how>` "from that
-  directory". Local work always takes this entry. For any other reference,
-  the **tree state** that applies must check the directory the review tree
-  that applies names: the built-in entries both check the repo checkout, and
-  an override whose **tree state** checks another directory must name that
-  directory in its own entry here. When the two differ, this operation is
-  unavailable for that reference. It is also unavailable when the path is not
+  directory". Local work always takes this entry. The rest of this entry is a
+  rule of this skill, not part of the entry an override replaces: it binds
+  whichever **review tree** applies, an override's included. For any other
+  reference, the **tree state** that applies must check the directory the
+  review tree that applies names: the built-in entries both check the repo
+  checkout, and an override whose **tree state** checks another directory must
+  name that directory in its own entry here. When the two differ, this
+  operation is unavailable for that reference. It is also unavailable when the path is not
   an absolute path to an existing directory, or when the loaded override's
   `dev-skills-ops/` lies inside that directory, its real paths compared as
   above for the repo checkout
