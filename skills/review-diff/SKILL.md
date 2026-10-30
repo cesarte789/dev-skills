@@ -76,8 +76,7 @@ stop before the step that needs it and report
   absolute path to an existing directory, when the loaded override's
   `dev-skills-ops/` or its `SKILL.md` lies inside it (real paths compared as
   above for the repo checkout), or, for anything but local work, when the **tree state** that
-  applies checks a different directory. These conditions are this skill's
-  rule, not part of the entry an override replaces
+  applies checks a different directory
 - **spawn a fresh reviewer** — a subagent, via the `Agent` tool
 
 <!-- repo-conventions -->
