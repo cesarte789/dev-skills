@@ -72,10 +72,11 @@ stop before the step that needs it and report
   `<how>`, the way they run repository commands against it: the repo
   checkout's root (`git rev-parse --show-toplevel`), with `<how>` "from that
   directory". Local work always takes this entry. Whichever **review tree**
-  applies, an override's included, is unavailable when the **tree state** that
-  applies checks a different directory, when its path is not an absolute path
-  to an existing directory, or when the loaded override's `dev-skills-ops/`
-  lies inside it, real paths compared as above for the repo checkout. These
+  applies, an override's included, is unavailable when its path is not an
+  absolute path to an existing directory, when the loaded override's
+  `dev-skills-ops/` lies inside it (real paths compared as above for the repo
+  checkout), or, for a change reference, when the **tree state** that applies
+  checks a different directory. These
   conditions are this skill's rule, not part of the entry an override
   replaces
 - **spawn a fresh reviewer** — a subagent, via the `Agent` tool
