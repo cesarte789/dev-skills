@@ -71,11 +71,11 @@ stop before the step that needs it and report
 - **review tree** — the directory reviewers run in and verify against, and
   `<how>`, the way they run repository commands against it: the repo
   checkout's root (`git rev-parse --show-toplevel`), with `<how>` "from that
-  directory". Local work always takes this entry. An override that defines
-  this entry for a reference must define **tree state** for it too, checking
-  that same directory; without one, this operation is unavailable for that
-  reference. It is also unavailable unless the path is an absolute path to an
-  existing directory
+  directory". Local work always takes this entry. For any other reference, an
+  override handles this entry and **tree state** together, both for the same
+  directory, or neither; when it handles only one of them, this operation is
+  unavailable for that reference. It is also unavailable unless the path is an
+  absolute path to an existing directory
 - **spawn a fresh reviewer** — a subagent, via the `Agent` tool
 
 <!-- repo-conventions -->
