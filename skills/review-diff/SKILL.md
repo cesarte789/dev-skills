@@ -71,9 +71,11 @@ stop before the step that needs it and report
 - **review tree** — the directory reviewers run in and verify against, and
   `<how>`, the way they run repository commands against it: the repo
   checkout's root (`git rev-parse --show-toplevel`), with `<how>` "from that
-  directory". Local work always takes this entry. For any other reference, an
-  override handles this entry and **tree state** together, both for the same
-  directory, or neither; when it handles only one of them, this operation is
+  directory". Local work always takes this entry. For any other reference,
+  the **tree state** that applies must check the directory the review tree
+  that applies names: the built-in entries both check the repo checkout, and
+  an override whose **tree state** checks another directory must name that
+  directory in its own entry here. When the two differ, this operation is
   unavailable for that reference. It is also unavailable unless the path is an
   absolute path to an existing directory
 - **spawn a fresh reviewer** — a subagent, via the `Agent` tool
@@ -179,10 +181,8 @@ Checklist for each reviewer:
 - **Reuse & efficiency** — the diff reimplements a helper the codebase
   already has, or does needless work a simpler form avoids.
 - **Repo conventions** — the diff against every rule in the files the repo's
-  standards come from, read in the review tree: the tree under review carries
-  the conventions that apply. Name those files to the reviewer by their paths
-  under it; the reviewer
-  loads them itself, so do not paraphrase rules into the prompt.
+  standards come from, read in the review tree. Name those files to the
+  reviewer by their paths under it; the reviewer loads them itself, so do not paraphrase rules into the prompt.
 - **UI** — any UI guidelines the repo documents (e.g. `docs/ui-guidelines.md`).
 
 ## Thorough mode
