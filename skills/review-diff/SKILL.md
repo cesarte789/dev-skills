@@ -47,8 +47,8 @@ here would receive any other reference, deferred or not defined, is
 unavailable for that reference, except that **read the issue** is then skipped
 as the Intent input says. It replaces
 operations only, never this skill's other rules. When it marks an operation
-unavailable, or one is unavailable for the reference or by its entry's own
-terms, never run or improvise it:
+unavailable, or one is unavailable for the reference or under a condition
+this section sets on it, never run or improvise it:
 stop before the step that needs it and report
 `review failed: <operation> unavailable`.
 
@@ -71,17 +71,13 @@ stop before the step that needs it and report
 - **review tree** — the directory reviewers run in and verify against, and
   `<how>`, the way they run repository commands against it: the repo
   checkout's root (`git rev-parse --show-toplevel`), with `<how>` "from that
-  directory". Local work always takes this entry. The rest of this entry is a
-  rule of this skill, not part of the entry an override replaces: it binds
-  whichever **review tree** applies, an override's included. For any other
-  reference, the **tree state** that applies must check the directory the
-  review tree that applies names: the built-in entries both check the repo
-  checkout, and an override whose **tree state** checks another directory must
-  name that directory in its own entry here. When the two differ, this
-  operation is unavailable for that reference. It is also unavailable when the path is not
-  an absolute path to an existing directory, or when the loaded override's
-  `dev-skills-ops/` lies inside that directory, its real paths compared as
-  above for the repo checkout
+  directory". Local work always takes this entry. Whichever **review tree**
+  applies, an override's included, is unavailable when the **tree state** that
+  applies checks a different directory, when its path is not an absolute path
+  to an existing directory, or when the loaded override's `dev-skills-ops/`
+  lies inside it, real paths compared as above for the repo checkout. These
+  conditions are this skill's rule, not part of the entry an override
+  replaces
 - **spawn a fresh reviewer** — a subagent, via the `Agent` tool
 
 <!-- repo-conventions -->
