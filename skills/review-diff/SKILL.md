@@ -75,8 +75,8 @@ stop before the step that needs it and report
   applies, an override's included, is unavailable when its path is not an
   absolute path to an existing directory, when the loaded override's
   `dev-skills-ops/` or its `SKILL.md` lies inside it (real paths compared as
-  above for the repo checkout), or, for anything but local work, when the **tree state** that
-  applies checks a different directory
+  above for the repo checkout), or, for anything but local work, when the
+  **tree state** that applies checks a different directory
 - **spawn a fresh reviewer** — a subagent, via the `Agent` tool
 
 <!-- repo-conventions -->
@@ -181,7 +181,8 @@ Checklist for each reviewer:
   already has, or does needless work a simpler form avoids.
 - **Repo conventions** — the diff against every rule in the files the repo's
   standards come from, read in the review tree. Name those files to the
-  reviewer by their paths under it; the reviewer loads them itself, so do not paraphrase rules into the prompt.
+  reviewer by their paths under it; the reviewer loads them itself, so do not
+  paraphrase rules into the prompt.
 - **UI** — any UI guidelines the repo documents (e.g. `docs/ui-guidelines.md`).
 
 ## Thorough mode
