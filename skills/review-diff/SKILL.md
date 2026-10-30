@@ -76,8 +76,8 @@ stop before the step that needs it and report
   that applies names: the built-in entries both check the repo checkout, and
   an override whose **tree state** checks another directory must name that
   directory in its own entry here. When the two differ, this operation is
-  unavailable for that reference. It is also unavailable unless the path is an
-  absolute path to an existing directory, and when the loaded override's
+  unavailable for that reference. It is also unavailable when the path is not
+  an absolute path to an existing directory, or when the loaded override's
   `dev-skills-ops/` lies inside that directory, its real paths compared as
   above for the repo checkout
 - **spawn a fresh reviewer** — a subagent, via the `Agent` tool
