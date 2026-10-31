@@ -80,6 +80,18 @@ ambiguous state.
 
 `<issue-number>` — required, e.g. `42`.
 
+`stop-before-merge <candidate-numbers>` — optional, after the issue number;
+only `resolve-issues` passes it, for a run inside one of its lanes, e.g.
+`42 stop-before-merge 40 42 45`. The candidate numbers are that sweep's
+candidate issues. Use only the ones made of digits alone, at most 10 digits
+each, and drop any other token. In this mode the run never merges, because
+`resolve-issues` merges every lane's PR through its own serial queue. Stages 1,
+4 and 6 each say what changes, and every other stage runs as written,
+including Stage 1b, Stage 1c and Stage 5's close. The run never checks out
+`<default>`, which another worktree may hold. A run that ends `ready` ends with
+the checkout detached (`git checkout --detach`), so the queue can check out the
+PR branch.
+
 ## Stage 0 — Check whether the default branch requires CI
 
 Every outcome past Stage 1 can merge unattended, and the skills' own CI waits
@@ -138,7 +150,12 @@ An issue **makes sense** when all of these hold:
 2. **Correct premise** — it isn't based on a misreading of the code, a stale
    version, or behavior that is intentional and documented.
 3. **Not already handled** — no duplicate open issue, no merged/open PR already
-   doing it, not already fixed on `<default>`.
+   doing it, not already fixed on `<default>`. In stop-before-merge mode (see
+   Arguments), only `<default>` counts as landed work. An open PR whose body
+   closes another candidate issue is ignored here: the merge queue re-checks
+   once that PR merges. Another candidate counts as a duplicate only when its
+   number is lower than this issue's, so of two duplicate candidates the older
+   one is the one built.
 4. **In scope** — it belongs to this project and doesn't contradict the repo
    conventions or the documented architecture.
 5. **Actionable** — a reader with nothing but the issue and the code can tell
@@ -277,6 +294,8 @@ Run the **polish-pr** skill on that PR (review → fix → verify loop).
   stop.
 
 ## Stage 4 — Merge
+
+In stop-before-merge mode (see Arguments), skip this stage and end `ready`.
 
 Only after a clean polish. That is the CI gate: `polish-pr` ends clean only with
 the PR marked ready and CI green on its latest push, so there is nothing left to
@@ -438,6 +457,10 @@ anything but comments, stop: that is a code change, and it does not belong to a
 rejected issue. As in Stage 4, if CI is not green or GitHub blocks the merge,
 leave the PR open and report it; never force it.
 
+In stop-before-merge mode (see Arguments), run everything in the block above
+through `gh pr create`, the comments-only check included, then skip the CI wait,
+the merge and the checkout of `<default>`, and end `ready` as a Stage 6 PR.
+
 If no place in the code is the right anchor, skip the stage and say so.
 
 ## Report
@@ -450,6 +473,14 @@ maps to one of them:
 - **`rejected`** — Stage 5 closed the issue with a verdict, and no PR from this
   run is left open (Stage 6 merged its comment-only PR, or was skipped).
 - **`split`** — Stage 1b split the issue into an epic; list the sub-issues.
+- **`ready`** — only in stop-before-merge mode (see Arguments); a run without
+  that argument never ends `ready`. It covers two cases:
+  - Stage 3 polished the PR clean. Give the PR number, the SHA Stage 3
+    recorded, and the findings `polish-pr` reported as fixed or dismissed in
+    each round.
+  - Stage 6 opened its comment-only PR after Stage 5 closed the issue. Give the
+    PR number and the SHA from its `git rev-parse HEAD`, and mark it as a
+    Stage 6 PR.
 - **`stopped`** — anything else: the fresh reader of the issue gave no usable
   answer (Stage 1 or 1b), the evaluation ended without a verdict (Stage 1c), polish stopped without a clean result (Stage 3), the merge was blocked or
   merged without closing the issue (Stage 4), the verdict comment failed to post
@@ -466,4 +497,5 @@ the final test/build status, the guard PR `compound` opened (or why none) and
 its **Plugin suggestions** verbatim, and anything left open. When a *narrow it* verdict
 was followed, say what was cut. On a rejection, say whether Stage 6 recorded the
 decision in code — with the file and the PR URL — or why nothing was worth
-anchoring. On the merge path, end on `<default>` synced to the merge.
+anchoring. On the merge path, end on `<default>` synced to the merge; in
+stop-before-merge mode, end as Arguments says.
