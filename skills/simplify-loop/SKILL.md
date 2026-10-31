@@ -89,8 +89,9 @@ simplifications landed and how many proposals were rejected, the stage whose
 rule ended the loop (e.g. stage 2: `propose-issues` filed nothing; stage 3:
 `resolve-issue` ended neither `merged` nor `rejected`; stage 4: cap reached),
 and anything left open (a PR that stalled in polish, a blocked merge,
-sub-issues from a split). After the per-iteration lines, list every guard PR `compound` opened during the run (or say none did), then each
-**Plugin suggestions** entry `resolve-issue` reported, verbatim: in a consuming
+sub-issues from a split). After the per-iteration lines, list every guard PR
+`compound` opened during the run (or say none did), then each **Plugin
+suggestions** entry `resolve-issue` reported, verbatim: in a consuming
 repo these are the only way a flaw in these skills reaches a human. End on
 `<default>`, synced to the last merge.
 
