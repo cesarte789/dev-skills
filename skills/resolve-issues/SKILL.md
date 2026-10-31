@@ -168,7 +168,22 @@ a checkout. Spawn each lane subagent with the Agent tool's worktree isolation
 the subagent in it as its working directory. Do not place worktrees by hand:
 Claude Code may treat such a path as protected (inside `.git/` or `.claude/`)
 or as outside the working directory, and an unattended lane cannot answer
-the permission prompt that follows. If the first lane cannot be spawned
+the permission prompt that follows.
+
+Claude Code keeps those worktrees under `.claude/worktrees/` inside the main
+checkout. The queue's `polish-pr` and `compound` need a clean tree there, and
+their `git add -A` must not stage a lane. So before the first lane starts, have
+this clone's own exclude file ignore that directory, unless something already
+does:
+
+```bash
+git check-ignore -q .claude/worktrees/ || echo '/.claude/worktrees/' >> "$(git rev-parse --git-path info/exclude)"
+git status --porcelain
+```
+
+If `git status --porcelain` lists anything, run the sweep in sequential mode
+instead, and say why in the report. The exclude file is local to this clone and
+never committed. If the first lane cannot be spawned
 with worktree isolation, run the sweep in sequential mode (stage 8) instead,
 and say why in the report.
 
@@ -178,7 +193,8 @@ can collide on a lock: `cannot lock ref`, `could not lock config file`, or
 times, a few seconds apart. Only then does it count as failed.
 
 **Slots.** `<max-issues>` caps issues **started**. Never start an issue when
-issues resolved so far plus issues in flight would exceed the cap. An issue is
+issues resolved so far, plus issues in flight, plus deferred issues that hold a
+slot, would exceed the cap. An issue is
 in flight from its start until it reaches an outcome, including while its PR
 waits in the queue. A deferred issue is not in flight, and stage 6 says which
 deferred issues hold a slot. There is no other limit on how many lanes run at
@@ -331,7 +347,8 @@ For a Stage 6 PR, skip steps 1, 3 and 4.
    satisfies the issue, not the whole of `resolve-issue`'s Stage 1. Judge what
    landed on `<default>` since the lane branched:
    `git log -p $(git merge-base <lane sha> origin/<default>)..origin/<default>`,
-   and `git show origin/<default>:<path>` for any file it touches. Never read
+   and `git show 'origin/<default>:<path>'` for any file it touches, writing
+   each `'` in the path as `'\''`. Never read
    the checkout: step 2 left it on the rebased PR branch, which already holds
    the PR's fix. If `<default>` fully satisfies the issue:
    - close the PR;
