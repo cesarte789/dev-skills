@@ -205,7 +205,7 @@ Whenever a slot is free, give it to the oldest pending issue that can start,
 whatever its lane. An issue can start when it is first in its lane, or when the
 issue before it in its lane has reached an outcome: merged by the queue,
 `rejected`, `split`, or skipped because it was already closed. Each issue keeps
-its slot until then. A skip or a `split` frees its slot.
+its slot until then; Counting says which outcomes free it.
 
 **Starting an issue.**
 
@@ -261,8 +261,8 @@ Act on each outcome:
 
 - **`ready`**: put the PR into the merge queue (stage 6).
 - **`rejected`**: the issue is resolved, and its lane continues.
-- **`split`**: report the sub-issues. The lane continues and the slot is freed,
-  as in stage 8.
+- **`split`**: report the sub-issues. The lane continues (see Counting for the
+  slot).
 - **`stopped`**: freeze the queue (stage 7).
 
 While lanes run, every merge to `<default>` goes through the queue, with no
@@ -321,7 +321,7 @@ change must touch comments only: read
 else is `stopped`.
 
 1. **Still open?** Confirm the issue is still open (stage 8 step 1). If it is
-   closed, close the PR. The issue counts as a skip and frees its slot.
+   closed, close the PR. The issue counts as a skip (see Counting).
 2. **Rebase** the lane's commit onto the current `<default>`, on the PR's
    local branch. Lane worktrees share branches with the main checkout, and a
    stale local branch would make the later `polish-pr` checkout fail:
@@ -483,7 +483,8 @@ React only to the outcome `resolve-issue`'s report opens with:
 ## Counting
 
 Only an issue that reaches `merged` or `rejected` counts as resolved. A skip or
-a `split` costs nothing, because the cap is there to bound unattended merges.
+a `split` costs nothing and frees its slot, because the cap is there to bound
+unattended merges.
 Report the candidates you never reached: the sweep is rerunnable and picks them
 up next time.
 
