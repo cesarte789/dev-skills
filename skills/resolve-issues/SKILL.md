@@ -440,8 +440,7 @@ Outcomes at the freeze:
 - A deferred issue is reported as deferred and never attempted. Say whether
   its PR was closed on a conflict, and that the issue is still open.
 
-Once the running lanes have answered, the sweep ends on the `stopped` stop
-condition.
+Once the running lanes have answered, the sweep ends `stopped`.
 
 ## 8. Sequential mode
 
@@ -490,16 +489,6 @@ unattended merges.
 Report the candidates you never reached: the sweep is rerunnable and picks them
 up next time.
 
-## Stop conditions
-
-End the run when **any** holds, and report which one:
-
-- every candidate has reached an outcome or been skipped,
-- the number of issues resolved reaches `<max-issues>`,
-- no open issue survives the stage-2 filters (backlog clear),
-- an issue ends `stopped`: in sequential mode, or in lane mode once stage 7's
-  freeze has let the running lanes answer.
-
 ## Cleanup
 
 When the sweep ends, run `git worktree list`. For each lane worktree the Agent
@@ -520,7 +509,10 @@ Summarize the whole sweep:
   Name every issue the queue deferred, and every one never attempted.
 - The totals: how many changes landed, how many issues were rejected, how many
   were skipped.
-- Which stop condition ended the sweep.
+- The stage and mode whose rule ended the sweep, e.g. stage 2: backlog clear;
+  stage 6, lane mode: no issue left that can go; stage 7, lane mode:
+  `stopped`; stage 8, sequential mode: cap reached, list exhausted or
+  `stopped`.
 - Everything left open or never attempted, including lane worktrees kept by
   Cleanup, so the user knows exactly what a rerun would pick up.
 
