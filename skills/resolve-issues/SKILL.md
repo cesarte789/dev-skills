@@ -390,7 +390,8 @@ For a Stage 6 PR, skip steps 1, 3 and 4.
 **Deferred issues.** The issue whose PR conflicted keeps its slot. A deferred
 issue that never started holds none: it runs only if a slot is free when its
 turn comes, and is otherwise never attempted. Once no issue is in flight and
-no pending issue can start, run the deferred issues one at a time:
+no pending issue can both start and get a free slot (one blocked only by the
+cap counts as unable to start), run the deferred issues one at a time:
 - in global oldest-first order, keeping each lane's internal order;
 - through `resolve-issue` without `stop-before-merge`, so each one merges itself;
 - from the main checkout, as stage 8 does.
