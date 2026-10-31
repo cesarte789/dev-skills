@@ -151,9 +151,9 @@ An issue **makes sense** when all of these hold:
    version, or behavior that is intentional and documented.
 3. **Not already handled** — no duplicate open issue, no merged/open PR already
    doing it, not already fixed on `<default>`. In stop-before-merge mode (see
-   Arguments), only `<default>` counts as landed work. An open PR whose body
-   closes another candidate issue is ignored here: the merge queue re-checks
-   once that PR merges. Another candidate counts as a duplicate only when its
+   Arguments), an open PR whose body closes another candidate issue is ignored
+   here: the merge queue re-checks once that PR merges. Every other open PR
+   still counts. Another candidate counts as a duplicate only when its
    number is lower than this issue's, so of two duplicate candidates the older
    one is the one built.
 4. **In scope** — it belongs to this project and doesn't contradict the repo

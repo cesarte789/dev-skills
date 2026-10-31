@@ -107,11 +107,12 @@ and give it this contract, verbatim:
 
 > You are a capability probe. Do not edit, create or delete any file, and run no
 > shell command. First, say whether you have a tool that runs skills (named
-> `Skill`). Then, if you have a tool that spawns subagents (named `Agent` or
+> `Skill`), and whether its listing includes a skill named
+> `dev-skills:resolve-issue` or `resolve-issue`. Then, if you have a tool that spawns subagents (named `Agent` or
 > `Task`), use it once to spawn a subagent with the prompt
 > `Reply with exactly PONG.` and quote its reply. End your answer with exactly
-> `nesting: ok` on its own line only when you have the skill tool and the
-> subagent you spawned replied `PONG`. Otherwise end it with exactly
+> `nesting: ok` on its own line only when you have the skill tool, it lists
+> that skill, and the subagent you spawned replied `PONG`. Otherwise end it with exactly
 > `nesting: no` on its own line.
 
 - An answer whose last line is `nesting: ok` puts this sweep in **lane mode**:
@@ -120,8 +121,8 @@ and give it this contract, verbatim:
 - Any other answer (errored, empty, or neither line last) is not a result.
   Respawn the probe once. If that answer is no better, use sequential mode.
 
-Lane mode works only where a subagent can run skills and spawn subagents of its
-own. Say in the report which mode ran, and why.
+Lane mode works only where a subagent can run `resolve-issue` and spawn
+subagents of its own. Say in the report which mode ran, and why.
 
 ## 4. Plan lanes
 
@@ -163,17 +164,22 @@ formed them for the report.
 
 Give each lane its own worktree off `<default>`, so lanes never share a
 checkout. `<lane-dir>` is an absolute path: the main checkout's parent
-directory, plus the checkout's directory name followed by `-lane-` and the
-lane's first issue number. Single-quote it in every command, as below:
+directory, plus the checkout's directory name, `-lane-`, the lane's first
+issue number, `-`, and the sweep's start time as `date +%Y%m%d%H%M%S` prints
+it. The time keeps a rerun from colliding with a worktree an earlier sweep
+kept. Single-quote it in every command, as below:
 
 ```bash
 git worktree add --detach '<lane-dir>' origin/<default>
 ```
 
+If this fails, every issue of that lane is `stopped`.
+
 **Slots.** `<max-issues>` caps issues **started**. Never start an issue when
 issues resolved so far plus issues in flight would exceed the cap. An issue is
 in flight from its start until it reaches an outcome, including while its PR
-waits in the queue. There is no other limit on how many lanes run at once.
+waits in the queue. A deferred issue (stage 6) is not in flight, but the one
+whose PR conflicted keeps its slot. There is no other limit on how many lanes run at once.
 Whenever a slot is free, give it to the oldest pending issue that can start,
 whatever its lane. An issue can start when it is first in its lane, or when the
 issue before it in its lane has reached an outcome: merged by the queue,
@@ -183,12 +189,17 @@ its slot until then. A skip or a `split` frees its slot.
 **Starting an issue.**
 
 1. Confirm it is still open, as stage 8 step 1 does. A closed issue is a skip.
-2. Reset the lane's worktree to the current `<default>`:
+2. Reset the lane's worktree to the current `<default>`. Edits the previous
+   issue left there belong to no PR: list them in the report, then discard
+   them:
 
    ```bash
-   git -C '<lane-dir>' fetch origin --quiet
-   git -C '<lane-dir>' checkout --detach origin/<default>
+   git -C '<lane-dir>' status --porcelain
+   git -C '<lane-dir>' reset --hard && git -C '<lane-dir>' clean -fd
+   git -C '<lane-dir>' fetch origin --quiet && git -C '<lane-dir>' checkout --detach origin/<default>
    ```
+
+   If any of these fails, the issue is `stopped`.
 
 3. Spawn a lane subagent in the background, and give it this contract with its
    slots filled in:
@@ -295,13 +306,14 @@ For a Stage 6 PR, skip steps 1, 3 and 4.
    stale local branch would make the later `polish-pr` checkout fail:
 
    ```bash
-   git fetch origin --quiet
-   git checkout -B '<branch>' <lane sha>
-   git rebase origin/<default>
+   git fetch origin --quiet && git checkout -B '<branch>' <lane sha> && git rebase origin/<default>
+   git rev-parse --abbrev-ref HEAD
    git rev-parse HEAD
    ```
 
-   If `git rev-parse HEAD` still prints the lane's SHA, the head did not
+   A rebase conflict is handled below. Any other failure is `stopped`, and so
+   is a `git rev-parse --abbrev-ref HEAD` that does not print `<branch>`. If
+   `git rev-parse HEAD` still prints the lane's SHA, the head did not
    change: push nothing. Otherwise push, leased to the lane's SHA:
 
    ```bash
@@ -333,7 +345,11 @@ For a Stage 6 PR, skip steps 1, 3 and 4.
    `stopped`, which freezes the queue. If the rebase left the head unchanged,
    skip the re-polish and merge pinned to the lane's SHA.
 5. **Merge** exactly as `resolve-issue`'s Stage 4 does, pinned to the SHA from
-   step 4, then return to `<default>`:
+   step 4, then return to `<default>`. When step 4 skipped the re-polish, the
+   lane's word is the only evidence of a clean polish. So first confirm the PR
+   is not a draft (`gh pr view <PR> --json isDraft`) and wait for green CI on
+   its head, as `resolve-issue`'s Stage 6 waits, counted from now. Anything else
+   is `stopped`.
 
    ```bash
    gh pr merge <PR> --squash --delete-branch --match-head-commit <sha>
@@ -353,8 +369,8 @@ For a Stage 6 PR, skip steps 1, 3 and 4.
 
 **Deferred issues.** The issue whose PR conflicted keeps its slot. A deferred
 issue that never started holds none: it runs only if a slot is free when its
-turn comes, and is otherwise never attempted. Once every other lane has
-drained, run the deferred issues one at a time:
+turn comes, and is otherwise never attempted. Once no issue is in flight and
+no pending issue can start, run the deferred issues one at a time:
 - in global oldest-first order, keeping each lane's internal order;
 - through `resolve-issue` without `stop-before-merge`, so each one merges itself;
 - from the main checkout, as stage 8 does.
@@ -383,6 +399,8 @@ Outcomes at the freeze:
 - An in-flight issue that finishes with no PR left open is reported under its
   real outcome: `rejected` without a Stage 6 PR, `split`, or skipped. Its slot
   follows the usual rule.
+- A deferred issue is reported as deferred and never attempted. Say whether
+  its PR was closed on a conflict, and that the issue is still open.
 
 Once the running lanes have answered, the sweep ends on the `stopped` stop
 condition.
@@ -414,9 +432,8 @@ candidate:
 Each resolution merges to `<default>`, and the next issue is vetted against
 that updated `<default>`. That is what makes overlapping issues safe: a request
 an earlier merge already satisfied is rejected by `resolve-issue` as already
-handled, instead of being built twice. Lane mode keeps the same guarantees.
-Issues that may overlap share a lane and run in order, and the queue rebases,
-re-vets and re-polishes every PR against the `<default>` it merges into.
+handled, instead of being built twice. Lane mode keeps the same guarantees
+through its lanes (stage 4) and its merge queue (stage 6).
 
 React only to the outcome `resolve-issue`'s report opens with:
 
