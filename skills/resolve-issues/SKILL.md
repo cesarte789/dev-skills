@@ -193,9 +193,10 @@ can collide on a lock: `cannot lock ref`, `could not lock config file`, or
 `Unable to create '…/….lock'`. Retry a command that fails that way up to three
 times, a few seconds apart. Only then does it count as failed.
 
-**Slots.** `<max-issues>` caps issues **started**. Never start an issue when
-issues resolved so far, plus issues in flight, plus deferred issues that hold a
-slot, would exceed the cap. An issue is
+**Slots.** `<max-issues>` caps issues **started**. Start an issue only
+while issues resolved so far, plus issues in flight, plus deferred issues that
+hold a slot, number fewer than the cap: the issue being started takes the
+next slot. An issue is
 in flight from its start until it reaches an outcome, including while its PR
 waits in the queue. A deferred issue is not in flight, and stage 6 says which
 deferred issues hold a slot. There is no other limit on how many lanes run at
