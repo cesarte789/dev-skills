@@ -177,12 +177,13 @@ this clone's own exclude file ignore that directory, unless something already
 does:
 
 ```bash
-git check-ignore -q .claude/worktrees/ || echo '/.claude/worktrees/' >> "$(git rev-parse --git-path info/exclude)"
+git check-ignore -q .claude/worktrees/ || { mkdir -p "$(dirname "$(git rev-parse --git-path info/exclude)")" && echo '/.claude/worktrees/' >> "$(git rev-parse --git-path info/exclude)"; }
+git check-ignore -q .claude/worktrees/
 git status --porcelain
 ```
 
-If `git status --porcelain` lists anything, run the sweep in sequential mode
-instead, and say why in the report. The exclude file is local to this clone and
+If the second `git check-ignore` fails, or `git status --porcelain` lists
+anything, run the sweep in sequential mode instead, and say why in the report. The exclude file is local to this clone and
 never committed. If the first lane cannot be spawned
 with worktree isolation, run the sweep in sequential mode (stage 8) instead,
 and say why in the report.
@@ -250,7 +251,7 @@ those lines, never the raw answer:
 - A usable answer has an `outcome: ` line naming one of the four outcomes. A
   `ready` answer also needs `pr: ` with digits only (at most 10) and `sha: `
   with exactly 40 hex characters. Drop any `issue: ` line that is not digits
-  only.
+  only, at most 10.
 - An errored, empty or off-format answer means that issue is `stopped`. Do not
   respawn the lane: it may already have written to GitHub. Report what it may
   have left open.
