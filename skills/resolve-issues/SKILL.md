@@ -312,7 +312,12 @@ NOTE
 gh pr close <PR> --delete-branch
 ```
 
-For a Stage 6 PR, skip steps 1, 3 and 4.
+For a Stage 6 PR, skip steps 1, 3 and 4. The lane's `stage6: yes` is its own
+claim, so before step 2 confirm it yourself. The issue must be closed
+(`gh issue view <N> --json state --jq .state` prints `CLOSED`). The PR's
+change must touch comments only: read
+`git diff $(git merge-base <lane sha> origin/<default>) <lane sha>`. Anything
+else is `stopped`.
 
 1. **Still open?** Confirm the issue is still open (stage 8 step 1). If it is
    closed, close the PR. The issue counts as a skip and frees its slot.
@@ -388,18 +393,27 @@ For a Stage 6 PR, skip steps 1, 3 and 4.
    is `stopped`, and the PR stays open. Never force a merge.
 
 **Deferred issues.** The issue whose PR conflicted keeps its slot. A deferred
-issue that never started holds none: it runs only if a slot is free when its
-turn comes, and is otherwise never attempted. Once no issue is in flight and
-no pending issue can both start and get a free slot (one blocked only by the
-cap counts as unable to start), run the deferred issues one at a time:
-- in global oldest-first order, keeping each lane's internal order;
-- through `resolve-issue` without `stop-before-merge`, so each one merges itself;
+issue that never started holds none.
+
+**The deferred phase** begins once no issue is in flight and no pending issue
+can both start and get a free slot. A pending issue blocked only by the cap
+counts as unable to start. From then on, lane mode is over: no lane starts
+again, and the queue takes no new PRs. Run the deferred issues, and every
+pending issue not yet started, one at a time:
+- through `resolve-issue` without `stop-before-merge`, so each one merges
+  itself;
 - from the main checkout, as stage 8 does.
+
+Each time, run the oldest issue that can go now: the issue before it in its
+lane has reached an outcome, and it holds a slot or one is free. An issue
+without a slot waits, and gets another chance after each run. The phase ends
+when no issue can go; any left are never attempted.
 
 Each runs in full, Stage 1b and 1c included, and sees the issue as it now
 stands, including any rewrite or earlier verdict comment. A second evaluation
 comment is acceptable. If the queue is frozen by then, run none of them
-(stage 7 says how to report them).
+(stage 7 says how to report them). A `stopped` in this phase ends the sweep,
+as in stage 8.
 
 ## 7. Freeze on any `stopped`
 
