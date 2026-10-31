@@ -81,21 +81,14 @@ Run these stages in order. Capture the issue and PR numbers as you go.
    back to stage 1 and analyze the freshly-merged tree for the next
    simplification.
 
-## Stop conditions
-
-End the run when **any** holds, and report which one:
-
-- the resolved-count reaches `<max-iterations>`,
-- `propose-issues` files nothing (clean, or everything left is already settled),
-- `resolve-issue` ends in anything but `merged` or `rejected`.
-
 ## Report
 
 Summarize the whole run: each iteration's issue and outcome with URLs — merged
 PR, or closed with a verdict (plus any comment-only PR it merged) — how many
-simplifications landed and how many proposals were rejected, which stop
-condition ended the loop, and anything left open (a PR that stalled in polish,
-a blocked merge, sub-issues from a split). After the per-iteration lines, list
+simplifications landed and how many proposals were rejected, the stage whose
+rule ended the loop (e.g. stage 2: `propose-issues` filed nothing; stage 3:
+`resolve-issue` ended `stopped`; stage 4: cap reached), and anything left
+open (a PR that stalled in polish, a blocked merge, sub-issues from a split). After the per-iteration lines, list
 every guard PR `compound` opened during the run (or say none did), then each
 **Plugin suggestions** entry `resolve-issue` reported, verbatim: in a consuming
 repo these are the only way a flaw in these skills reaches a human. End on
@@ -104,5 +97,5 @@ repo these are the only way a flaw in these skills reaches a human. End on
 ## Tip
 
 For a hands-off long run you can wrap a single invocation with the built-in
-`/loop`, but the loop above is self-contained — one invocation already iterates to
-its cap or a stop condition.
+`/loop`, but the loop above is self-contained — one invocation already iterates
+until one of stages 2–4 ends it.
