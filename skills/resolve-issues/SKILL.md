@@ -523,7 +523,8 @@ Summarize the whole sweep:
 
 After the per-issue lines, list every guard PR `compound` opened during the
 sweep (or say none did), then each **Plugin suggestions** entry reported during
-the sweep, verbatim. In lane mode, those are the `suggestion: ` lines lanes
-returned plus what the queue's `compound` runs reported. In a consuming repo
+the sweep, verbatim. In lane mode, they come from the `suggestion: ` lines
+lanes returned, the queue's `compound` runs, and every `resolve-issue` run in
+the deferred phase. In a consuming repo
 these are the only way a flaw in these skills reaches a human. End on
 `<default>`, synced to the last merge.
