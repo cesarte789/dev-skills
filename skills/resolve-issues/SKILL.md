@@ -383,7 +383,9 @@ else is `stopped`.
 
    Confirm the issue went to closed. Then run `compound` as that Stage 4
    says, passing the findings the lane reported and any from the step 4
-   re-polish.
+   re-polish. Then clean up after it as that Stage 4 does: discard what it
+   left, report what was discarded, and return to `<default>` again before the
+   next PR.
 
    A Stage 6 PR instead waits for green CI on its head, as `resolve-issue`'s
    Stage 6 waits, counted from step 2's push, or from now when nothing was
