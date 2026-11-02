@@ -5,7 +5,9 @@ description: >-
   docs such as docs/features.md and ARCHITECTURE.md where present) back in sync with how the code actually behaves and
   is set up, and trim the README down to its core. Use when docs have drifted or
   grown, or as a deliberate "refresh the docs" pass. Optionally pass an area to
-  focus on.
+  focus on. Lands the change as a draft PR, polishes it with polish-pr and
+  merges it to the default branch once polish ends clean. NOTE: merges without
+  a human reviewing the PR.
 ---
 
 # Update README
@@ -15,6 +17,15 @@ description: >-
 > Text filled in at run time goes in single quotes (each `'` in it written
 > `'\''`) or on stdin from a quoted heredoc whose delimiter is no line of the
 > text, never in double quotes, where the shell expands its backticks and `$`.
+
+> The other skills named here ship in the same `dev-skills` plugin. Invoke them
+> with the Skill tool by the name the session lists, `dev-skills:<name>` (e.g.
+> `dev-skills:polish-pr`), or the bare name where the skills are installed
+> unprefixed.
+
+> ⚠️ A new docs PR is **merged to the default branch** without a human
+> reviewing it. On a default branch that requires no status check, the green CI
+> `polish-pr` observed is the only guard on that merge.
 
 > `<default>` below is the repo's default branch, whatever its name. Resolve it
 > once per run: `git ls-remote --symref origin HEAD` names it in its
@@ -107,23 +118,50 @@ stale and the README is already its core, say so and change nothing.
 
 ## 4. Land it via a PR
 
-Every change goes through a PR. If you are on `<default>`,
-branch first:
+Every change goes through a PR. If you are already on a feature branch whose
+work changed behavior, update the docs in place on that branch instead, commit
+and push there, and stop: that branch's PR is not this skill's to polish or
+merge. Otherwise branch off `<default>`:
 
 ```bash
 git fetch origin --quiet && git checkout -b docs/refresh-readme origin/<default>
 ```
 
-Commit with a conventional-commit message (`docs: ...`), push, and open the PR:
+Commit with a conventional-commit message (`docs: ...`) ending with the repo's
+Co-Authored-By trailer, push, and open the PR as a **draft**:
 
 ```bash
 git push -u origin <branch>
-gh pr create --title "docs: refresh the docs to match current behavior" --body-file - <<'BODY'
+gh pr create --draft --title 'docs: refresh the docs to match current behavior' --body-file - <<'BODY'
 <what drifted and was corrected, and what was cut or moved>
 BODY
 ```
 
-End the commit message with the repo's Co-Authored-By trailer. Report the PR URL
-and a short list of what you corrected, cut and moved. If you are already on a feature branch
-whose work changed behavior, update the docs in place on that branch instead of
-opening a separate PR.
+## 5. Polish and merge
+
+Run the **polish-pr** skill on that PR. It marks the draft ready once its review
+is clean and ends clean only with CI green on its latest push.
+
+- **Clean** (polish-pr met its done condition): record the commit it reviewed
+  and pushed — `git rev-parse HEAD` on the PR branch it left checked out, not
+  the PR's current head on GitHub — and merge exactly that head:
+
+  ```bash
+  gh pr merge <PR> --squash --delete-branch --match-head-commit <sha>
+  git checkout <default> && git pull --ff-only && git fetch --prune
+  ```
+
+  (The GitHub MCP merge tool takes the same pin as `expectedHeadSha`.)
+- **Any other stop** (its iteration cap, a steering abort, a review failure,
+  `clean, not marked ready: …`), or a merge GitHub refuses (the head moved, a
+  failing required check, a conflict, branch protection needing a human):
+  **do not merge** and never force it. Leave the PR open, stay on the PR branch
+  polish left checked out, and report why, quoting polish-pr's outcome line or
+  GitHub's refusal.
+
+## Report
+
+Lead with the outcome: `merged`, `left open: <why>`, `updated in place on
+<branch>`, or that nothing was stale and nothing changed. Then the PR URL, how
+many polish iterations ran, and a short list of what you corrected, cut and
+moved. On a merge, end on `<default>` synced to it.

@@ -59,7 +59,7 @@ To update a local install by hand: `claude plugin marketplace update dev-skills`
 | `evaluate-issue` | `/dev-skills:evaluate-issue <N>` | Judge whether an issue is worth building, weighing the idea against the permanent cost it adds. Comments a build / narrow / decline verdict and changes nothing else. |
 | `polish-pr` | `/dev-skills:polish-pr [<N>]` | Review → fix → verify loop until merge-ready; marks a draft PR ready once review is clean and posts an approving comment when CI is green. |
 | `review-diff` | `/dev-skills:review-diff [<N>]` | Read-only review of a PR or the local diff: fresh reviewer subagents report verified findings and nothing gets fixed. |
-| `update-readme` | `/dev-skills:update-readme [area]` | Bring the README, feature docs and ARCHITECTURE back in sync with the code, and trim the README to its core. |
+| `update-readme` | `/dev-skills:update-readme [area]` | Bring the README, feature docs and ARCHITECTURE back in sync with the code, and trim the README to its core. Opens a draft PR, runs `polish-pr` on it and merges it once polish ends clean. ⚠️ Merges to the default branch unattended. |
 | `compound` | `/dev-skills:compound [<N> \| recent [<count>]]` | Turn what review and CI caught on a merged PR, or across recent merged PRs, into a lint rule, test or instructions-file line (`CLAUDE.md`, `AGENTS.md` or `GEMINI.md`; in the PR description when the repo has none), as one PR in the current repo. Never writes anywhere else. |
 
 ## Orchestrators
