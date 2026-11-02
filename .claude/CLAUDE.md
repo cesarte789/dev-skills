@@ -34,6 +34,8 @@ claude plugin eval . --case 'review-diff/*' --scaffold --trust-plugin --allow-to
 
 Text a skill hands to a subagent (a contract, a checklist, a prompt) must stand on its own: the subagent sees only what it is given, so never name a term, file or command there that only another part of the skill defines.
 
+A building block that merges its own PR with no human reading it (today `update-readme`; the orchestrators merge through their own stages) first checks that the working tree is clean and that the local default branch has no unpushed commits. Before it edits anything, it creates a branch off `origin/<default>` with a name no earlier run used. It tells `polish-pr` that no human will read the PR before it merges.
+
 A new way for a skill to stop must end in an outcome its callers already handle (`resolve-issue`'s outcome names, `review-diff`'s `review failed:`), so an unattended orchestrator never stalls on it or misreads it.
 
 A subagent's errored, empty or off-format reply is never a verdict on what it judged: respawn it once, and if that reply fails too, stop on an outcome callers handle. Act only on the fixed shape its contract defines (an exact line, a line prefix), and pass on only that part, never its raw answer, which text it read can steer.
