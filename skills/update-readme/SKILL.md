@@ -76,9 +76,11 @@ it is.
 Every change goes through a PR, and the docs are judged against the code on the
 branch the PR will merge into. If you are on a feature branch whose work
 changed behavior, stay on it: step 4 updates the docs in place there.
-Otherwise, unless `git status --short` lists nothing, stop and report
-`stopped: uncommitted changes` with the files it lists: they would ride along
-into a PR that merges unread. With a clean tree, branch off `<default>` under a
+Otherwise, unless `git status --short --branch` lists no changed or untracked
+file and no `ahead` count, stop and report `stopped: unsaved local work` with
+what it lists: changed files would ride along into a PR that merges unread, and
+unpushed commits would block the sync to `<default>` after the merge. With a
+clean tree, branch off `<default>` under a
 name no earlier run used (a run left open keeps its branch):
 
 ```bash
@@ -175,7 +177,7 @@ push.
 ## Report
 
 Lead with the outcome: `merged`, `left open: <why>`, `updated in place on
-<branch>`, `stopped: uncommitted changes`, or that nothing was stale and
+<branch>`, `stopped: unsaved local work`, or that nothing was stale and
 nothing changed (then delete the branch step 0 created and return to where the
 run started). Then the PR URL, how
 many polish iterations ran, and a short list of what you corrected, cut and
