@@ -77,7 +77,9 @@ stop before the step that needs it and report
   `dev-skills-ops/` or its `SKILL.md` lies inside it (real paths compared as
   above for the repo checkout), or, for anything but local work, when the
   **tree state** that applies checks a different directory
-- **spawn a fresh reviewer** — a subagent, via the `Agent` tool
+- **spawn a fresh reviewer** — a subagent, via the `Agent` tool (named `Task`
+  in some sessions); unavailable when the session has neither, e.g. when this
+  skill itself runs inside a subagent without it
 
 <!-- repo-conventions -->
 > **The repo conventions** are this repo's standards and commands. Find them in
@@ -141,7 +143,9 @@ Collect before spawning reviewers:
 ## Spawn reviewers
 
 **Spawn a fresh reviewer** — a clean context reads the change on its own
-merits, without the reasoning that produced it. It runs in the
+merits, without the reasoning that produced it. When that operation is
+unavailable, the Operations section's stop applies: never review the change in
+this skill's own context instead. It runs in the
 **review tree**; give it the inputs above and this contract verbatim, with
 `<review tree>` and `<how>` filled in from that entry:
 
