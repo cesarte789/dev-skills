@@ -198,7 +198,10 @@ lines as the guess list. An answer with no `guess: ` line that ends in
 empty or cut-off reply, or neither shape) is not a judgement of the issue:
 respawn the reader once, and if that answer is no better, **stop** with outcome
 `stopped`, naming the reader failure. Never rewrite or close an issue on a
-reader that did not answer.
+reader that did not answer. A session with no tool that spawns a subagent
+(`Agent`, or `Task` in some sessions) cannot run the reader at all: **stop**
+with outcome `stopped`, naming the missing tool, and never judge #5 in this
+context instead.
 
 Note what this stage does *not* ask: whether the issue is worth building. A
 request can be real, correct, novel, in scope and perfectly actionable and still
@@ -481,8 +484,8 @@ maps to one of them:
   - Stage 6 opened its comment-only PR after Stage 5 closed the issue. Give the
     PR number and the SHA from its `git rev-parse HEAD`, and mark it as a
     Stage 6 PR.
-- **`stopped`** — anything else: the fresh reader of the issue gave no usable
-  answer (Stage 1 or 1b), the evaluation ended without a verdict (Stage 1c), polish stopped without a clean result (Stage 3), the merge was blocked or
+- **`stopped`** — anything else: the fresh reader of the issue could not be
+  spawned or gave no usable answer (Stage 1 or 1b), the evaluation ended without a verdict (Stage 1c), polish stopped without a clean result (Stage 3), the merge was blocked or
   merged without closing the issue (Stage 4), the verdict comment failed to post
   and the issue is still open (Stage 5), or the comment-only PR was blocked, its
   CI was not green, or its diff touched more than comments (Stage 6). Name what
