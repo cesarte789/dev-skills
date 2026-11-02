@@ -118,20 +118,22 @@ stale and the README is already its core, say so and change nothing.
 
 ## 4. Land it via a PR
 
-Every change goes through a PR. If you are already on a feature branch whose
-work changed behavior, update the docs in place on that branch instead, commit
-and push there, and stop: that branch's PR is not this skill's to polish or
-merge. Otherwise branch off `<default>`:
+Every change goes through a PR. Commit with a conventional-commit message
+(`docs: ...`) ending with the repo's Co-Authored-By trailer.
+
+If you are already on a feature branch whose work changed behavior, update the
+docs in place on that branch instead, commit and push there, and stop: that
+branch's PR is not this skill's to polish or merge. Otherwise branch off
+`<default>` under a name no earlier run used (a run left open keeps its branch):
 
 ```bash
-git fetch origin --quiet && git checkout -b docs/refresh-readme origin/<default>
+git fetch origin --quiet && git checkout -b "docs/refresh-readme-$(date -u +%Y%m%d%H%M%S)" origin/<default>
 ```
 
-Commit with a conventional-commit message (`docs: ...`) ending with the repo's
-Co-Authored-By trailer, push, and open the PR as a **draft**:
+Commit, push, and open the PR as a **draft**:
 
 ```bash
-git push -u origin <branch>
+git push -u origin HEAD
 gh pr create --draft --title 'docs: refresh the docs to match current behavior' --body-file - <<'BODY'
 <what drifted and was corrected, and what was cut or moved>
 BODY
@@ -139,8 +141,10 @@ BODY
 
 ## 5. Polish and merge
 
-Run the **polish-pr** skill on that PR. It marks the draft ready once its review
-is clean and ends clean only with CI green on its latest push.
+Run the **polish-pr** skill on that PR, telling it that no human will read the
+PR before it merges, so it reviews in its thorough mode. It marks the draft
+ready once its review is clean and ends clean only with CI green on its latest
+push.
 
 - **Clean** (polish-pr met its done condition): record the commit it reviewed
   and pushed — `git rev-parse HEAD` on the PR branch it left checked out, not
@@ -151,7 +155,8 @@ is clean and ends clean only with CI green on its latest push.
   git checkout <default> && git pull --ff-only && git fetch --prune
   ```
 
-  (The GitHub MCP merge tool takes the same pin as `expectedHeadSha`.)
+  (The GitHub MCP merge tool takes the same pin as `expectedHeadSha`; it
+  deletes no branch, which the per-run branch name above leaves harmless.)
 - **Any other stop** (its iteration cap, a steering abort, a review failure,
   `clean, not marked ready: …`), or a merge GitHub refuses (the head moved, a
   failing required check, a conflict, branch protection needing a human):
