@@ -76,15 +76,21 @@ it is.
 Every change goes through a PR, and the docs are judged against the code on the
 branch the PR will merge into. If you are on a feature branch whose work
 changed behavior, stay on it: step 4 updates the docs in place there.
-Otherwise, unless `git status --short --branch` lists no changed or untracked
-file and no `ahead` count, stop and report `stopped: unsaved local work` with
-what it lists: changed files would ride along into a PR that merges unread, and
-unpushed commits would block the sync to `<default>` after the merge. With a
-clean tree, branch off `<default>` under a
-name no earlier run used (a run left open keeps its branch):
+Otherwise run `git fetch origin --quiet`, then stop and report
+`stopped: unsaved local work`, with what you found, when either holds:
+
+- `git status --short --branch` lists a changed or untracked file or an
+  `ahead` count: changed files would ride along into a PR that merges unread;
+- a local `<default>` exists and
+  `git rev-list --count origin/<default>..<default>` is above 0: its unpushed
+  commits would block the sync to `<default>` after the merge, whichever branch
+  the run started on.
+
+Otherwise branch off `<default>` under a name no earlier run used (a run left
+open keeps its branch):
 
 ```bash
-git fetch origin --quiet && git checkout -b "docs/refresh-readme-$(date -u +%Y%m%d%H%M%S)" origin/<default>
+git checkout -b "docs/refresh-readme-$(date -u +%Y%m%d%H%M%S)" origin/<default>
 ```
 
 ## 1. Read the current docs
