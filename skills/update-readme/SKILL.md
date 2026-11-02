@@ -71,6 +71,20 @@ Test every other line: **would a newcomer fail to install, set up or use the
 project without it?** If not, it does not belong in the README, however correct
 it is.
 
+## 0. Start from the right base
+
+Every change goes through a PR, and the docs are judged against the code on the
+branch the PR will merge into. If you are on a feature branch whose work
+changed behavior, stay on it: step 4 updates the docs in place there.
+Otherwise, unless `git status --short` lists nothing, stop and report
+`stopped: uncommitted changes` with the files it lists: they would ride along
+into a PR that merges unread. With a clean tree, branch off `<default>` under a
+name no earlier run used (a run left open keeps its branch):
+
+```bash
+git fetch origin --quiet && git checkout -b "docs/refresh-readme-$(date -u +%Y%m%d%H%M%S)" origin/<default>
+```
+
 ## 1. Read the current docs
 
 Read `README.md` and, where they exist, the feature docs (e.g. `docs/features.md`)
@@ -118,19 +132,13 @@ stale and the README is already its core, say so and change nothing.
 
 ## 4. Land it via a PR
 
-Every change goes through a PR. Commit with a conventional-commit message
-(`docs: ...`) ending with the repo's Co-Authored-By trailer.
+Stage only the doc files this pass edited (`git add <file>…`, never
+`git add -A`) and commit with a conventional-commit message (`docs: ...`)
+ending with the repo's Co-Authored-By trailer.
 
-If you are already on a feature branch whose work changed behavior, update the
-docs in place on that branch instead, commit and push there, and stop: that
-branch's PR is not this skill's to polish or merge. Otherwise branch off
-`<default>` under a name no earlier run used (a run left open keeps its branch):
-
-```bash
-git fetch origin --quiet && git checkout -b "docs/refresh-readme-$(date -u +%Y%m%d%H%M%S)" origin/<default>
-```
-
-Commit, push, and open the PR as a **draft**:
+On the feature branch step 0 kept, push there and stop: that branch's PR is not
+this skill's to polish or merge. On the branch step 0 created, push and open the
+PR as a **draft**:
 
 ```bash
 git push -u origin HEAD
@@ -156,7 +164,7 @@ push.
   ```
 
   (The GitHub MCP merge tool takes the same pin as `expectedHeadSha`; it
-  deletes no branch, which the per-run branch name above leaves harmless.)
+  deletes no branch, which step 0's per-run branch name leaves harmless.)
 - **Any other stop** (its iteration cap, a steering abort, a review failure,
   `clean, not marked ready: …`), or a merge GitHub refuses (the head moved, a
   failing required check, a conflict, branch protection needing a human):
@@ -167,6 +175,8 @@ push.
 ## Report
 
 Lead with the outcome: `merged`, `left open: <why>`, `updated in place on
-<branch>`, or that nothing was stale and nothing changed. Then the PR URL, how
+<branch>`, `stopped: uncommitted changes`, or that nothing was stale and
+nothing changed (then delete the branch step 0 created and return to where the
+run started). Then the PR URL, how
 many polish iterations ran, and a short list of what you corrected, cut and
 moved. On a merge, end on `<default>` synced to it.
