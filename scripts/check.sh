@@ -195,11 +195,23 @@ def section_end(lines, start):
     return next((i for i in unfenced_lines(lines, start + 1) if re.match(r"##?(?:[ \t]|$)", lines[i])), len(lines))
 
 
+def setext_title(lines, i, title):
+    """Whether lines[i:] open a setext title matching `title`: the lines from i
+    up to a `=`/`-` underline in the same run of non-blank lines, joined as one
+    title (a title may wrap)."""
+    for k in range(i + 1, len(lines)):
+        if not lines[k].strip():
+            return False
+        if UNDERLINE.fullmatch(lines[k]):
+            return bool(re.match(title, " ".join(line.strip() for line in lines[i:k])))
+    return False
+
+
 def headings(lines, atx, title):
     """The indices of the headings in lines that are ATX headings `atx` accepts
-    or setext headings whose title starts on a line matching `title`, with a
-    `=` or `-` underline later in the same run of non-blank lines (a title may
-    wrap); the second list holds the setext ones. Any such line counts,
+    or setext headings whose title, from that line to a `=` or `-` underline
+    in the same run of non-blank lines and joined, matches `title` (a title
+    may wrap); the second list holds the setext ones. Any such line counts,
     whatever precedes it: telling a real setext heading from the last line of
     a paragraph takes a markdown parser, and a false count fails loudly where
     a missed one would pass silently. Lines in code fences count
@@ -211,9 +223,7 @@ def headings(lines, atx, title):
     for i in range(first, len(lines)):
         if atx(lines[i]):
             found.append(i)
-        elif re.match(r" {0,3}" + title, lines[i]) and any(
-                UNDERLINE.fullmatch(lines[k]) for k in range(i + 1, next(
-                    (k for k in range(i + 1, len(lines)) if not lines[k].strip()), len(lines)))):
+        elif lines[i].strip() and not UNDERLINE.fullmatch(lines[i]) and setext_title(lines, i, title):
             found.append(i)
             setext.append(i)
     return found, setext
@@ -238,8 +248,11 @@ def shown(text, fill=" "):
 
 def uncommented(line):
     """line without its one-line comments (found outside code spans, as markdown reads them), code kept, and
-    its runs of spaces closed up, as they render."""
-    return " ".join("".join(char for char, seen in zip(line, shown(line, fill="\0")) if seen != "\0").split())
+    its runs of spaces outside code spans closed up, as they render."""
+    kept = "".join(char for char, seen in zip(line, shown(line, fill="\0")) if seen != "\0")
+    # Spaces close up outside code spans only: inside one they render as written.
+    return "".join(part if part.startswith("`") else re.sub(r"\s+", " ", part)
+                   for part in re.split(r"(`[^`]*`)", kept)).strip()
 
 
 def bad_comment(text):
@@ -457,7 +470,6 @@ for i, text in found:
         failed = True
     else:
         listed[item.group(1)] = [name.strip() for name in item.group(2).split(",")]
-
 
 
 # The sentence is read from what renders: a comment's copy of the phrase, or its names, are no part of it.
