@@ -171,7 +171,7 @@ BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 OPEN_FENCE = re.compile(r"  ```[\w-]*")
 CLOSE_FENCE = "  ```"
-TAG = re.compile(r"</?[A-Za-z][\w-]*(?:\s[^<>]*)?/?>")
+TAG = re.compile(r"</?[A-Za-z]")  # the start of an HTML tag, whether or not it closes on the line
 OPERATIONS = re.compile(r"##[ \t]+Operations\b")
 OVERRIDES = re.compile(r"##[ \t]+Platform overrides[ \t]*#*[ \t]*")
 
