@@ -135,7 +135,7 @@ PY
 # appear outside it. Skills without the section are not checked yet.
 # README's "Platform overrides" lists the entry names of each such section, one
 # line per skill, for override authors: keep each list equal to the skill's own
-# entries, and every top-level bold bullet in the section in a shape read here.
+# entries, and the section's list items in the shapes read below.
 python3 - <<'PY'
 import glob
 import re
@@ -156,9 +156,10 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 
 # An entry is `- **name** — ...`; a bullet naming operations then `:` or `,` says
 # what happens when they are unavailable, so every name it gives must have an
-# entry. Any other top-level list item is a shape this check would misread, so
-# it fails rather than drop the entry silently. A bullet is read whole, with its indented
-# continuation lines, since names and bold spans wrap.
+# entry. Any other top-level list item outside a code fence is a shape this
+# check would misread, so it fails rather than drop the entry silently. A bullet
+# is read whole, with its indented continuation lines, since names and bold
+# spans wrap. A name holds no comma, which separates names in the README.
 BULLET = re.compile(r"^([-*+]) \*\*(.+?)\*\*(.*)$")
 
 failed = False
@@ -173,15 +174,22 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
     names = entries[path.split("/")[1]] = []
     availability = []
+    fenced = False
     for i in range(start, end):
-        if not re.match(r"(?:[-*+]|\d+[.)])\s", lines[i]):
+        if lines[i].lstrip().startswith("```"):
+            fenced = not fenced
+        if fenced or not re.match(r"(?:[-*+]|\d+[.)])\s", lines[i]):
             continue
         j = i + 1
         while j < end and lines[j].startswith(" ") and lines[j].strip():
             j += 1
         text = " ".join(line.strip() for line in lines[i:j])
         bullet = BULLET.match(text)
-        if bullet and bullet.group(1) == "-" and bullet.group(3).startswith(" —"):
+        if bullet and bullet.group(1) == "-" and bullet.group(3).startswith(" —") and "," in bullet.group(2):
+            print(f"error: {path}:{i + 1}: Operations entry name `{bullet.group(2)}` holds a comma, which the "
+                  "README list uses to separate names", file=sys.stderr)
+            failed = True
+        elif bullet and bullet.group(1) == "-" and bullet.group(3).startswith(" —"):
             names.append(bullet.group(2))
         elif bullet and bullet.group(1) == "-" and bullet.group(3)[:1] in (":", ","):
             availability.append((i, re.findall(r"\*\*(.+?)\*\*", text.split(":")[0])))
