@@ -192,6 +192,13 @@ def items(path, lines, start, end, flat=False):
     def error(i, message):
         errors.append(f"{path}:{i + 1}: {message}")
 
+    def unfenced(i, text):
+        """The rules every line outside a code fence keeps."""
+        if opens_comment(text):
+            error(i, "HTML comment over several lines; keep it on one line")
+        if "__" in prose(text):
+            error(i, "`__` outside code; write bold as **…**")
+
     for i in range(start, end):
         if "\t" in lines[i]:
             error(i, "tab character; indent with spaces")
@@ -211,10 +218,8 @@ def items(path, lines, start, end, flat=False):
             conventions = line != "<!-- /repo-conventions -->"
             i += 1
             continue
-        if not fenced and opens_comment(line):
-            error(i, "HTML comment over several lines; keep it on one line")
-        if not fenced and "__" in prose(line):
-            error(i, "`__` outside code; write bold as **…**")
+        if not fenced:
+            unfenced(i, line)
         if fenced:
             if line == CLOSE_FENCE:
                 fenced = False
@@ -247,10 +252,7 @@ def items(path, lines, start, end, flat=False):
                 wrapped = lines[j].lstrip(" ")
                 if flat or MARKER.match(wrapped) or wrapped.startswith(("```", "~~~", ">")):
                     break
-                if opens_comment(wrapped):
-                    error(j, "HTML comment over several lines; keep it on one line")
-                if "__" in prose(wrapped):
-                    error(j, "`__` outside code; write bold as **…**")
+                unfenced(j, wrapped)
                 j += 1
             if (j < end and lines[j].strip() and not lines[j].startswith("  ")
                     and not MARKER.match(lines[j].lstrip(" "))):
@@ -276,6 +278,9 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     if start is None:
         continue
     checked += 1
+    if sum(line.startswith("## Operations") for line in lines) > 1:
+        print(f"error: {path}: more than one `## Operations` section; keep the one", file=sys.stderr)
+        failed = True
     end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
     names = entries[path.split("/")[1]] = []
     availability = []
