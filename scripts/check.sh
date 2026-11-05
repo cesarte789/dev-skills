@@ -195,23 +195,13 @@ def section_end(lines, start):
     return next((i for i in unfenced_lines(lines, start + 1) if re.match(r"##?(?:[ \t]|$)", lines[i])), len(lines))
 
 
-def block_ends(line):
-    """Whether a paragraph can start on the line after this one: anything but a
-    line a paragraph (its own, a list item's or a quote's) would continue onto
-    — a blank line, a heading, a fence line, a one-line comment, a rule or
-    setext underline, or indented code all end their block."""
-    stripped = line.strip()
-    continues = (stripped and len(line) - len(line.lstrip(" ")) < 4 and not HEADING.match(line)
-                 and not stripped.startswith(FENCE_START) and not COMMENT.fullmatch(stripped)
-                 and not RULE.fullmatch(line))
-    return not continues
-
-
 def headings(lines, atx, title):
     """The indices of the headings in lines that are ATX headings `atx` accepts
     or setext headings whose title line matches `title`, underlined with `=`
-    or `-` (a one-line paragraph, so the title is the whole of it); the second
-    list holds the setext ones. Lines in code fences count
+    or `-`; the second list holds the setext ones. Any such line counts,
+    whatever precedes it: telling a real setext heading from the last line of
+    a paragraph takes a markdown parser, and a false count fails loudly where
+    a missed one would pass silently. Lines in code fences count
     too, so a fence misread before a heading never hides it: an example heading
     fails loudly as a second section instead."""
     found, setext = [], []
@@ -220,8 +210,7 @@ def headings(lines, atx, title):
     for i in range(first, len(lines)):
         if atx(lines[i]):
             found.append(i)
-        elif (re.match(r" {0,3}" + title, lines[i]) and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1])
-              and (i == first or block_ends(lines[i - 1]))):  # a one-line paragraph: the whole title
+        elif re.match(r" {0,3}" + title, lines[i]) and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1]):
             found.append(i)
             setext.append(i)
     return found, setext
@@ -378,8 +367,10 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
         print(f"error: {path}:{setext[0] + 1}: Operations heading underlined; write it as `## Operations`",
               file=sys.stderr)
         failed = True
+    atx_found = [i for i in found if i not in setext]
+    if not atx_found:
         continue
-    start = found[0]
+    start = atx_found[0]
     end = section_end(lines, start)
     names = entries[path.split("/")[1]] = []
     availability = []
