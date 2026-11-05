@@ -157,13 +157,42 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # An entry is `- **name** — ...`; a bullet naming operations then `:` or `,` says
 # what happens when they are unavailable, so every name it gives must have an
 # entry. Any other top-level list item outside a code fence is a shape this
-# check would misread, so it fails rather than drop the entry silently. A bullet
-# is read whole, with every line up to the next item, blank line or heading
-# (indented or not, as markdown continues it), since names and bold spans wrap. A name holds no comma, which separates names in the README.
+# check would misread, so it fails rather than drop the entry silently. A name
+# holds no comma, which separates names in the README.
 BULLET = re.compile(r"^([-*+]) \*\*(.+?)\*\*(.*)$")
-# A top-level item: one leading space at most, since two put a `- ` item inside
-# the entry above it.
-ITEM = re.compile(r" ?(?:[-*+]|\d+[.)])\s")
+MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
+FENCE = ("```", "~~~")
+
+
+def items(lines, start, end):
+    """Each top-level list item in lines[start:end], outside code fences, as
+    (index, text): the item read whole, with every line up to the next blank
+    line, item, heading or fence, since names and bold spans wrap. Indented up
+    to three spaces an item is top-level, unless it follows another item's
+    lines: there two spaces or more nest it inside that item."""
+    fenced = in_item = False
+    i = start
+    while i < end:
+        line = lines[i]
+        stripped = line.lstrip(" ")
+        indent = len(line) - len(stripped)
+        if stripped.startswith(FENCE):
+            fenced = not fenced
+        elif not fenced and line.strip():
+            if MARKER.match(stripped) and indent <= (1 if in_item else 3):
+                j = i + 1
+                while (j < end and lines[j].strip() and not lines[j].startswith("#")
+                       and not lines[j].lstrip(" ").startswith(FENCE)
+                       and not (MARKER.match(lines[j].lstrip(" ")) and len(lines[j]) - len(lines[j].lstrip(" ")) <= 3)):
+                    j += 1
+                yield i, " ".join(part.strip() for part in lines[i:j])
+                in_item = True
+                i = j
+                continue
+            if indent == 0:
+                in_item = False
+        i += 1
+
 
 failed = False
 checked = 0
@@ -177,17 +206,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
     names = entries[path.split("/")[1]] = []
     availability = []
-    fenced = False
-    for i in range(start, end):
-        if lines[i].lstrip().startswith(("```", "~~~")):
-            fenced = not fenced
-        if fenced or not ITEM.match(lines[i]):
-            continue
-        j = i + 1
-        while (j < end and lines[j].strip() and not ITEM.match(lines[j]) and not lines[j].startswith("#")
-               and not lines[j].lstrip().startswith(("```", "~~~"))):
-            j += 1
-        text = " ".join(line.strip() for line in lines[i:j])
+    for i, text in items(lines, start, end):
         bullet = BULLET.match(text)
         if bullet and bullet.group(1) == "-":
             name, rest = bullet.group(2), bullet.group(3)
@@ -232,15 +251,16 @@ if start is None:
     sys.exit(1)
 end = next((i for i in range(start + 1, len(readme)) if readme[i].startswith("## ")), len(readme))
 listed = {}
-for number, line in enumerate(readme[start:end], start + 1):
-    if ITEM.match(line) and not re.match(r"^- `([\w-]+)`: (.+)$", line):
-        print(f"error: README.md:{number}: Platform overrides list item in an unrecognized shape; write it as "
+for i, text in items(readme, start, end):
+    item = re.match(r"^- `([\w-]+)`: (.+)$", text)
+    if not item:
+        print(f"error: README.md:{i + 1}: Platform overrides list item in an unrecognized shape; write it as "
               "- `skill`: operation, operation", file=sys.stderr)
         failed = True
-    if item := re.match(r"^- `([\w-]+)`: (.+)$", line):
-        if item.group(1) in listed:
-            print(f"error: README.md: Platform overrides lists {item.group(1)} twice", file=sys.stderr)
-            failed = True
+    elif item.group(1) in listed:
+        print(f"error: README.md:{i + 1}: Platform overrides lists {item.group(1)} twice", file=sys.stderr)
+        failed = True
+    else:
         listed[item.group(1)] = [name.strip() for name in item.group(2).split(",")]
 intro = next((line for line in readme[start:end] if " keep every platform command in an " in line), "")
 named = sorted(re.findall(r"`([\w-]+)`", intro.split(" keep every platform command in an ")[0]))
