@@ -171,9 +171,24 @@ BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 OPEN_FENCE = re.compile(r"  ```[\w-]*")
 CLOSE_FENCE = "  ```"
-TAG = re.compile(r"</?[A-Za-z]")  # the start of an HTML tag, whether or not it closes on the line
-OPERATIONS = re.compile(r"##[ \t]+Operations\b")
-OVERRIDES = re.compile(r"##[ \t]+Platform overrides[ \t]*#*[ \t]*")
+# The start of any raw HTML (a tag, `<?`, `<!X`, `<![CDATA[`), closed on the
+# line or not; a `<!--` comment is left to the comment rule.
+TAG = re.compile(r"<(?:[A-Za-z/?]|!(?!--))")
+OPERATIONS = re.compile(r" {0,3}##[ \t]+Operations\b")
+OVERRIDES = re.compile(r" {0,3}##[ \t]+Platform overrides[ \t]*#*[ \t]*")
+UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
+
+
+def headings(lines, atx, title):
+    """How many headings in lines are ATX headings `atx` accepts, or setext
+    headings whose title line matches `title`, underlined with `=` or `-`."""
+    count = 0
+    for i, line in enumerate(lines):
+        if atx(line):
+            count += 1
+        elif re.match(r" {0,3}" + title, line) and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1]):
+            count += 1
+    return count
 
 
 def prose(text):
@@ -286,7 +301,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     if start is None:
         continue
     checked += 1
-    if sum(bool(OPERATIONS.match(line)) for line in lines) > 1:
+    if headings(lines, OPERATIONS.match, r"Operations\b") > 1:
         print(f"error: {path}: more than one `## Operations` section; keep the one", file=sys.stderr)
         failed = True
     end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
@@ -312,7 +327,10 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
                     names.append(name)
                 continue
             if rest[:1] in (":", ","):
-                availability.append((i, re.findall(r"\*\*(.+?)\*\*", text)))
+                # Bold names found with code spans blanked, so `**` in code is no name;
+                # each read back from the text, so a name may hold code.
+                availability.append((i, [text[m.start(1):m.end(1)]
+                                         for m in re.finditer(r"\*\*(.+?)\*\*", prose(text))]))
                 continue
         print(f"error: {path}:{i + 1}: Operations list item in an unrecognized shape; write an entry as "
               "`- **name** — ...`, or what happens when operations are unavailable as `- **name**: ...` or "
@@ -338,7 +356,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
 
 readme = open("README.md", encoding="utf-8").read().split("\n")
 start = next((i for i, line in enumerate(readme) if OVERRIDES.fullmatch(line)), None)
-if sum(bool(OVERRIDES.fullmatch(line)) for line in readme) > 1:
+if headings(readme, OVERRIDES.fullmatch, r"Platform overrides[ \t]*$") > 1:
     print("error: README.md: more than one `## Platform overrides` section; keep the one", file=sys.stderr)
     failed = True
 if start is None:
