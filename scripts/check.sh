@@ -162,14 +162,18 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # above keeps identical in every skill). The README list keeps each line whole,
 # with nothing indented under it, and gets no repo-conventions exemption.
 # Anything else fails, rather than risk an entry being read past silently. An
-# entry is `- **name** — ...` and its name
-# holds no comma, which separates names in the README; a bullet naming
-# operations then `:` or `,` says what happens when they are unavailable, so
-# every name it gives must have an entry.
+# entry is `- **name** — ...` and its name holds no comma, which separates names
+# in the README; a bullet naming operations then `:` or `,` says what happens
+# when they are unavailable, so every name it gives must have an entry.
 BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 OPEN_FENCE = re.compile(r"  ```[\w-]*")
 CLOSE_FENCE = "  ```"
+
+
+def opens_comment(text):
+    """Whether text leaves an HTML comment open past its end."""
+    return "<!--" in text and "-->" not in text.rsplit("<!--", 1)[1]
 
 
 def items(path, lines, start, end, flat=False):
@@ -181,6 +185,9 @@ def items(path, lines, start, end, flat=False):
     def error(i, message):
         errors.append(f"{path}:{i + 1}: {message}")
 
+    for i in range(start, end):
+        if "\t" in lines[i]:
+            error(i, "tab character; indent with spaces")
     fenced = conventions = False
     blocks = 0
     i = start
@@ -197,9 +204,7 @@ def items(path, lines, start, end, flat=False):
             conventions = line != "<!-- /repo-conventions -->"
             i += 1
             continue
-        if "\t" in line:
-            error(i, "tab character; indent with spaces")
-        if "<!--" in line and "-->" not in line.split("<!--", 1)[1]:
+        if not fenced and opens_comment(line):
             error(i, "HTML comment over several lines; keep it on one line")
         if fenced:
             if line == CLOSE_FENCE:
@@ -230,7 +235,7 @@ def items(path, lines, start, end, flat=False):
                 wrapped = lines[j].lstrip(" ")
                 if flat or MARKER.match(wrapped) or wrapped.startswith(("```", "~~~", ">")):
                     break
-                if "<!--" in wrapped and "-->" not in wrapped.split("<!--", 1)[1]:
+                if opens_comment(wrapped):
                     error(j, "HTML comment over several lines; keep it on one line")
                 j += 1
             if (j < end and lines[j].strip() and not lines[j].startswith("  ")
