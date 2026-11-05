@@ -156,16 +156,19 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 
 # Operations sections and the README list keep one strict layout, so a reader
 # needs no markdown parser to find every item: an item starts `- ` at the
-# margin, its wrapped lines are indented two spaces, a code fence two, inside an
-# entry, and no list nests. The README list keeps each line whole, with nothing
-# indented under it. Anything else fails, rather than risk an
+# margin, its wrapped lines are indented two spaces, a code fence is two spaces
+# then ``` and an optional language, closed by two spaces then ```, and no list
+# nests and nothing is quoted (bar the repo-conventions block, which the check
+# above keeps identical in every skill). The README list keeps each line whole,
+# with nothing indented under it. Anything else fails, rather than risk an
 # entry being read past silently. An entry is `- **name** — ...` and its name
 # holds no comma, which separates names in the README; a bullet naming
 # operations then `:` or `,` says what happens when they are unavailable, so
 # every name it gives must have an entry.
 BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
-FENCE = re.compile(r"`{3,}|~{3,}")
+OPEN_FENCE = re.compile(r"  ```[\w-]*")
+CLOSE_FENCE = "  ```"
 
 
 def items(path, lines, start, end, flat=False):
@@ -173,47 +176,71 @@ def items(path, lines, start, end, flat=False):
     wrapped lines, plus an error for each line off the layout. Flat, nothing
     may be indented at all."""
     found, errors = [], []
-    fence = None  # the run that opened the current code fence
+
+    def error(i, message):
+        errors.append(f"{path}:{i + 1}: {message}")
+
+    fenced = conventions = False
+    blocks = 0
     i = start
     while i < end:
         line = lines[i]
         stripped = line.lstrip(" ")
         indent = len(line) - len(stripped)
-        where = f"{path}:{i + 1}"
+        if line == "<!-- repo-conventions -->":
+            conventions = True
+            blocks += 1
+            if blocks > 1:
+                error(i, "second repo-conventions block; keep the one")
+        if conventions:
+            conventions = line != "<!-- /repo-conventions -->"
+            i += 1
+            continue
         if "\t" in line:
-            errors.append(f"{where}: tab character; indent with spaces")
-        elif fence:
-            if stripped.rstrip() == fence:
-                fence = None
+            error(i, "tab character; indent with spaces")
+        if "<!--" in line and "-->" not in line.split("<!--", 1)[1]:
+            error(i, "HTML comment over several lines; keep it on one line")
+        if fenced:
+            if line == CLOSE_FENCE:
+                fenced = False
             elif line.strip() and indent < 2:
-                errors.append(f"{where}: line inside a code fence indented less than two spaces")
-        elif FENCE.match(stripped):
-            fence = FENCE.match(stripped).group()
-            if indent != 2:
-                errors.append(f"{where}: code fence indented {indent} spaces; indent it two, under an entry")
-        elif stripped.startswith("<!--") and "-->" not in stripped:
-            errors.append(f"{where}: HTML comment over several lines; keep it on one line")
+                error(i, "line inside a code fence indented less than two spaces")
         elif flat and indent and line.strip():
-            errors.append(f"{where}: indented line under a README list item; keep each item on one line")
+            error(i, "indented line under a README list item; keep each item on one line")
+        elif stripped.startswith(("```", "~~~")):
+            if flat:
+                error(i, "code fence in the README list; keep it to one line per skill")
+            elif OPEN_FENCE.fullmatch(line):
+                fenced = True
+            else:
+                error(i, "code fence not written as two spaces, ``` and an optional language")
+        elif stripped.startswith(">"):
+            error(i, "blockquote here; write it as plain text")
         elif MARKER.match(stripped) and indent:
-            errors.append(f"{where}: list item indented {indent} spaces; start every item at the margin, "
-                          "since lists here do not nest")
-        elif MARKER.match(stripped) and indent == 0:
+            error(i, f"list item indented {indent} spaces; start every item at the margin, "
+                     "since lists here do not nest")
+        elif MARKER.match(stripped):
             if not line.startswith("- "):
-                errors.append(f"{where}: top-level list item not started with `- `")
+                error(i, "list item not started with `- `")
             j = i + 1
-            while (j < end and lines[j].startswith("  ") and lines[j].strip()
-                   and not MARKER.match(lines[j].lstrip(" ")) and not FENCE.match(lines[j].lstrip(" "))):
+            while j < end and lines[j].startswith("  ") and lines[j].strip():
+                wrapped = lines[j].lstrip(" ")
+                if MARKER.match(wrapped) or wrapped.startswith(("```", "~~~", ">")):
+                    break
+                if "<!--" in wrapped and "-->" not in wrapped.split("<!--", 1)[1]:
+                    error(j, "HTML comment over several lines; keep it on one line")
                 j += 1
             if (j < end and lines[j].strip() and not lines[j].startswith("  ")
                     and not MARKER.match(lines[j].lstrip(" "))):
-                errors.append(f"{path}:{j + 1}: wrapped line of a list item indented less than two spaces")
+                error(j, "wrapped line of a list item indented less than two spaces")
             found.append((i, " ".join(part.strip() for part in lines[i:j])))
             i = j
             continue
         i += 1
-    if fence:
-        errors.append(f"{path}:{end}: code fence opened with {fence} never closed")
+    if fenced:
+        error(end - 1, "code fence never closed")
+    if conventions:
+        error(end - 1, "repo-conventions block never closed")
     return found, errors
 
 
@@ -238,7 +265,10 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
         if bullet:
             name, rest = bullet.group(1), bullet.group(2)
             if rest.startswith(" —"):
-                if "," in name:
+                if name in names:
+                    print(f"error: {path}:{i + 1}: Operations entry `{name}` defined twice", file=sys.stderr)
+                    failed = True
+                elif "," in name:
                     print(f"error: {path}:{i + 1}: Operations entry name `{name}` holds a comma, which the "
                           "README list uses to separate names", file=sys.stderr)
                     failed = True
