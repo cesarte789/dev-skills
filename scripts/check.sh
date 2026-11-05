@@ -267,6 +267,9 @@ def items(path, lines, start, end, flat=False):
                 error(i, "fence line inside a code fence; close it with exactly two spaces then ```")
             elif line.strip() and indent < 2:
                 error(i, "line inside a code fence indented less than two spaces")
+        elif (flat and line.strip() and not indent and not MARKER.match(stripped) and i > start
+              and lines[i - 1].strip() and not MARKER.match(lines[i - 1]) and not HEADING.match(lines[i - 1])):
+            error(i, "paragraph wrapped onto a second line here; keep each README paragraph on one line")
         elif flat and indent and line.strip():
             error(i, "indented line under a README list item; keep each item on one line")
         elif stripped.startswith(FENCE_START):
@@ -306,7 +309,8 @@ def items(path, lines, start, end, flat=False):
             if (j < end and lines[j].strip() and not lines[j].startswith("  ")
                     and not MARKER.match(lines[j].lstrip(" "))):
                 error(j, "line right under a README list item; keep each item on one line" if flat
-                      else "wrapped line of a list item indented less than two spaces")
+                      else "line right under a list item; indent a wrapped line two spaces, or leave a blank line "
+                           "before anything else")
             found.append((i, " ".join(part.strip() for part in lines[i:j])))
             i = j
             continue
@@ -413,7 +417,12 @@ for i, text in found:
         failed = True
     else:
         listed[item.group(1)] = [name.strip() for name in item.group(2).split(",")]
-intro = next((line for line in readme[start:end] if " keep every platform command in an " in line), "")
+sentences = [line for line in readme[start:end] if " keep every platform command in an " in line]
+if len(sentences) > 1:
+    print("error: README.md: Platform overrides names the skills with an Operations section more than once; keep "
+          "one sentence", file=sys.stderr)
+    failed = True
+intro = sentences[0] if sentences else ""
 intro = re.sub(r"<!--.*?-->", "", intro)  # a comment's names are no part of the rendered sentence
 named = sorted(re.findall(r"`([\w-]+)`", intro.split(" keep every platform command in an ")[0]))
 if named != sorted(entries):
