@@ -169,7 +169,9 @@ OPERATIONS = re.compile(r" {0,3}##[ \t]+Operations\b")
 OVERRIDES = re.compile(r" {0,3}##[ \t]+Platform overrides[ \t]*#*[ \t]*")
 FENCE_START = ("```", "~~~")
 SENTENCE = " keep every platform command in an "  # the README sentence naming the skills with an Operations section
-ONE_LINE_COMMENT = re.compile(r"<!--.*-->[ \t]*")
+# A one-line comment that reads the same under every CommonMark version: no `<!-->` or `<!--->` opener and no
+# `--` inside. Any other `<!--` fails, so text a comment seems to hide is never text that renders.
+COMMENT = re.compile(r"<!--(?!-?>)(?:(?!--).)*-->")
 HEADING = re.compile(r" {0,3}#{1,6}(?:[ \t]|$)")
 UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
 RULE = re.compile(r" {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*|" + UNDERLINE.pattern)  # a thematic break or setext underline
@@ -214,10 +216,9 @@ def prose(text):
     return re.sub(r"`[^`]*`", lambda m: " " * len(m.group()), text)
 
 
-def opens_comment(text):
-    """Whether text leaves an HTML comment open past its end."""
-    text = prose(text)
-    return "<!--" in text and "-->" not in text.rsplit("<!--", 1)[1]
+def bad_comment(text):
+    """Whether text holds a `<!--` that is not a well-formed one-line comment."""
+    return "<!--" in COMMENT.sub("", prose(text))
 
 
 def items(path, lines, start, end, flat=False):
@@ -234,9 +235,9 @@ def items(path, lines, start, end, flat=False):
         on the line, so reading them line by line reads them as markdown does."""
         if "\\`" in text or "``" in text or text.count("`") % 2:
             error(i, "backticks outside a code fence must pair on their line, singly and unescaped")
-        if opens_comment(text):
-            error(i, "HTML comment over several lines; keep it on one line")
-        shown = re.sub(r"<!--.*?-->", "", prose(text))  # what renders: no code spans, no one-line comments
+        if bad_comment(text):
+            error(i, "HTML comment not closed on its line, or malformed; write `<!-- text -->` on one line")
+        shown = COMMENT.sub("", prose(text))  # what renders: no code spans, no one-line comments
         if "__" in shown:
             error(i, "`__` outside code; write bold as **…**")
         if TAG.search(shown):
@@ -274,7 +275,7 @@ def items(path, lines, start, end, flat=False):
                 error(i, "line inside a code fence indented less than two spaces")
         elif (flat and line.strip() and not indent and not MARKER.match(stripped) and i > start
               and lines[i - 1].strip() and not MARKER.match(lines[i - 1]) and not HEADING.match(lines[i - 1])
-              and not ONE_LINE_COMMENT.fullmatch(line) and not ONE_LINE_COMMENT.fullmatch(lines[i - 1])):
+              and not COMMENT.fullmatch(line.strip()) and not COMMENT.fullmatch(lines[i - 1].strip())):
             error(i, "paragraph wrapped onto a second line here; keep each README paragraph on one line")
         elif flat and indent and line.strip():
             error(i, "indented line in the README Platform overrides section; write every line at the margin")
@@ -435,14 +436,16 @@ if len(sentences) > 1:
           "one sentence", file=sys.stderr)
     failed = True
 intro = sentences[0] if sentences else ""
-intro = re.sub(r"<!--.*?-->", "", intro)  # a comment's names are no part of the rendered sentence
+intro = COMMENT.sub("", intro)  # a comment's names are no part of the rendered sentence
 # Every skill directory named in the sentence, however written (code span, link, plain text).
 lead = intro.split(SENTENCE)[0]
 if "[" in prose(lead):
     print("error: README.md: a link in the Platform overrides sentence naming the skills; name each one as `skill`",
           file=sys.stderr)
     failed = True
-named = sorted(skill for skill in skill_dirs if re.search(r"(?<![\w-])" + re.escape(skill) + r"(?![\w-])", lead))
+# Every skill directory the sentence names, however written, and every name it writes as code.
+named = sorted({skill for skill in skill_dirs if re.search(r"(?<![\w-])" + re.escape(skill) + r"(?![\w-])", lead)}
+               | set(re.findall(r"`([^`]+)`", lead)))
 if named != sorted(entries):
     print("error: README.md: the Platform overrides sentence naming the skills that \"keep every platform command "
           f"in an Operations section\" should name exactly: {', '.join(sorted(entries))}", file=sys.stderr)
