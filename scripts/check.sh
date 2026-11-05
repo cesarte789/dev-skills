@@ -158,8 +158,8 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # what happens when they are unavailable, so every name it gives must have an
 # entry. Any other top-level list item outside a code fence is a shape this
 # check would misread, so it fails rather than drop the entry silently. A bullet
-# is read whole, with its indented continuation lines, since names and bold
-# spans wrap. A name holds no comma, which separates names in the README.
+# is read whole, with every line up to the next item, blank line or heading
+# (indented or not, as markdown continues it), since names and bold spans wrap. A name holds no comma, which separates names in the README.
 BULLET = re.compile(r"^([-*+]) \*\*(.+?)\*\*(.*)$")
 # A top-level item: one leading space at most, since two put a `- ` item inside
 # the entry above it.
@@ -179,12 +179,13 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     availability = []
     fenced = False
     for i in range(start, end):
-        if lines[i].lstrip().startswith("```"):
+        if lines[i].lstrip().startswith(("```", "~~~")):
             fenced = not fenced
         if fenced or not ITEM.match(lines[i]):
             continue
         j = i + 1
-        while j < end and lines[j].startswith(" ") and lines[j].strip() and not ITEM.match(lines[j]):
+        while (j < end and lines[j].strip() and not ITEM.match(lines[j]) and not lines[j].startswith("#")
+               and not lines[j].lstrip().startswith(("```", "~~~"))):
             j += 1
         text = " ".join(line.strip() for line in lines[i:j])
         bullet = BULLET.match(text)
@@ -202,7 +203,8 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
                 availability.append((i, re.findall(r"\*\*(.+?)\*\*", text.split(":")[0])))
                 continue
         print(f"error: {path}:{i + 1}: Operations list item in an unrecognized shape; write an entry as "
-              "`- **name** — ...`", file=sys.stderr)
+              "`- **name** — ...`, or what happens when operations are unavailable as `- **name**: ...` or "
+              "`- **name**, **other**: ...`", file=sys.stderr)
         failed = True
     if not names:
         print(f"error: {path}:{start + 1}: Operations section has no `- **name** — ...` entries", file=sys.stderr)
@@ -230,7 +232,11 @@ if start is None:
     sys.exit(1)
 end = next((i for i in range(start + 1, len(readme)) if readme[i].startswith("## ")), len(readme))
 listed = {}
-for line in readme[start:end]:
+for number, line in enumerate(readme[start:end], start + 1):
+    if ITEM.match(line) and not re.match(r"^- `([\w-]+)`: (.+)$", line):
+        print(f"error: README.md:{number}: Platform overrides list item in an unrecognized shape; write it as "
+              "- `skill`: operation, operation", file=sys.stderr)
+        failed = True
     if item := re.match(r"^- `([\w-]+)`: (.+)$", line):
         if item.group(1) in listed:
             print(f"error: README.md: Platform overrides lists {item.group(1)} twice", file=sys.stderr)
