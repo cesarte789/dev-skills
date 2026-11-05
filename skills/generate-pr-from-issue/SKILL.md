@@ -77,7 +77,7 @@ The entries:
   `ref: refs/heads/<default>` line (or `gh repo view --json defaultBranchRef`).
   Only the built-in **start the branch** needs it.
 - **start the branch** — a new branch off **default branch**:
-  `git fetch origin --quiet && git checkout -b <branch> origin/<default>`
+  `git fetch origin --quiet && git checkout -b '<branch>' 'origin/<default>'`
 - **commit the change** — stage exactly the files the change created, modified
   or deleted, each path single-quoted (not `git add -A`, so unrelated untracked
   files stay out), then commit with a conventional-commit message on stdin,
@@ -94,7 +94,7 @@ The entries:
   URL:
 
   ```bash
-  git push -u origin <branch>
+  git push -u origin '<branch>'
   gh pr create --draft --title '<conventional title>' --body-file - <<'BODY'
   <summary>
 
