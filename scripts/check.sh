@@ -376,6 +376,9 @@ def items(path, lines, start, end, flat=False):
             error(i, "blockquote here; write it as plain text")
         elif RULE.fullmatch(line):
             error(i, "horizontal rule or setext underline here; use an ATX heading, or plain text")
+        elif line.startswith("**") and flat:
+            error(i, "line starting with bold in the Platform overrides list; start it with plain text, or write "
+                     "an item as - `skill`: operation, operation")
         elif line.startswith("**"):
             error(i, "bold name at the margin here; write an operation as an entry, `- **name** — ...`")
         elif not flat and i > start and not MARKER.match(stripped) and (HEADING.match(line) or "|" in shown(line)
@@ -498,8 +501,9 @@ found, setext, contained = headings(readme, OVERRIDES.fullmatch, r"Platform over
                                    r"Platform overrides\b")
 start = next((i for i in found if i not in setext and i not in contained), None)
 if contained:
-    print(f"error: README.md:{contained[0] + 1}: Platform overrides heading in another form (level, indent, "
-          "blockquote, list item, emphasis or HTML); write it as `## Platform overrides` at the margin",
+    print(f"error: README.md:{contained[0] + 1}: Platform overrides heading in another form (text after the "
+          "title, level, indent, blockquote, list item, emphasis or HTML); write it as exactly "
+          "`## Platform overrides` at the margin",
           file=sys.stderr)
     failed = True
 if len(found) > 1:
