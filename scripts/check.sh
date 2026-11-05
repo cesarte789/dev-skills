@@ -167,33 +167,37 @@ FENCE = ("```", "~~~")
 def items(lines, start, end):
     """Each top-level list item in lines[start:end], outside code fences, as
     (index, text): the item read whole, with every line up to the next blank
-    line, item, heading or fence, since names and bold spans wrap. Indented up
-    to three spaces an item is top-level, unless it follows another item's
-    lines: there two spaces or more nest it inside that item. A paragraph or
-    fence at the margin ends the list."""
-    fenced = in_item = False
+    line, item, heading or fence, since names and bold spans wrap. An item
+    indented up to three spaces is top-level unless it sits at or past the
+    content column of the item open above it, which nests it; any line before
+    that column closes the open item."""
+    fenced = False
+    content = 0  # the open top-level item's content column; 0 when none is open
     i = start
     while i < end:
         line = lines[i]
         stripped = line.lstrip(" ")
         indent = len(line) - len(stripped)
+        marker = MARKER.match(stripped)
         if stripped.startswith(FENCE):
             fenced = not fenced
-            if indent < 2:
-                in_item = False
+            if indent < content:
+                content = 0
         elif not fenced and line.strip():
-            if MARKER.match(stripped) and indent <= (1 if in_item else 3):
+            if content and indent >= content:
+                pass
+            elif marker and indent <= 3:
                 j = i + 1
                 while (j < end and lines[j].strip() and not lines[j].startswith("#")
                        and not lines[j].lstrip(" ").startswith(FENCE)
                        and not (MARKER.match(lines[j].lstrip(" ")) and len(lines[j]) - len(lines[j].lstrip(" ")) <= 3)):
                     j += 1
                 yield i, " ".join(part.strip() for part in lines[i:j])
-                in_item = True
+                content = indent + marker.end()
                 i = j
                 continue
-            if indent == 0:
-                in_item = False
+            else:
+                content = 0
         i += 1
 
 
