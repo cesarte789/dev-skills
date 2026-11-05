@@ -179,7 +179,12 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
         if bullet.group(1) == "-" and bullet.group(3).startswith(" —"):
             names.append(bullet.group(2))
         elif bullet.group(1) == "-" and bullet.group(3)[:1] in (":", ","):
-            availability.append((i, re.findall(r"\*\*(.+?)\*\*", lines[i].split(":")[0])))
+            # The bullet wraps: read it with its indented continuation lines.
+            j = i + 1
+            while j < end and lines[j].startswith(" ") and lines[j].strip():
+                j += 1
+            text = " ".join(line.strip() for line in lines[i:j])
+            availability.append((i, re.findall(r"\*\*(.+?)\*\*", text.split(":")[0])))
         else:
             print(f"error: {path}:{i + 1}: Operations bullet in an unrecognized shape; write an entry as "
                   "`- **name** — ...`", file=sys.stderr)
