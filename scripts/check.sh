@@ -161,7 +161,7 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # holds no comma, which separates names in the README.
 BULLET = re.compile(r"^([-*+]) \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
-FENCE = ("```", "~~~")
+FENCE = re.compile(r"`{3,}|~{3,}")
 
 
 def items(lines, start, end):
@@ -170,8 +170,11 @@ def items(lines, start, end):
     line, item, heading or fence, since names and bold spans wrap. An item
     indented up to three spaces is top-level unless it sits at or past the
     content column of the item open above it, which nests it; any line before
-    that column closes the open item."""
-    fenced = False
+    that column closes the open item. A fence closes only on a run of its own
+    character at least as long as the one that opened it; tabs count to the
+    next multiple of four columns."""
+    lines = [line.expandtabs(4) for line in lines]
+    fence = None  # the run that opened the current code fence
     content = 0  # the open top-level item's content column; 0 when none is open
     i = start
     while i < end:
@@ -179,17 +182,21 @@ def items(lines, start, end):
         stripped = line.lstrip(" ")
         indent = len(line) - len(stripped)
         marker = MARKER.match(stripped)
-        if stripped.startswith(FENCE):
-            fenced = not fenced
+        run = FENCE.match(stripped)
+        if fence:
+            if run and run.group()[0] == fence[0] and len(run.group()) >= len(fence) and not stripped[run.end():].strip():
+                fence = None
+        elif run:
+            fence = run.group()
             if indent < content:
                 content = 0
-        elif not fenced and line.strip():
+        elif line.strip():
             if content and indent >= content:
                 pass
             elif marker and indent <= 3:
                 j = i + 1
                 while (j < end and lines[j].strip() and not lines[j].startswith("#")
-                       and not lines[j].lstrip(" ").startswith(FENCE)
+                       and not FENCE.match(lines[j].lstrip(" "))
                        and not (MARKER.match(lines[j].lstrip(" ")) and len(lines[j]) - len(lines[j].lstrip(" ")) <= 3)):
                     j += 1
                 yield i, " ".join(part.strip() for part in lines[i:j])
