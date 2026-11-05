@@ -342,7 +342,7 @@ def items(path, lines, start, end, flat=False):
             error(i, "horizontal rule or setext underline here; use an ATX heading, or plain text")
         elif line.startswith("**"):
             error(i, "bold name at the margin here; write an operation as an entry, `- **name** — ...`")
-        elif not flat and i > start and not MARKER.match(stripped) and (HEADING.match(line) or line.startswith("|")
+        elif not flat and i > start and not MARKER.match(stripped) and (HEADING.match(line) or "|" in shown(line)
                                          or re.search(r"\*\*[^*]+\*\*\S*\s+—", shown(line))):
             error(i, "sub-heading, table row or entry-shaped line in an Operations section; write an operation "
                      "as an entry, `- **name** — ...`")
@@ -382,6 +382,7 @@ def items(path, lines, start, end, flat=False):
 failed = False
 checked = 0
 entries = {}
+unread = set()  # skills whose only Operations heading is setext: reported once, skipped below
 for path in sorted(glob.glob("skills/*/SKILL.md")):
     lines = open(path, encoding="utf-8").read().split("\n")
     found, setext = headings(lines, OPERATIONS.match, r"Operations\b")
@@ -397,6 +398,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
         failed = True
     atx_found = [i for i in found if i not in setext]
     if not atx_found:
+        unread.add(path.split("/")[1])
         continue
     start = atx_found[0]
     end = section_end(lines, start)
@@ -497,7 +499,7 @@ if SENTENCE in intro and not re.fullmatch(r"`[\w-]+`(?:, `[\w-]+`)*(?:,? and `[\
     print("error: README.md: the Platform overrides sentence must open its paragraph with the skills alone, as "
           "`a`, `b` and `c`", file=sys.stderr)
     failed = True
-named = sorted(re.findall(r"`([^`]+)`", lead))
+named = sorted(n for n in re.findall(r"`([^`]+)`", lead) if n not in unread)
 if named != sorted(entries):
     print("error: README.md: the Platform overrides sentence naming the skills that \"keep every platform command "
           f"in an Operations section\" should name exactly: {', '.join(sorted(entries))}", file=sys.stderr)
@@ -513,7 +515,7 @@ for skill, names in entries.items():
         print(f"error: README.md: Platform overrides lists other operations for {skill}; expected: {expected}",
               file=sys.stderr)
         failed = True
-for skill in sorted(listed.keys() - entries.keys()):
+for skill in sorted(listed.keys() - entries.keys() - unread):
     print(f"error: README.md: Platform overrides lists {skill}, which has no Operations section", file=sys.stderr)
     failed = True
 if not failed:
