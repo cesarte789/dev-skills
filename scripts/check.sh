@@ -173,6 +173,55 @@ if not failed:
 sys.exit(1 if failed else 0)
 PY
 
+# README's "Platform overrides" lists, per skill with an Operations section, the
+# entry names a dev-skills-ops can define. Keep each list equal to the skill's
+# own entries, so an override author never misses or invents a name.
+python3 - <<'PY'
+import glob
+import re
+import sys
+
+ENTRY = re.compile(r"^- \*\*(.+?)\*\* —")
+LISTED = re.compile(r"^- `([\w-]+)`: (.+)$")
+
+skills = {}
+for path in sorted(glob.glob("skills/*/SKILL.md")):
+    lines = open(path, encoding="utf-8").read().split("\n")
+    start = next((i for i, line in enumerate(lines) if line.startswith("## Operations")), None)
+    if start is None:
+        continue
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    names = [m.group(1) for line in lines[start:end] if (m := ENTRY.match(line))]
+    skills[path.split("/")[1]] = names
+
+readme = open("README.md", encoding="utf-8").read().split("\n")
+start = next((i for i, line in enumerate(readme) if line == "## Platform overrides"), None)
+listed = {}
+if start is not None:
+    end = next((i for i in range(start + 1, len(readme)) if readme[i].startswith("## ")), len(readme))
+    for line in readme[start:end]:
+        if m := LISTED.match(line):
+            listed[m.group(1)] = [name.strip() for name in m.group(2).split(",")]
+
+failed = False
+for skill, names in skills.items():
+    if skill not in listed:
+        print(f"error: README.md: no `- `{skill}`: ...` line under Platform overrides for its Operations entries",
+              file=sys.stderr)
+        failed = True
+    elif listed[skill] != names:
+        print(f"error: README.md: the `{skill}` override list does not match its Operations entries; "
+              f"expected: {', '.join(names)}", file=sys.stderr)
+        failed = True
+for skill in listed.keys() - skills.keys():
+    print(f"error: README.md: `{skill}` is listed under Platform overrides but has no Operations section",
+          file=sys.stderr)
+    failed = True
+if not failed:
+    print(f"README override lists match the Operations entries of {len(skills)} skills")
+sys.exit(1 if failed else 0)
+PY
+
 # Run-time text in a command template is single-quoted or in a quoted heredoc,
 # never in double quotes (.claude/CLAUDE.md, Writing skills).
 python3 - <<'PY'
