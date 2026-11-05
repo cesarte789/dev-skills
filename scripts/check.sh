@@ -222,9 +222,15 @@ def needs_blank_before(line):
     return bool(line.strip()) and not line.startswith("  ") and not MARKER.match(line.lstrip(" "))
 
 
+def shown(text, fill=" "):
+    """text as it renders, at its own length: code spans blanked, then each
+    one-line comment filled with `fill`, so offsets still map back to text."""
+    return COMMENT.sub(lambda m: fill * len(m.group()), prose(text))
+
+
 def bad_comment(text):
     """Whether text holds a `<!--` that is not a well-formed one-line comment."""
-    return "<!--" in COMMENT.sub("", prose(text))
+    return "<!--" in shown(text)
 
 
 def items(path, lines, start, end, flat=False):
@@ -243,10 +249,10 @@ def items(path, lines, start, end, flat=False):
             error(i, "backticks outside a code fence must pair on their line, singly and unescaped")
         if bad_comment(text):
             error(i, "HTML comment not closed on its line, or malformed; write `<!-- text -->` on one line")
-        shown = COMMENT.sub("", prose(text))  # what renders: no code spans, no one-line comments
-        if "__" in shown:
+        rendered = shown(text)
+        if "__" in rendered:
             error(i, "`__` outside code; write bold as **…**")
-        if TAG.search(shown):
+        if TAG.search(rendered):
             error(i, "HTML tag outside code; write formatting as markdown")
 
     for i in range(start, end):
@@ -304,7 +310,7 @@ def items(path, lines, start, end, flat=False):
         elif line.startswith("**"):
             error(i, "bold name at the margin here; write an operation as an entry, `- **name** — ...`")
         elif not flat and i > start and not MARKER.match(stripped) and (HEADING.match(line) or line.startswith("|")
-                                         or re.search(r"\*\*[^*]+\*\*\S*\s+—", prose(line))):
+                                         or re.search(r"\*\*[^*]+\*\*\S*\s+—", shown(line))):
             error(i, "sub-heading, table row or entry-shaped line in an Operations section; write an operation "
                      "as an entry, `- **name** — ...`")
         elif RULE.fullmatch(line):
@@ -386,8 +392,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
                 # Bold names found with code spans and comments blanked, so `**` there is no name;
                 # each read back from the text, so a name may hold code.
                 availability.append((i, [text[m.start(1):m.end(1)]
-                                         for m in re.finditer(r"\*\*(.+?)\*\*", COMMENT.sub(
-                                             lambda c: " " * len(c.group()), prose(text)))]))
+                                         for m in re.finditer(r"\*\*(.+?)\*\*", shown(text))]))
                 continue
         print(f"error: {path}:{i + 1}: Operations list item in an unrecognized shape; write an entry as "
               "`- **name** — ...`, or what happens when operations are unavailable as `- **name**: ...` or "
@@ -447,13 +452,16 @@ if len(sentences) > 1:
     failed = True
 intro = sentences[0] if sentences else ""
 # A comment's names are no part of the rendered sentence: comments found outside code spans, as markdown reads them.
-intro = "".join(intro[k] for k in range(len(intro))
-                if not any(m.start() <= k < m.end() for m in COMMENT.finditer(prose(intro))))
+intro = "".join(char for char, seen in zip(intro, shown(intro, fill="\0")) if seen != "\0")
 if SENTENCE in intro and not intro.split(SENTENCE, 1)[1].startswith("**Operations** section."):
     print("error: README.md: the Platform overrides sentence naming the skills must end right after the names, as "
           f"\"{SENTENCE.strip()} **Operations** section.\"", file=sys.stderr)
     failed = True
 lead = intro.split(SENTENCE)[0]
+if re.search(r"[.!?](?:\s|$)", prose(lead)):
+    print("error: README.md: the Platform overrides sentence naming the skills must open its paragraph",
+          file=sys.stderr)
+    failed = True
 if "[" in prose(lead):
     print("error: README.md: a link in the Platform overrides sentence naming the skills; name each one as `skill`",
           file=sys.stderr)
