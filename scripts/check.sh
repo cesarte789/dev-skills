@@ -163,6 +163,12 @@ BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 FENCE = re.compile(r"`{3,}|~{3,}")
 HEADING = re.compile(r" {0,3}#{1,6}(?:\s|$)")
+BREAK = re.compile(r" {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$")  # a thematic break
+
+
+def closes(line):
+    """A heading or thematic break: never continues a paragraph lazily."""
+    return HEADING.match(line) or BREAK.match(line)
 
 
 def items(lines, start, end):
@@ -207,7 +213,7 @@ def items(lines, start, end):
             blank = True
             i += 1
             continue
-        elif HEADING.match(line) and (not content or indent < content):
+        elif closes(line) and (not content or indent < content):
             content = 0
             nested = code = False
         else:
@@ -216,13 +222,13 @@ def items(lines, start, end):
                 # paragraph text. Only paragraph text continues lazily: not an
                 # indented code line, nor a heading.
                 code = indent >= content + 4 and (blank or code)
-                nested = not code and not HEADING.match(stripped)
+                nested = not code and not closes(stripped)
                 blank = False
                 i += 1
                 continue
             elif marker and indent <= 3:
                 j = i + 1
-                while (j < end and lines[j].strip() and not HEADING.match(lines[j])
+                while (j < end and lines[j].strip() and not closes(lines[j])
                        and not (FENCE.match(lines[j].lstrip(" "))
                                 and len(lines[j]) - len(lines[j].lstrip(" ")) - (indent + marker.end()) <= 3)
                        and not (MARKER.match(lines[j].lstrip(" ")) and len(lines[j]) - len(lines[j].lstrip(" ")) <= 3)):
