@@ -162,18 +162,24 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # above keeps identical in every skill). The README list keeps each line whole,
 # with nothing indented under it, and gets no repo-conventions exemption.
 # Anything else fails, rather than risk an entry being read past silently. An
-# entry is `- **name** — ...` and its name holds no comma or colon, which
-# separate names in the README and end a bullet's names. A bullet naming
-# operations then `:` or `,` says what happens when they are unavailable, and
-# every bold name anywhere in it must have an entry.
+# entry is `- **name** — ...` and its name holds no comma, which separates
+# names in the README. A bullet naming operations then `:` or `,` says what
+# happens when they are unavailable, and every bold name anywhere in it must
+# have an entry. Bold is written `**…**` only.
 BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 OPEN_FENCE = re.compile(r"  ```[\w-]*")
 CLOSE_FENCE = "  ```"
 
 
+def prose(text):
+    """text with its code spans blanked out."""
+    return re.sub(r"`[^`]*`", lambda m: " " * len(m.group()), text)
+
+
 def opens_comment(text):
     """Whether text leaves an HTML comment open past its end."""
+    text = prose(text)
     return "<!--" in text and "-->" not in text.rsplit("<!--", 1)[1]
 
 
@@ -189,6 +195,8 @@ def items(path, lines, start, end, flat=False):
     for i in range(start, end):
         if "\t" in lines[i]:
             error(i, "tab character; indent with spaces")
+        if "__" in prose(lines[i]):
+            error(i, "`__` outside a code span; write bold as **…**")
     fenced = conventions = False
     blocks = 0
     i = start
@@ -223,6 +231,9 @@ def items(path, lines, start, end, flat=False):
                 fenced = True
             else:
                 error(i, "code fence not written as two spaces, ``` and an optional language")
+        elif indent and line.strip() and not MARKER.match(stripped):
+            error(i, "indented line that is no list item's wrapped line nor in a code fence; keep an item's "
+                     "text in one block")
         elif stripped.startswith(">"):
             error(i, "blockquote here; write it as plain text")
         elif MARKER.match(stripped) and indent:
@@ -278,9 +289,9 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
                 if name in names:
                     print(f"error: {path}:{i + 1}: Operations entry `{name}` defined twice", file=sys.stderr)
                     failed = True
-                elif "," in name or ":" in name:
-                    print(f"error: {path}:{i + 1}: Operations entry name `{name}` holds a comma or colon, "
-                          "which separate names in the README and end a bullet's names", file=sys.stderr)
+                elif "," in name:
+                    print(f"error: {path}:{i + 1}: Operations entry name `{name}` holds a comma, which "
+                          "separates names in the README", file=sys.stderr)
                     failed = True
                 else:
                     names.append(name)
@@ -312,6 +323,9 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
 
 readme = open("README.md", encoding="utf-8").read().split("\n")
 start = next((i for i, line in enumerate(readme) if line == "## Platform overrides"), None)
+if readme.count("## Platform overrides") > 1:
+    print("error: README.md: more than one `## Platform overrides` section; keep the one", file=sys.stderr)
+    failed = True
 if start is None:
     print("error: README.md: no `## Platform overrides` section listing each skill's override operations",
           file=sys.stderr)
