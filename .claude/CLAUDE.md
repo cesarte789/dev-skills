@@ -2,7 +2,7 @@
 
 <!-- Lives in .claude/ rather than the repo root: a root CLAUDE.md fails `claude plugin validate … --strict`, which says plugins don't load it. Claude Code still loads this one as project memory. -->
 
-A Claude Code plugin: skills under `skills/`, one output style under `output-styles/`. No build and no test suite; the checks below are the gate, plus a small eval suite run by hand.
+A Claude Code plugin: skills under `skills/`, two output styles under `output-styles/`. No build and no test suite; the checks below are the gate, plus a small eval suite run by hand.
 
 ## Before pushing
 

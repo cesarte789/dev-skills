@@ -1,6 +1,6 @@
 # dev-skills
 
-Claude Code skills that automate the issue → PR → review → merge loop, plus one output style, packaged as a plugin so every repo uses the same copy instead of drifting forks.
+Claude Code skills that automate the issue → PR → review → merge loop, plus two output styles, packaged as a plugin so every repo uses the same copy instead of drifting forks.
 
 ## Install in a repo
 
@@ -71,9 +71,11 @@ To update a local install by hand: `claude plugin marketplace update dev-skills`
 | `resolve-issues` | `/dev-skills:resolve-issues [<max-issues>]` | resolve-issue × each open issue | Clears the backlog oldest first. Where nested subagents work, issues that touch unrelated code run in parallel lanes (one worktree each) and every PR merges through one serial queue; elsewhere it runs one issue at a time, re-syncing the default branch between issues. Skips epics, claimed and held issues. Default cap 5. ⚠️ Merges to the default branch and closes issues unattended. |
 | `simplify-loop` | `/dev-skills:simplify-loop [<max-iterations>] [area]` | (propose-issues `simplification` → resolve-issue) × N | One simplification per pass, re-analyzing the merged tree each time. Default cap 3, rejected proposals included. ⚠️ Merges to the default branch and closes issues unattended. |
 
-## Output style
+## Output styles
 
 `i-have-adhd` is an [output style](https://code.claude.com/docs/en/output-styles), not a skill: it shapes every reply for an ADHD reader (next action first, numbered steps, no tangents). Turn it on for a repo by adding `"outputStyle": "dev-skills:i-have-adhd"` to the `.claude/settings.json` above, or for yourself under `/config` → Output style.
+
+`asd-ste100` is an output style too: it writes every reply in [ASD-STE100](https://www.asd-ste100.org/) Simplified Technical English (approved words, short sentences, active voice), and leaves code, commands and paths unchanged. Turn it on the same way, with `"outputStyle": "dev-skills:asd-ste100"`. Only one output style is active at a time.
 
 ## Platform overrides
 
