@@ -169,7 +169,8 @@ def items(lines, start, end):
     (index, text): the item read whole, with every line up to the next blank
     line, item, heading or fence, since names and bold spans wrap. Indented up
     to three spaces an item is top-level, unless it follows another item's
-    lines: there two spaces or more nest it inside that item."""
+    lines: there two spaces or more nest it inside that item. A paragraph or
+    fence at the margin ends the list."""
     fenced = in_item = False
     i = start
     while i < end:
@@ -178,6 +179,8 @@ def items(lines, start, end):
         indent = len(line) - len(stripped)
         if stripped.startswith(FENCE):
             fenced = not fenced
+            if indent < 2:
+                in_item = False
         elif not fenced and line.strip():
             if MARKER.match(stripped) and indent <= (1 if in_item else 3):
                 j = i + 1
