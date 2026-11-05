@@ -177,11 +177,14 @@ TAG = re.compile(r"<(?:[A-Za-z/?]|!(?!--))")
 OPERATIONS = re.compile(r" {0,3}##[ \t]+Operations\b")
 OVERRIDES = re.compile(r" {0,3}##[ \t]+Platform overrides[ \t]*#*[ \t]*")
 UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
+RULE = re.compile(r" {0,3}(?:([-*_])(?:[ \t]*\1){2,}|=+|-+)[ \t]*")  # a thematic break or setext underline
 
 
 def section_end(lines, start):
     """Where the section opened at lines[start] ends: the next level-1 or level-2
-    heading, ATX (indented up to three spaces) or setext, outside code fences."""
+    ATX heading (indented up to three spaces) outside code fences. A setext
+    underline or rule inside the section fails as off the layout instead, so
+    it is never misread as a heading."""
     fenced = False
     for i in range(start + 1, len(lines)):
         if lines[i].lstrip(" ").startswith(("```", "~~~")):
@@ -189,8 +192,6 @@ def section_end(lines, start):
         if fenced:
             continue
         if re.match(r" {0,3}##?(?:[ \t]|$)", lines[i]):
-            return i
-        if lines[i].strip() and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1]):
             return i
     return len(lines)
 
@@ -281,6 +282,8 @@ def items(path, lines, start, end, flat=False):
                      "text in one block")
         elif stripped.startswith(">"):
             error(i, "blockquote here; write it as plain text")
+        elif RULE.fullmatch(line):
+            error(i, "horizontal rule or setext underline here; use an ATX heading, or plain text")
         elif MARKER.match(stripped) and indent:
             error(i, f"list item indented {indent} spaces; start every item at the margin, "
                      "since lists here do not nest")
@@ -290,7 +293,7 @@ def items(path, lines, start, end, flat=False):
             j = i + 1
             while j < end and lines[j].startswith("  ") and lines[j].strip():
                 wrapped = lines[j].lstrip(" ")
-                if flat or MARKER.match(wrapped) or wrapped.startswith(("```", "~~~", ">")):
+                if flat or MARKER.match(wrapped) or wrapped.startswith(("```", "~~~", ">")) or RULE.fullmatch(lines[j]):
                     break
                 if len(lines[j]) - len(wrapped) != 2:
                     error(j, f"wrapped line indented {len(lines[j]) - len(wrapped)} spaces; indent it two")
