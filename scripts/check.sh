@@ -269,6 +269,9 @@ def items(path, lines, start, end, flat=False):
         if fenced:
             if line == CLOSE_FENCE:
                 fenced = False
+                after = lines[i + 1] if i + 1 < end else ""
+                if after.strip() and not after.startswith("  ") and not MARKER.match(after):
+                    error(i + 1, "line right after a code fence; leave a blank line before it")
             elif stripped.startswith(FENCE_START):
                 error(i, "fence line inside a code fence; close it with exactly two spaces then ```")
             elif line.strip() and indent < 2:
@@ -431,12 +434,20 @@ for i, text in found:
     else:
         listed[item.group(1)] = [name.strip() for name in item.group(2).split(",")]
 sentences = [line for line in readme[start:end] if SENTENCE in line]
+if sum(line.count(SENTENCE) for line in readme[start:end]) > 1:
+    sentences.append("")  # a second copy of the phrase on one line counts as a second sentence
 if len(sentences) > 1:
     print("error: README.md: Platform overrides names the skills with an Operations section more than once; keep "
           "one sentence", file=sys.stderr)
     failed = True
 intro = sentences[0] if sentences else ""
-intro = COMMENT.sub("", intro)  # a comment's names are no part of the rendered sentence
+# A comment's names are no part of the rendered sentence: comments found outside code spans, as markdown reads them.
+intro = "".join(intro[k] for k in range(len(intro))
+                if not any(m.start() <= k < m.end() for m in COMMENT.finditer(prose(intro))))
+if SENTENCE in intro and not intro.split(SENTENCE, 1)[1].startswith("**Operations** section."):
+    print("error: README.md: the Platform overrides sentence naming the skills must end right after the names, as "
+          f"\"{SENTENCE.strip()} **Operations** section.\"", file=sys.stderr)
+    failed = True
 # Every skill directory named in the sentence, however written (code span, link, plain text).
 lead = intro.split(SENTENCE)[0]
 if "[" in prose(lead):
