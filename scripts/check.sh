@@ -458,7 +458,7 @@ if SENTENCE in intro and not intro.split(SENTENCE, 1)[1].startswith("**Operation
           f"\"{SENTENCE.strip()} **Operations** section.\"", file=sys.stderr)
     failed = True
 lead = intro.split(SENTENCE)[0]
-if re.search(r"[.!?](?:\s|$)", prose(lead)):
+if re.search(r"[.!?]", prose(lead)):  # any end mark outside code before the phrase: an earlier sentence
     print("error: README.md: the Platform overrides sentence naming the skills must open its paragraph",
           file=sys.stderr)
     failed = True
