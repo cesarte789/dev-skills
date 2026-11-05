@@ -211,8 +211,8 @@ def headings(lines, atx, title, name):
     """The indices of the headings in lines that are ATX headings `atx` accepts,
     setext headings whose title, from that line to a `=` or `-` underline
     in the same run of non-blank lines and joined, matches `title` (a title
-    may wrap), or headings named `name` inside a blockquote or list item or
-    written as an `<h1>`-`<h6>` tag; the second list holds the setext ones,
+    may wrap), or headings named `name` at any other indent, inside a
+    blockquote or list item, or written as an `<h1>`-`<h6>` tag; the second list holds the setext ones,
     the third the contained or HTML ones. Any such line counts,
     whatever precedes it: telling a real setext heading from the last line of
     a paragraph takes a markdown parser, and a false count fails loudly where
@@ -228,7 +228,7 @@ def headings(lines, atx, title, name):
         elif lines[i].strip() and not UNDERLINE.fullmatch(lines[i]) and setext_title(lines, i, title):
             found.append(i)
             setext.append(i)
-        elif (re.match(r" {0,3}(?:(?:>|[-*+]|\d+[.)])[ \t]*)+#{1,6}[ \t]+" + name, lines[i])
+        elif (re.match(r"[ \t]*(?:(?:>|[-*+]|\d+[.)])[ \t]*)*#{1,6}[ \t]+" + name, lines[i])
               or re.search(r"<h[1-6]\b[^>]*>[ \t]*" + name, lines[i], re.IGNORECASE)):
             found.append(i)
             contained.append(i)
@@ -405,7 +405,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
               file=sys.stderr)
         failed = True
     if contained:
-        print(f"error: {path}:{contained[0] + 1}: Operations heading inside a blockquote, list item or HTML tag; "
+        print(f"error: {path}:{contained[0] + 1}: Operations heading indented, inside a blockquote or list item, or in an HTML tag; "
               "write it as `## Operations` at the margin", file=sys.stderr)
         failed = True
     atx_found = [i for i in found if i not in setext and i not in contained]
@@ -470,8 +470,8 @@ found, setext, contained = headings(readme, OVERRIDES.fullmatch, r"Platform over
                                    r"Platform overrides\b")
 start = next((i for i in found if i not in setext and i not in contained), None)
 if contained:
-    print(f"error: README.md:{contained[0] + 1}: Platform overrides heading inside a blockquote, list item or "
-          "HTML tag; write it as `## Platform overrides` at the margin", file=sys.stderr)
+    print(f"error: README.md:{contained[0] + 1}: Platform overrides heading indented, inside a blockquote or "
+          "list item, or in an HTML tag; write it as `## Platform overrides` at the margin", file=sys.stderr)
     failed = True
 if len(found) > 1:
     print("error: README.md: more than one `## Platform overrides` section; keep the one", file=sys.stderr)
