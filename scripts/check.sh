@@ -195,6 +195,14 @@ def section_end(lines, start):
     return next((i for i in unfenced_lines(lines, start + 1) if re.match(r"##?(?:[ \t]|$)", lines[i])), len(lines))
 
 
+def block_ends(line):
+    """Whether a paragraph can start on the line after this one: it is blank,
+    a heading, a fence line or a one-line comment, not a paragraph's own line."""
+    stripped = line.strip()
+    return (not stripped or bool(HEADING.match(line)) or stripped.startswith(FENCE_START)
+            or bool(COMMENT.fullmatch(stripped)))
+
+
 def headings(lines, atx, title):
     """The indices of the headings in lines that are ATX headings `atx` accepts
     or setext headings whose title line matches `title`, underlined with `=`
@@ -209,7 +217,7 @@ def headings(lines, atx, title):
         if atx(lines[i]):
             found.append(i)
         elif (re.match(r" {0,3}" + title, lines[i]) and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1])
-              and (i == first or not lines[i - 1].strip())):  # a one-line paragraph: the whole title
+              and (i == first or block_ends(lines[i - 1]))):  # a one-line paragraph: the whole title
             found.append(i)
             setext.append(i)
     return found, setext
@@ -445,16 +453,21 @@ for i, text in found:
         failed = True
     else:
         listed[item.group(1)] = [name.strip() for name in item.group(2).split(",")]
-sentences = [line for line in readme[start:end] if SENTENCE in line]
-if sum(line.count(SENTENCE) for line in readme[start:end]) > 1:
-    sentences.append("")  # a second copy of the phrase on one line counts as a second sentence
-if len(sentences) > 1:
+
+
+def uncommented(line):
+    """line without its one-line comments (found outside code spans, as markdown reads them), code kept."""
+    return "".join(char for char, seen in zip(line, shown(line, fill="\0")) if seen != "\0")
+
+
+# The sentence is read from what renders: a comment's copy of the phrase, or its names, are no part of it.
+rendered = [uncommented(line) for line in readme[start:end]]
+sentences = [line for line in rendered if SENTENCE in line]
+if sum(line.count(SENTENCE) for line in rendered) > 1:
     print("error: README.md: Platform overrides names the skills with an Operations section more than once; keep "
           "one sentence", file=sys.stderr)
     failed = True
 intro = sentences[0] if sentences else ""
-# A comment's names are no part of the rendered sentence: comments found outside code spans, as markdown reads them.
-intro = "".join(char for char, seen in zip(intro, shown(intro, fill="\0")) if seen != "\0")
 if SENTENCE in intro and not intro.split(SENTENCE, 1)[1].startswith("**Operations** section."):
     print("error: README.md: the Platform overrides sentence naming the skills must end right after the names, as "
           f"\"{SENTENCE.strip()} **Operations** section.\"", file=sys.stderr)
