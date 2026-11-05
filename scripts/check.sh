@@ -292,6 +292,10 @@ def items(path, lines, start, end, flat=False):
             error(i, "blockquote here; write it as plain text")
         elif line.startswith("**"):
             error(i, "bold name at the margin here; write an operation as an entry, `- **name** — ...`")
+        elif not flat and i > start and not MARKER.match(stripped) and (HEADING.match(line) or line.startswith("|")
+                                         or re.search(r"\*\*[^*]+\*\*\S*\s+—", prose(line))):
+            error(i, "sub-heading, table row or entry-shaped line in an Operations section; write an operation "
+                     "as an entry, `- **name** — ...`")
         elif RULE.fullmatch(line):
             error(i, "horizontal rule or setext underline here; use an ATX heading, or plain text")
         elif MARKER.match(stripped) and indent:
@@ -428,7 +432,10 @@ if len(sentences) > 1:
     failed = True
 intro = sentences[0] if sentences else ""
 intro = re.sub(r"<!--.*?-->", "", intro)  # a comment's names are no part of the rendered sentence
-named = sorted(re.findall(r"`([\w-]+)`", intro.split(" keep every platform command in an ")[0]))
+# Every skill directory named in the sentence, however written (code span, link, plain text).
+skill_dirs = sorted(path.split("/")[1] for path in glob.glob("skills/*/SKILL.md"))
+lead = intro.split(" keep every platform command in an ")[0]
+named = sorted(skill for skill in skill_dirs if re.search(r"(?<![\w-])" + re.escape(skill) + r"(?![\w-])", lead))
 if named != sorted(entries):
     print("error: README.md: the Platform overrides sentence naming the skills that \"keep every platform command "
           f"in an Operations section\" should name exactly: {', '.join(sorted(entries))}", file=sys.stderr)
