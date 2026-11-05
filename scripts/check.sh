@@ -346,6 +346,8 @@ def items(path, lines, start, end, flat=False):
             elif line.strip() and indent < 2:
                 error(i, "line inside a code fence indented less than two spaces")
         elif (flat and line.strip() and not indent and not MARKER.match(stripped) and i > start
+              # A heading, quote, rule or fence here gets its own message below.
+              and not HEADING.match(line) and not RULE.fullmatch(line) and not stripped.startswith(FENCE_START + (">",))
               and lines[i - 1].strip() and not MARKER.match(lines[i - 1]) and not HEADING.match(lines[i - 1])
               and not COMMENT.fullmatch(line.strip()) and not COMMENT.fullmatch(lines[i - 1].strip())):
             error(i, "paragraph wrapped onto a second line here; keep each README paragraph on one line")
