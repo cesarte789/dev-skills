@@ -135,7 +135,7 @@ PY
 # appear outside it. Skills without the section are not checked yet.
 # README's "Platform overrides" lists the entry names of each such section, one
 # line per skill, for override authors: keep each list equal to the skill's own
-# entries, and the section's list items in the shapes read below.
+# entries, and the section in the layout read below.
 python3 - <<'PY'
 import glob
 import re
@@ -154,94 +154,63 @@ OPTIONS = r"(?:\s+(?:-[A-Za-z]\s+\S+|--[\w-]+(?:=\S+|\s+[^\s-]\S*)?))*"
 COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join(GIT.split())
                      + r")|(gh)" + OPTIONS + r"\s+(?:" + "|".join(GH.split()) + r"))(?![\w-])", re.M)
 
-# An entry is `- **name** — ...`; a bullet naming operations then `:` or `,` says
-# what happens when they are unavailable, so every name it gives must have an
-# entry. Any other top-level list item outside a code fence is a shape this
-# check would misread, so it fails rather than drop the entry silently. A name
-# holds no comma, which separates names in the README.
+# Operations sections and the README list keep one strict layout, so a reader
+# needs no markdown parser to find every top-level item: an item starts `- ` at
+# the margin, its wrapped lines are indented two spaces, a nested item four, and
+# a code fence two, inside an entry. Anything else fails, rather than risk an
+# entry being read past silently. An entry is `- **name** — ...` and its name
+# holds no comma, which separates names in the README; a bullet naming
+# operations then `:` or `,` says what happens when they are unavailable, so
+# every name it gives must have an entry.
 BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 FENCE = re.compile(r"`{3,}|~{3,}")
-HEADING = re.compile(r" {0,3}#{1,6}(?:\s|$)")
-BREAK = re.compile(r" {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$")  # a thematic break
 
 
-def closes(line):
-    """A heading or thematic break: never continues a paragraph lazily."""
-    return HEADING.match(line) or BREAK.match(line)
-
-
-def items(lines, start, end):
-    """Each top-level list item in lines[start:end], outside code fences, as
-    (index, text): the item read whole, with every line up to the next blank
-    line, item, heading or fence, since names and bold spans wrap. An item
-    indented up to three spaces is top-level unless it sits at or past the
-    content column of the item open above it, which nests it; any line before
-    that column closes the open item. A fence closes only on a run of its own
-    character at least as long as the one that opened it; tabs count to the
-    next multiple of four columns."""
-    lines = [line.expandtabs(4) for line in lines]
+def items(path, lines, start, end):
+    """The top-level items of lines[start:end] as (index, text), each item read
+    with its wrapped lines, plus an error for each line off the layout."""
+    found, errors = [], []
     fence = None  # the run that opened the current code fence
-    holder = 0  # content column of the item a fence opened inside; 0 at the margin
-    content = 0  # the open top-level item's content column; 0 when none is open
-    nested = False  # the previous line is paragraph text nested in the open item
-    code = False  # the previous line is an indented code line nested in the open item
-    blank = True  # the previous line is blank
     i = start
     while i < end:
         line = lines[i]
         stripped = line.lstrip(" ")
         indent = len(line) - len(stripped)
-        marker = MARKER.match(stripped)
-        if fence and holder and line.strip() and indent < holder:
-            fence = None  # the item holding the fence ended, and the fence with it
-        # A fence opens within three columns of the open item's content (or of
-        # the margin); deeper, the line is indented code.
-        run = FENCE.match(stripped) if fence or indent - content <= 3 else None
-        if fence:
-            if run and run.group()[0] == fence[0] and len(run.group()) >= len(fence) and not stripped[run.end():].strip():
+        where = f"{path}:{i + 1}"
+        if "\t" in line:
+            errors.append(f"{where}: tab character; indent with spaces")
+        elif fence:
+            if stripped.rstrip() == fence:
                 fence = None
-                nested = False
-        elif run:
-            fence = run.group()
-            holder = content if content and indent >= content else 0
-            nested = False
-            if indent < content:
-                content = 0
-        elif not line.strip():
-            nested = False
-            blank = True
-            i += 1
+            elif line.strip() and indent < 2:
+                errors.append(f"{where}: line inside a code fence indented less than two spaces")
+        elif FENCE.match(stripped):
+            fence = FENCE.match(stripped).group()
+            if indent != 2:
+                errors.append(f"{where}: code fence indented {indent} spaces; indent it two, under an entry")
+        elif stripped.startswith("<!--") and "-->" not in stripped:
+            errors.append(f"{where}: HTML comment over several lines; keep it on one line")
+        elif MARKER.match(stripped) and 0 < indent < 4:
+            errors.append(f"{where}: list item indented {indent} spaces; start a top-level item at the margin, "
+                          "or indent a nested one four spaces")
+        elif MARKER.match(stripped) and indent == 0:
+            if not line.startswith("- "):
+                errors.append(f"{where}: top-level list item not started with `- `")
+            j = i + 1
+            while (j < end and lines[j].startswith("  ") and lines[j].strip()
+                   and not MARKER.match(lines[j].lstrip(" ")) and not FENCE.match(lines[j].lstrip(" "))):
+                j += 1
+            if (j < end and lines[j].strip() and not lines[j].startswith("  ")
+                    and not MARKER.match(lines[j].lstrip(" "))):
+                errors.append(f"{path}:{j + 1}: wrapped line of a list item indented less than two spaces")
+            found.append((i, " ".join(part.strip() for part in lines[i:j])))
+            i = j
             continue
-        elif closes(line) and (not content or indent < content):
-            content = 0
-            nested = code = False
-        else:
-            if content and (indent >= content or (nested and not marker)):
-                # Nested in the open item, or a lazy continuation of nested
-                # paragraph text. Only paragraph text continues lazily: not an
-                # indented code line, nor a heading.
-                code = indent >= content + 4 and (blank or code)
-                nested = not code and not closes(stripped)
-                blank = False
-                i += 1
-                continue
-            elif marker and indent <= 3:
-                j = i + 1
-                while (j < end and lines[j].strip() and not closes(lines[j])
-                       and not (FENCE.match(lines[j].lstrip(" "))
-                                and len(lines[j]) - len(lines[j].lstrip(" ")) - (indent + marker.end()) <= 3)
-                       and not (MARKER.match(lines[j].lstrip(" ")) and len(lines[j]) - len(lines[j].lstrip(" ")) <= 3)):
-                    j += 1
-                yield i, " ".join(part.strip() for part in lines[i:j])
-                content = indent + marker.end()
-                nested = code = blank = False
-                i = j
-                continue
-            content = 0
-            nested = code = False
-        blank = False
         i += 1
+    if fence:
+        errors.append(f"{path}:{end}: code fence opened with {fence} never closed")
+    return found, errors
 
 
 failed = False
@@ -256,7 +225,11 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
     names = entries[path.split("/")[1]] = []
     availability = []
-    for i, text in items(lines, start, end):
+    found, errors = items(path, lines, start, end)
+    for error in errors:
+        print(f"error: {error}", file=sys.stderr)
+        failed = True
+    for i, text in found:
         bullet = BULLET.match(text)
         if bullet:
             name, rest = bullet.group(1), bullet.group(2)
@@ -301,7 +274,11 @@ if start is None:
     sys.exit(1)
 end = next((i for i in range(start + 1, len(readme)) if readme[i].startswith("## ")), len(readme))
 listed = {}
-for i, text in items(readme, start, end):
+found, errors = items("README.md", readme, start, end)
+for error in errors:
+    print(f"error: {error}", file=sys.stderr)
+    failed = True
+for i, text in found:
     item = re.match(r"^- `([\w-]+)`: (.+)$", text)
     if not item:
         print(f"error: README.md:{i + 1}: Platform overrides list item in an unrecognized shape; write it as "
