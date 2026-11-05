@@ -158,7 +158,7 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # what happens when they are unavailable, so every name it gives must have an
 # entry. Any other bold bullet is a shape this check would misread, so it fails
 # rather than drop the entry silently.
-BULLET = re.compile(r"^([-*]) \*\*(.+?)\*\*(.*)$")
+BULLET = re.compile(r"^([-*+]) \*\*(.+?)\*\*(.*)$")
 
 failed = False
 checked = 0
