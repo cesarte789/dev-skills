@@ -133,6 +133,9 @@ PY
 # A skill with an Operations section promises that a port, or a dev-skills-ops
 # override, needs to replace that section alone, so no gh or git command may
 # appear outside it. Skills without the section are not checked yet.
+# README's "Platform overrides" lists the entry names of each such section, one
+# line per skill, for override authors: keep each list equal to the skill's own
+# entries, and every top-level bold bullet in the section in a shape read here.
 python3 - <<'PY'
 import glob
 import re
@@ -151,8 +154,14 @@ OPTIONS = r"(?:\s+(?:-[A-Za-z]\s+\S+|--[\w-]+(?:=\S+|\s+[^\s-]\S*)?))*"
 COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join(GIT.split())
                      + r")|(gh)" + OPTIONS + r"\s+(?:" + "|".join(GH.split()) + r"))(?![\w-])", re.M)
 
+# An entry is `- **name** — ...`; a bullet naming operations then `:` or `,` says
+# what happens when they are unavailable. Any other bold bullet is a shape this
+# check would misread, so it fails rather than drop the entry silently.
+BULLET = re.compile(r"^([-*]) \*\*(.+?)\*\*(.*)$")
+
 failed = False
 checked = 0
+entries = {}
 for path in sorted(glob.glob("skills/*/SKILL.md")):
     lines = open(path, encoding="utf-8").read().split("\n")
     start = next((i for i, line in enumerate(lines) if line.startswith("## Operations")), None)
@@ -160,6 +169,17 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
         continue
     checked += 1
     end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    names = entries[path.split("/")[1]] = []
+    for i in range(start, end):
+        bullet = BULLET.match(lines[i])
+        if not bullet:
+            continue
+        if bullet.group(1) == "-" and bullet.group(3).startswith(" —"):
+            names.append(bullet.group(2))
+        elif bullet.group(1) != "-" or bullet.group(3)[:1] not in (":", ","):
+            print(f"error: {path}:{i + 1}: Operations bullet in an unrecognized shape; write an entry as "
+                  "`- **name** — ...`", file=sys.stderr)
+            failed = True
     for i, line in enumerate(lines):
         if start <= i < end:
             continue
@@ -168,57 +188,33 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
             print(f"error: {path}:{i + 1}: `{match.group(1) or match.group(2)}` command outside the Operations section; "
                   "move it there and refer to it by name", file=sys.stderr)
             failed = True
-if not failed:
-    print(f"no gh or git commands outside the Operations section in {checked} skills")
-sys.exit(1 if failed else 0)
-PY
-
-# README's "Platform overrides" lists, per skill with an Operations section, the
-# entry names a dev-skills-ops can define. Keep each list equal to the skill's
-# own entries, so an override author never misses or invents a name.
-python3 - <<'PY'
-import glob
-import re
-import sys
-
-ENTRY = re.compile(r"^- \*\*(.+?)\*\* —")
-LISTED = re.compile(r"^- `([\w-]+)`: (.+)$")
-
-skills = {}
-for path in sorted(glob.glob("skills/*/SKILL.md")):
-    lines = open(path, encoding="utf-8").read().split("\n")
-    start = next((i for i, line in enumerate(lines) if line.startswith("## Operations")), None)
-    if start is None:
-        continue
-    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
-    names = [m.group(1) for line in lines[start:end] if (m := ENTRY.match(line))]
-    skills[path.split("/")[1]] = names
 
 readme = open("README.md", encoding="utf-8").read().split("\n")
 start = next((i for i, line in enumerate(readme) if line == "## Platform overrides"), None)
+if start is None:
+    print("error: README.md: no `## Platform overrides` section listing each skill's override operations",
+          file=sys.stderr)
+    sys.exit(1)
+end = next((i for i in range(start + 1, len(readme)) if readme[i].startswith("## ")), len(readme))
 listed = {}
-if start is not None:
-    end = next((i for i in range(start + 1, len(readme)) if readme[i].startswith("## ")), len(readme))
-    for line in readme[start:end]:
-        if m := LISTED.match(line):
-            listed[m.group(1)] = [name.strip() for name in m.group(2).split(",")]
-
-failed = False
-for skill, names in skills.items():
+for line in readme[start:end]:
+    if item := re.match(r"^- `([\w-]+)`: (.+)$", line):
+        listed[item.group(1)] = [name.strip() for name in item.group(2).split(",")]
+for skill, names in entries.items():
+    expected = f"- `{skill}`: {', '.join(names)}"
     if skill not in listed:
-        print(f"error: README.md: no `- `{skill}`: ...` line under Platform overrides for its Operations entries",
-              file=sys.stderr)
+        print(f"error: README.md: Platform overrides has no line for {skill}; add: {expected}", file=sys.stderr)
         failed = True
     elif listed[skill] != names:
-        print(f"error: README.md: the `{skill}` override list does not match its Operations entries; "
-              f"expected: {', '.join(names)}", file=sys.stderr)
+        print(f"error: README.md: Platform overrides lists other operations for {skill}; expected: {expected}",
+              file=sys.stderr)
         failed = True
-for skill in listed.keys() - skills.keys():
-    print(f"error: README.md: `{skill}` is listed under Platform overrides but has no Operations section",
-          file=sys.stderr)
+for skill in sorted(listed.keys() - entries.keys()):
+    print(f"error: README.md: Platform overrides lists {skill}, which has no Operations section", file=sys.stderr)
     failed = True
 if not failed:
-    print(f"README override lists match the Operations entries of {len(skills)} skills")
+    print(f"no gh or git commands outside the Operations section in {checked} skills, "
+          "and README lists each one's operations")
 sys.exit(1 if failed else 0)
 PY
 
