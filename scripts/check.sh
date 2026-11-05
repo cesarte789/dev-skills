@@ -159,7 +159,7 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # entry. Any other top-level list item outside a code fence is a shape this
 # check would misread, so it fails rather than drop the entry silently. A name
 # holds no comma, which separates names in the README.
-BULLET = re.compile(r"^([-*+]) \*\*(.+?)\*\*(.*)$")
+BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 FENCE = re.compile(r"`{3,}|~{3,}")
 HEADING = re.compile(r" {0,3}#{1,6}(?:\s|$)")
@@ -176,6 +176,7 @@ def items(lines, start, end):
     next multiple of four columns."""
     lines = [line.expandtabs(4) for line in lines]
     fence = None  # the run that opened the current code fence
+    holder = 0  # content column of the item a fence opened inside; 0 at the margin
     content = 0  # the open top-level item's content column; 0 when none is open
     nested = False  # the previous line is paragraph text nested in the open item
     code = False  # the previous line is an indented code line nested in the open item
@@ -186,13 +187,18 @@ def items(lines, start, end):
         stripped = line.lstrip(" ")
         indent = len(line) - len(stripped)
         marker = MARKER.match(stripped)
-        run = FENCE.match(stripped)
+        if fence and holder and line.strip() and indent < holder:
+            fence = None  # the item holding the fence ended, and the fence with it
+        # A fence opens within three columns of the open item's content (or of
+        # the margin); deeper, the line is indented code.
+        run = FENCE.match(stripped) if fence or indent - content <= 3 else None
         if fence:
             if run and run.group()[0] == fence[0] and len(run.group()) >= len(fence) and not stripped[run.end():].strip():
                 fence = None
                 nested = False
         elif run:
             fence = run.group()
+            holder = content if content and indent >= content else 0
             nested = False
             if indent < content:
                 content = 0
@@ -217,7 +223,8 @@ def items(lines, start, end):
             elif marker and indent <= 3:
                 j = i + 1
                 while (j < end and lines[j].strip() and not HEADING.match(lines[j])
-                       and not FENCE.match(lines[j].lstrip(" "))
+                       and not (FENCE.match(lines[j].lstrip(" "))
+                                and len(lines[j]) - len(lines[j].lstrip(" ")) - (indent + marker.end()) <= 3)
                        and not (MARKER.match(lines[j].lstrip(" ")) and len(lines[j]) - len(lines[j].lstrip(" ")) <= 3)):
                     j += 1
                 yield i, " ".join(part.strip() for part in lines[i:j])
@@ -245,8 +252,8 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     availability = []
     for i, text in items(lines, start, end):
         bullet = BULLET.match(text)
-        if bullet and bullet.group(1) == "-":
-            name, rest = bullet.group(2), bullet.group(3)
+        if bullet:
+            name, rest = bullet.group(1), bullet.group(2)
             if rest.startswith(" —"):
                 if "," in name:
                     print(f"error: {path}:{i + 1}: Operations entry name `{name}` holds a comma, which the "
