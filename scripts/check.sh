@@ -548,7 +548,7 @@ if SENTENCE in intro and not intro.split(SENTENCE, 1)[1].startswith("**Operation
 # The sentence opens its paragraph with the names alone, each as code: nothing else before the phrase, so no
 # earlier sentence, link, emphasis or escape can add or hide a name.
 lead = intro.split(SENTENCE)[0]
-if SENTENCE in intro and not re.fullmatch(r"`[\w-]+`(?:, `[\w-]+`)*(?:,? and `[\w-]+`)?", lead):
+if SENTENCE in intro and not re.fullmatch(r"`[\w-]+`(?:, `[\w-]+`)*(?: and `[\w-]+`)?", lead):
     print("error: README.md: the Platform overrides sentence must open its paragraph with the skills alone, as "
           "`a`, `b` and `c`", file=sys.stderr)
     failed = True
