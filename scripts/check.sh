@@ -197,8 +197,9 @@ def section_end(lines, start):
 
 def headings(lines, atx, title):
     """The indices of the headings in lines that are ATX headings `atx` accepts
-    or setext headings whose title line matches `title`, underlined with `=`
-    or `-`; the second list holds the setext ones. Any such line counts,
+    or setext headings whose title starts on a line matching `title`, with a
+    `=` or `-` underline later in the same run of non-blank lines (a title may
+    wrap); the second list holds the setext ones. Any such line counts,
     whatever precedes it: telling a real setext heading from the last line of
     a paragraph takes a markdown parser, and a false count fails loudly where
     a missed one would pass silently. Lines in code fences count
@@ -210,7 +211,9 @@ def headings(lines, atx, title):
     for i in range(first, len(lines)):
         if atx(lines[i]):
             found.append(i)
-        elif re.match(r" {0,3}" + title, lines[i]) and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1]):
+        elif re.match(r" {0,3}" + title, lines[i]) and any(
+                UNDERLINE.fullmatch(lines[k]) for k in range(i + 1, next(
+                    (k for k in range(i + 1, len(lines)) if not lines[k].strip()), len(lines)))):
             found.append(i)
             setext.append(i)
     return found, setext
@@ -231,6 +234,12 @@ def shown(text, fill=" "):
     """text as it renders, at its own length: code spans blanked, then each
     one-line comment filled with `fill`, so offsets still map back to text."""
     return COMMENT.sub(lambda m: fill * len(m.group()), prose(text))
+
+
+def uncommented(line):
+    """line without its one-line comments (found outside code spans, as markdown reads them), code kept, and
+    its runs of spaces closed up, as they render."""
+    return " ".join("".join(char for char, seen in zip(line, shown(line, fill="\0")) if seen != "\0").split())
 
 
 def bad_comment(text):
@@ -379,7 +388,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
         print(f"error: {error}", file=sys.stderr)
         failed = True
     for i, text in found:
-        bullet = BULLET.match(text)
+        bullet = BULLET.match(uncommented(text))
         if bullet:
             name, rest = bullet.group(1), bullet.group(2)
             if rest.startswith(" —"):
@@ -438,7 +447,7 @@ for error in errors:
     print(f"error: {error}", file=sys.stderr)
     failed = True
 for i, text in found:
-    item = re.match(r"^- `([\w-]+)`: (.+)$", text)
+    item = re.match(r"^- `([\w-]+)`: (.+)$", uncommented(text))
     if not item:
         print(f"error: README.md:{i + 1}: Platform overrides list item in an unrecognized shape; write it as "
               "- `skill`: operation, operation", file=sys.stderr)
@@ -449,10 +458,6 @@ for i, text in found:
     else:
         listed[item.group(1)] = [name.strip() for name in item.group(2).split(",")]
 
-
-def uncommented(line):
-    """line without its one-line comments (found outside code spans, as markdown reads them), code kept."""
-    return "".join(char for char, seen in zip(line, shown(line, fill="\0")) if seen != "\0")
 
 
 # The sentence is read from what renders: a comment's copy of the phrase, or its names, are no part of it.
