@@ -207,17 +207,19 @@ def setext_title(lines, i, title):
     return False
 
 
-def headings(lines, atx, title):
-    """The indices of the headings in lines that are ATX headings `atx` accepts
-    or setext headings whose title, from that line to a `=` or `-` underline
+def headings(lines, atx, title, name):
+    """The indices of the headings in lines that are ATX headings `atx` accepts,
+    setext headings whose title, from that line to a `=` or `-` underline
     in the same run of non-blank lines and joined, matches `title` (a title
-    may wrap); the second list holds the setext ones. Any such line counts,
+    may wrap), or headings named `name` inside a blockquote or list item or
+    written as an `<h1>`-`<h6>` tag; the second list holds the setext ones,
+    the third the contained or HTML ones. Any such line counts,
     whatever precedes it: telling a real setext heading from the last line of
     a paragraph takes a markdown parser, and a false count fails loudly where
     a missed one would pass silently. Lines in code fences count
     too, so a fence misread before a heading never hides it: an example heading
     fails loudly as a second section instead."""
-    found, setext = [], []
+    found, setext, contained = [], [], []
     # YAML frontmatter is no markdown: skip it.
     first = next((k + 1 for k in range(1, len(lines)) if lines[k] == "---"), 0) if lines[:1] == ["---"] else 0
     for i in range(first, len(lines)):
@@ -226,7 +228,11 @@ def headings(lines, atx, title):
         elif lines[i].strip() and not UNDERLINE.fullmatch(lines[i]) and setext_title(lines, i, title):
             found.append(i)
             setext.append(i)
-    return found, setext
+        elif (re.match(r" {0,3}(?:(?:>|[-*+]|\d+[.)])[ \t]*)+#{1,6}[ \t]+" + name, lines[i])
+              or re.search(r"<h[1-6]\b[^>]*>[ \t]*" + name, lines[i], re.IGNORECASE)):
+            found.append(i)
+            contained.append(i)
+    return found, setext, contained
 
 
 def prose(text):
@@ -281,6 +287,8 @@ def items(path, lines, start, end, flat=False):
             error(i, "`__` outside code; write bold as **…**")
         if "\\" in rendered:
             error(i, "backslash outside code; write the text without escapes")
+        if re.search(r"&(?:#[0-9]+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);", rendered):
+            error(i, "character reference outside code; write the character itself")
         if TAG.search(rendered):
             error(i, "HTML tag outside code; write formatting as markdown")
 
@@ -382,10 +390,10 @@ def items(path, lines, start, end, flat=False):
 failed = False
 checked = 0
 entries = {}
-unread = set()  # skills whose only Operations heading is setext: reported once, skipped below
+unread = set()  # skills with no `## Operations` heading but another form of one: reported once, skipped below
 for path in sorted(glob.glob("skills/*/SKILL.md")):
     lines = open(path, encoding="utf-8").read().split("\n")
-    found, setext = headings(lines, OPERATIONS.match, r"Operations\b")
+    found, setext, contained = headings(lines, OPERATIONS.match, r"Operations\b", r"Operations\b")
     if not found:
         continue
     checked += 1
@@ -396,7 +404,11 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
         print(f"error: {path}:{setext[0] + 1}: Operations heading underlined; write it as `## Operations`",
               file=sys.stderr)
         failed = True
-    atx_found = [i for i in found if i not in setext]
+    if contained:
+        print(f"error: {path}:{contained[0] + 1}: Operations heading inside a blockquote, list item or HTML tag; "
+              "write it as `## Operations` at the margin", file=sys.stderr)
+        failed = True
+    atx_found = [i for i in found if i not in setext and i not in contained]
     if not atx_found:
         unread.add(path.split("/")[1])
         continue
@@ -409,9 +421,11 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
         print(f"error: {error}", file=sys.stderr)
         failed = True
     for i, text in found:
-        bullet = BULLET.match(uncommented(text))
+        # Matched with code spans blanked, so `**` in code ends no name; read back from the text by offset.
+        plain = uncommented(text)
+        bullet = BULLET.match(prose(plain))
         if bullet:
-            name, rest = bullet.group(1), bullet.group(2)
+            name, rest = plain[bullet.start(1):bullet.end(1)], plain[bullet.start(2):]
             if rest.startswith(" —"):
                 if name in names:
                     print(f"error: {path}:{i + 1}: Operations entry `{name}` defined twice", file=sys.stderr)
@@ -452,8 +466,13 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
             failed = True
 
 readme = open("README.md", encoding="utf-8").read().split("\n")
-found, setext = headings(readme, OVERRIDES.fullmatch, r"Platform overrides[ \t]*$")
-start = next((i for i in found if i not in setext), None)
+found, setext, contained = headings(readme, OVERRIDES.fullmatch, r"Platform overrides[ \t]*$",
+                                   r"Platform overrides\b")
+start = next((i for i in found if i not in setext and i not in contained), None)
+if contained:
+    print(f"error: README.md:{contained[0] + 1}: Platform overrides heading inside a blockquote, list item or "
+          "HTML tag; write it as `## Platform overrides` at the margin", file=sys.stderr)
+    failed = True
 if len(found) > 1:
     print("error: README.md: more than one `## Platform overrides` section; keep the one", file=sys.stderr)
     failed = True
