@@ -198,14 +198,18 @@ def section_end(lines, start):
 def headings(lines, atx, title):
     """The indices of the headings in lines that are ATX headings `atx` accepts
     or setext headings whose title line matches `title`, underlined with `=`
-    or `-`; the second list holds the setext ones. Lines in code fences count
+    or `-` (a one-line paragraph, so the title is the whole of it); the second
+    list holds the setext ones. Lines in code fences count
     too, so a fence misread before a heading never hides it: an example heading
     fails loudly as a second section instead."""
     found, setext = [], []
-    for i in range(len(lines)):
+    # YAML frontmatter is no markdown: skip it.
+    first = next((k + 1 for k in range(1, len(lines)) if lines[k] == "---"), 0) if lines[:1] == ["---"] else 0
+    for i in range(first, len(lines)):
         if atx(lines[i]):
             found.append(i)
-        elif re.match(r" {0,3}" + title, lines[i]) and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1]):
+        elif (re.match(r" {0,3}" + title, lines[i]) and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1])
+              and (i == first or not lines[i - 1].strip())):  # a one-line paragraph: the whole title
             found.append(i)
             setext.append(i)
     return found, setext
@@ -349,9 +353,7 @@ def items(path, lines, start, end, flat=False):
 failed = False
 checked = 0
 entries = {}
-skill_dirs = []
 for path in sorted(glob.glob("skills/*/SKILL.md")):
-    skill_dirs.append(path.split("/")[1])
     lines = open(path, encoding="utf-8").read().split("\n")
     found, setext = headings(lines, OPERATIONS.match, r"Operations\b")
     if not found:
@@ -457,18 +459,14 @@ if SENTENCE in intro and not intro.split(SENTENCE, 1)[1].startswith("**Operation
     print("error: README.md: the Platform overrides sentence naming the skills must end right after the names, as "
           f"\"{SENTENCE.strip()} **Operations** section.\"", file=sys.stderr)
     failed = True
+# The sentence opens its paragraph with the names alone, each as code: nothing else before the phrase, so no
+# earlier sentence, link, emphasis or escape can add or hide a name.
 lead = intro.split(SENTENCE)[0]
-if re.search(r"[.!?]", prose(lead)):  # any end mark outside code before the phrase: an earlier sentence
-    print("error: README.md: the Platform overrides sentence naming the skills must open its paragraph",
-          file=sys.stderr)
+if SENTENCE in intro and not re.fullmatch(r"`[\w-]+`(?:, `[\w-]+`)*(?:,? and `[\w-]+`)?", lead):
+    print("error: README.md: the Platform overrides sentence must open its paragraph with the skills alone, as "
+          "`a`, `b` and `c`", file=sys.stderr)
     failed = True
-if "[" in prose(lead):
-    print("error: README.md: a link in the Platform overrides sentence naming the skills; name each one as `skill`",
-          file=sys.stderr)
-    failed = True
-# Every skill directory the sentence names, however written, and every name it writes as code.
-named = sorted({skill for skill in skill_dirs if re.search(r"(?<![\w-])" + re.escape(skill) + r"(?![\w-])", lead)}
-               | set(re.findall(r"`([^`]+)`", lead)))
+named = sorted(re.findall(r"`([^`]+)`", lead))
 if named != sorted(entries):
     print("error: README.md: the Platform overrides sentence naming the skills that \"keep every platform command "
           f"in an Operations section\" should name exactly: {', '.join(sorted(entries))}", file=sys.stderr)
