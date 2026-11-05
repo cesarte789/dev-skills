@@ -163,8 +163,9 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # with nothing indented under it, and gets no repo-conventions exemption.
 # Anything else fails, rather than risk an entry being read past silently. An
 # entry is `- **name** — ...` and its name holds no comma or colon, which
-# separate names in the README and end a bullet's names; a bullet naming operations then `:` or `,` says what happens
-# when they are unavailable, so every name it gives must have an entry.
+# separate names in the README and end a bullet's names. A bullet naming
+# operations then `:` or `,` says what happens when they are unavailable, and
+# every bold name anywhere in it must have an entry.
 BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 OPEN_FENCE = re.compile(r"  ```[\w-]*")
@@ -240,7 +241,8 @@ def items(path, lines, start, end, flat=False):
                 j += 1
             if (j < end and lines[j].strip() and not lines[j].startswith("  ")
                     and not MARKER.match(lines[j].lstrip(" "))):
-                error(j, "wrapped line of a list item indented less than two spaces")
+                error(j, "line right under a README list item; keep each item on one line" if flat
+                      else "wrapped line of a list item indented less than two spaces")
             found.append((i, " ".join(part.strip() for part in lines[i:j])))
             i = j
             continue
@@ -284,9 +286,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
                     names.append(name)
                 continue
             if rest[:1] in (":", ","):
-                # The bullet's own colon: the first one outside code spans and bold names.
-                masked = re.sub(r"`[^`]*`|\*\*.+?\*\*", lambda m: "x" * len(m.group()), text)
-                availability.append((i, re.findall(r"\*\*(.+?)\*\*", text[:masked.find(":")])))
+                availability.append((i, re.findall(r"\*\*(.+?)\*\*", text)))
                 continue
         print(f"error: {path}:{i + 1}: Operations list item in an unrecognized shape; write an entry as "
               "`- **name** — ...`, or what happens when operations are unavailable as `- **name**: ...` or "
