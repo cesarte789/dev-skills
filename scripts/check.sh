@@ -168,6 +168,7 @@ TAG = re.compile(r"<(?:[A-Za-z/?]|!(?!--))")
 OPERATIONS = re.compile(r" {0,3}##[ \t]+Operations\b")
 OVERRIDES = re.compile(r" {0,3}##[ \t]+Platform overrides[ \t]*#*[ \t]*")
 FENCE_START = ("```", "~~~")
+SENTENCE = " keep every platform command in an "  # the README sentence naming the skills with an Operations section
 ONE_LINE_COMMENT = re.compile(r"<!--.*-->[ \t]*")
 HEADING = re.compile(r" {0,3}#{1,6}(?:[ \t]|$)")
 UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
@@ -235,9 +236,10 @@ def items(path, lines, start, end, flat=False):
             error(i, "backticks outside a code fence must pair on their line, singly and unescaped")
         if opens_comment(text):
             error(i, "HTML comment over several lines; keep it on one line")
-        if "__" in prose(text):
+        shown = re.sub(r"<!--.*?-->", "", prose(text))  # what renders: no code spans, no one-line comments
+        if "__" in shown:
             error(i, "`__` outside code; write bold as **…**")
-        if TAG.search(prose(text)):
+        if TAG.search(shown):
             error(i, "HTML tag outside code; write formatting as markdown")
 
     for i in range(start, end):
@@ -333,7 +335,9 @@ def items(path, lines, start, end, flat=False):
 failed = False
 checked = 0
 entries = {}
+skill_dirs = []
 for path in sorted(glob.glob("skills/*/SKILL.md")):
+    skill_dirs.append(path.split("/")[1])
     lines = open(path, encoding="utf-8").read().split("\n")
     found, setext = headings(lines, OPERATIONS.match, r"Operations\b")
     if not found:
@@ -425,7 +429,7 @@ for i, text in found:
         failed = True
     else:
         listed[item.group(1)] = [name.strip() for name in item.group(2).split(",")]
-sentences = [line for line in readme[start:end] if " keep every platform command in an " in line]
+sentences = [line for line in readme[start:end] if SENTENCE in line]
 if len(sentences) > 1:
     print("error: README.md: Platform overrides names the skills with an Operations section more than once; keep "
           "one sentence", file=sys.stderr)
@@ -433,8 +437,11 @@ if len(sentences) > 1:
 intro = sentences[0] if sentences else ""
 intro = re.sub(r"<!--.*?-->", "", intro)  # a comment's names are no part of the rendered sentence
 # Every skill directory named in the sentence, however written (code span, link, plain text).
-skill_dirs = sorted(path.split("/")[1] for path in glob.glob("skills/*/SKILL.md"))
-lead = intro.split(" keep every platform command in an ")[0]
+lead = intro.split(SENTENCE)[0]
+if "[" in prose(lead):
+    print("error: README.md: a link in the Platform overrides sentence naming the skills; name each one as `skill`",
+          file=sys.stderr)
+    failed = True
 named = sorted(skill for skill in skill_dirs if re.search(r"(?<![\w-])" + re.escape(skill) + r"(?![\w-])", lead))
 if named != sorted(entries):
     print("error: README.md: the Platform overrides sentence naming the skills that \"keep every platform command "
