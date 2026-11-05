@@ -195,15 +195,25 @@ def section_end(lines, start):
     return next((i for i in unfenced_lines(lines, start + 1) if re.match(r"##?(?:[ \t]|$)", lines[i])), len(lines))
 
 
+CONTAINER = re.compile(r"[ \t]*(?:(?:>|[-*+]|\d+[.)])[ \t]*)*")  # leading blockquote and list markers
+
+
+def as_title(text):
+    """text with HTML tags, `*`, `_`, backticks and backslashes blanked: a title as it reads."""
+    return re.sub(r"<[^>]*>|[*_`\\]", " ", text)
+
+
 def setext_title(lines, i, title):
     """Whether lines[i:] open a setext title matching `title`: the lines from i
-    up to a `=`/`-` underline in the same run of non-blank lines, joined as one
-    title (a title may wrap)."""
+    up to a `=`/`-` underline (read past its blockquote markers) in the same
+    run of non-blank lines, each read past its blockquote and list markers, joined as one title (a title may
+    wrap) and read through `as_title()`, so an emphasised or quoted title counts."""
     for k in range(i + 1, len(lines)):
         if not lines[k].strip():
             return False
-        if UNDERLINE.fullmatch(lines[k]):
-            return bool(re.match(title, " ".join(line.strip() for line in lines[i:k])))
+        if UNDERLINE.fullmatch(re.sub(r"^[ \t]*(?:>[ \t]*)+", "", lines[k])):  # an underline may be quoted
+            joined = " ".join(line[CONTAINER.match(line).end():] for line in lines[i:k])
+            return bool(re.match(r"\s*" + title, as_title(joined)))
     return False
 
 
@@ -241,17 +251,14 @@ def other_heading(lines, i, name):
     backticks and backslashes dropped, starts with `name`: an ATX heading at any
     level, indent or depth of blockquote and list markers, or an `<h1>`-`<h6>`
     tag read from its `<h` to the next blank line (a tag may wrap)."""
-    def plain(text):
-        return re.sub(r"<[^>]*>|[*_`\\]", " ", text)
-
-    atx = re.match(r"[ \t]*(?:(?:>|[-*+]|\d+[.)])[ \t]*)*#{1,6}[ \t]+(.*)", lines[i])
-    if atx and re.match(r"\s*" + name, plain(atx.group(1))):
+    atx = re.match(CONTAINER.pattern + r"#{1,6}[ \t]+(.*)", lines[i])
+    if atx and re.match(r"\s*" + name, as_title(atx.group(1))):
         return True
     tag = re.search(r"<h[1-6](?![0-9A-Za-z-])", lines[i], re.IGNORECASE)
     if not tag:
         return False
     k = next((k for k in range(i + 1, len(lines)) if not lines[k].strip()), len(lines))
-    return bool(re.match(r"\s*" + name, plain(" ".join([lines[i][tag.start():]] + lines[i + 1:k]))))
+    return bool(re.match(r"\s*" + name, as_title(" ".join([lines[i][tag.start():]] + lines[i + 1:k]))))
 
 
 def prose(text):
