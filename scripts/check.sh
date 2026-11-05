@@ -162,8 +162,8 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # above keeps identical in every skill). The README list keeps each line whole,
 # with nothing indented under it, and gets no repo-conventions exemption.
 # Anything else fails, rather than risk an entry being read past silently. An
-# entry is `- **name** — ...` and its name holds no comma, which separates names
-# in the README; a bullet naming operations then `:` or `,` says what happens
+# entry is `- **name** — ...` and its name holds no comma or colon, which
+# separate names in the README and end a bullet's names; a bullet naming operations then `:` or `,` says what happens
 # when they are unavailable, so every name it gives must have an entry.
 BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
@@ -195,7 +195,7 @@ def items(path, lines, start, end, flat=False):
         line = lines[i]
         stripped = line.lstrip(" ")
         indent = len(line) - len(stripped)
-        if line == "<!-- repo-conventions -->" and not flat:
+        if line == "<!-- repo-conventions -->" and not flat and not fenced:
             conventions = True
             blocks += 1
             if blocks > 1:
@@ -276,15 +276,17 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
                 if name in names:
                     print(f"error: {path}:{i + 1}: Operations entry `{name}` defined twice", file=sys.stderr)
                     failed = True
-                elif "," in name:
-                    print(f"error: {path}:{i + 1}: Operations entry name `{name}` holds a comma, which the "
-                          "README list uses to separate names", file=sys.stderr)
+                elif "," in name or ":" in name:
+                    print(f"error: {path}:{i + 1}: Operations entry name `{name}` holds a comma or colon, "
+                          "which separate names in the README and end a bullet's names", file=sys.stderr)
                     failed = True
                 else:
                     names.append(name)
                 continue
             if rest[:1] in (":", ","):
-                availability.append((i, re.findall(r"\*\*(.+?)\*\*", text.split(":")[0])))
+                # The bullet's own colon: the first one outside code spans and bold names.
+                masked = re.sub(r"`[^`]*`|\*\*.+?\*\*", lambda m: "x" * len(m.group()), text)
+                availability.append((i, re.findall(r"\*\*(.+?)\*\*", text[:masked.find(":")])))
                 continue
         print(f"error: {path}:{i + 1}: Operations list item in an unrecognized shape; write an entry as "
               "`- **name** — ...`, or what happens when operations are unavailable as `- **name**: ...` or "
