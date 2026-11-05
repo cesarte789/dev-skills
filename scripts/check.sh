@@ -160,7 +160,8 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # then ``` and an optional language, closed by two spaces then ```, and no list
 # nests and nothing is quoted (bar the repo-conventions block, which the check
 # above keeps identical in every skill). The README list keeps each line whole,
-# with nothing indented under it, and gets no repo-conventions exemption.
+# with nothing indented under it, and gets no repo-conventions exemption. No
+# HTML tag stands outside code, bar one-line comments.
 # Anything else fails, rather than risk an entry being read past silently. An
 # entry is `- **name** — ...` and its name holds no comma, which separates
 # names in the README. A bullet naming operations then `:` or `,` says what
@@ -170,6 +171,9 @@ BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 OPEN_FENCE = re.compile(r"  ```[\w-]*")
 CLOSE_FENCE = "  ```"
+TAG = re.compile(r"</?[A-Za-z][\w-]*(?:\s[^<>]*)?/?>")
+OPERATIONS = re.compile(r"##[ \t]+Operations\b")
+OVERRIDES = re.compile(r"##[ \t]+Platform overrides[ \t]*#*[ \t]*")
 
 
 def prose(text):
@@ -198,6 +202,8 @@ def items(path, lines, start, end, flat=False):
             error(i, "HTML comment over several lines; keep it on one line")
         if "__" in prose(text):
             error(i, "`__` outside code; write bold as **…**")
+        if TAG.search(prose(text)):
+            error(i, "HTML tag outside code; write formatting as markdown")
 
     for i in range(start, end):
         if "\t" in lines[i]:
@@ -252,6 +258,8 @@ def items(path, lines, start, end, flat=False):
                 wrapped = lines[j].lstrip(" ")
                 if flat or MARKER.match(wrapped) or wrapped.startswith(("```", "~~~", ">")):
                     break
+                if len(lines[j]) - len(wrapped) != 2:
+                    error(j, f"wrapped line indented {len(lines[j]) - len(wrapped)} spaces; indent it two")
                 unfenced(j, wrapped)
                 j += 1
             if (j < end and lines[j].strip() and not lines[j].startswith("  ")
@@ -274,11 +282,11 @@ checked = 0
 entries = {}
 for path in sorted(glob.glob("skills/*/SKILL.md")):
     lines = open(path, encoding="utf-8").read().split("\n")
-    start = next((i for i, line in enumerate(lines) if line.startswith("## Operations")), None)
+    start = next((i for i, line in enumerate(lines) if OPERATIONS.match(line)), None)
     if start is None:
         continue
     checked += 1
-    if sum(line.startswith("## Operations") for line in lines) > 1:
+    if sum(bool(OPERATIONS.match(line)) for line in lines) > 1:
         print(f"error: {path}: more than one `## Operations` section; keep the one", file=sys.stderr)
         failed = True
     end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
@@ -329,8 +337,8 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
             failed = True
 
 readme = open("README.md", encoding="utf-8").read().split("\n")
-start = next((i for i, line in enumerate(readme) if line == "## Platform overrides"), None)
-if readme.count("## Platform overrides") > 1:
+start = next((i for i, line in enumerate(readme) if OVERRIDES.fullmatch(line)), None)
+if sum(bool(OVERRIDES.fullmatch(line)) for line in readme) > 1:
     print("error: README.md: more than one `## Platform overrides` section; keep the one", file=sys.stderr)
     failed = True
 if start is None:
