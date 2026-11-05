@@ -155,8 +155,9 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
                      + r")|(gh)" + OPTIONS + r"\s+(?:" + "|".join(GH.split()) + r"))(?![\w-])", re.M)
 
 # An entry is `- **name** — ...`; a bullet naming operations then `:` or `,` says
-# what happens when they are unavailable. Any other bold bullet is a shape this
-# check would misread, so it fails rather than drop the entry silently.
+# what happens when they are unavailable, so every name it gives must have an
+# entry. Any other bold bullet is a shape this check would misread, so it fails
+# rather than drop the entry silently.
 BULLET = re.compile(r"^([-*]) \*\*(.+?)\*\*(.*)$")
 
 failed = False
@@ -170,16 +171,25 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     checked += 1
     end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
     names = entries[path.split("/")[1]] = []
+    availability = []
     for i in range(start, end):
         bullet = BULLET.match(lines[i])
         if not bullet:
             continue
         if bullet.group(1) == "-" and bullet.group(3).startswith(" —"):
             names.append(bullet.group(2))
-        elif bullet.group(1) != "-" or bullet.group(3)[:1] not in (":", ","):
+        elif bullet.group(1) == "-" and bullet.group(3)[:1] in (":", ","):
+            availability.append((i, re.findall(r"\*\*(.+?)\*\*", lines[i].split(":")[0])))
+        else:
             print(f"error: {path}:{i + 1}: Operations bullet in an unrecognized shape; write an entry as "
                   "`- **name** — ...`", file=sys.stderr)
             failed = True
+    for i, named in availability:
+        for name in named:
+            if name not in names:
+                print(f"error: {path}:{i + 1}: `{name}` has no `- **{name}** — ...` entry in the Operations section",
+                      file=sys.stderr)
+                failed = True
     for i, line in enumerate(lines):
         if start <= i < end:
             continue
@@ -199,7 +209,16 @@ end = next((i for i in range(start + 1, len(readme)) if readme[i].startswith("##
 listed = {}
 for line in readme[start:end]:
     if item := re.match(r"^- `([\w-]+)`: (.+)$", line):
+        if item.group(1) in listed:
+            print(f"error: README.md: Platform overrides lists {item.group(1)} twice", file=sys.stderr)
+            failed = True
         listed[item.group(1)] = [name.strip() for name in item.group(2).split(",")]
+intro = next((line for line in readme[start:end] if " keep every platform command in an " in line), "")
+named = sorted(re.findall(r"`([\w-]+)`", intro.split(" keep every platform command in an ")[0]))
+if named != sorted(entries):
+    print("error: README.md: the Platform overrides sentence naming the skills that \"keep every platform command "
+          f"in an Operations section\" should name exactly: {', '.join(sorted(entries))}", file=sys.stderr)
+    failed = True
 for skill, names in entries.items():
     expected = f"- `{skill}`: {', '.join(names)}"
     if skill not in listed:
