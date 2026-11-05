@@ -196,11 +196,15 @@ def section_end(lines, start):
 
 
 def block_ends(line):
-    """Whether a paragraph can start on the line after this one: it is blank,
-    a heading, a fence line or a one-line comment, not a paragraph's own line."""
+    """Whether a paragraph can start on the line after this one: anything but a
+    line a paragraph (its own, a list item's or a quote's) would continue onto
+    — a blank line, a heading, a fence line, a one-line comment, a rule or
+    setext underline, or indented code all end their block."""
     stripped = line.strip()
-    return (not stripped or bool(HEADING.match(line)) or stripped.startswith(FENCE_START)
-            or bool(COMMENT.fullmatch(stripped)))
+    continues = (stripped and len(line) - len(line.lstrip(" ")) < 4 and not HEADING.match(line)
+                 and not stripped.startswith(FENCE_START) and not COMMENT.fullmatch(stripped)
+                 and not RULE.fullmatch(line))
+    return not continues
 
 
 def headings(lines, atx, title):
