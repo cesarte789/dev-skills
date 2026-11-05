@@ -383,10 +383,11 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
                     names.append(name)
                 continue
             if rest[:1] in (":", ","):
-                # Bold names found with code spans blanked, so `**` in code is no name;
+                # Bold names found with code spans and comments blanked, so `**` there is no name;
                 # each read back from the text, so a name may hold code.
                 availability.append((i, [text[m.start(1):m.end(1)]
-                                         for m in re.finditer(r"\*\*(.+?)\*\*", prose(text))]))
+                                         for m in re.finditer(r"\*\*(.+?)\*\*", COMMENT.sub(
+                                             lambda c: " " * len(c.group()), prose(text)))]))
                 continue
         print(f"error: {path}:{i + 1}: Operations list item in an unrecognized shape; write an entry as "
               "`- **name** — ...`, or what happens when operations are unavailable as `- **name**: ...` or "
@@ -452,7 +453,6 @@ if SENTENCE in intro and not intro.split(SENTENCE, 1)[1].startswith("**Operation
     print("error: README.md: the Platform overrides sentence naming the skills must end right after the names, as "
           f"\"{SENTENCE.strip()} **Operations** section.\"", file=sys.stderr)
     failed = True
-# Every skill directory named in the sentence, however written (code span, link, plain text).
 lead = intro.split(SENTENCE)[0]
 if "[" in prose(lead):
     print("error: README.md: a link in the Platform overrides sentence naming the skills; name each one as `skill`",
