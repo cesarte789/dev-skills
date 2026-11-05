@@ -180,32 +180,36 @@ UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
 RULE = re.compile(r" {0,3}(?:([-*_])(?:[ \t]*\1){2,}|=+|-+)[ \t]*")  # a thematic break or setext underline
 
 
-def section_end(lines, start):
-    """Where the section opened at lines[start] ends: the next level-1 or level-2
-    ATX heading (indented up to three spaces) outside code fences. A setext
-    underline or rule inside the section fails as off the layout instead, so
-    it is never misread as a heading."""
+def unfenced_lines(lines, start=0):
+    """The indices of lines[start:] that lie outside code fences."""
     fenced = False
-    for i in range(start + 1, len(lines)):
+    for i in range(start, len(lines)):
         if lines[i].lstrip(" ").startswith(("```", "~~~")):
             fenced = not fenced
-        if fenced:
-            continue
-        if re.match(r" {0,3}##?(?:[ \t]|$)", lines[i]):
-            return i
-    return len(lines)
+        elif not fenced:
+            yield i
+
+
+def section_end(lines, start):
+    """Where the section opened at lines[start] ends: the next level-1 or level-2
+    ATX heading at the margin, outside code fences. An indented heading, a rule
+    or a setext underline inside the section fails as off the layout instead,
+    so none is misread as the section's end."""
+    return next((i for i in unfenced_lines(lines, start + 1) if re.match(r"##?(?:[ \t]|$)", lines[i])), len(lines))
 
 
 def headings(lines, atx, title):
-    """How many headings in lines are ATX headings `atx` accepts, or setext
-    headings whose title line matches `title`, underlined with `=` or `-`."""
-    count = 0
-    for i, line in enumerate(lines):
-        if atx(line):
-            count += 1
-        elif re.match(r" {0,3}" + title, line) and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1]):
-            count += 1
-    return count
+    """The indices of the headings in lines, outside code fences, that are ATX
+    headings `atx` accepts or setext headings whose title line matches `title`,
+    underlined with `=` or `-`; the second list holds the setext ones."""
+    found, setext = [], []
+    for i in unfenced_lines(lines):
+        if atx(lines[i]):
+            found.append(i)
+        elif re.match(r" {0,3}" + title, lines[i]) and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1]):
+            found.append(i)
+            setext.append(i)
+    return found, setext
 
 
 def prose(text):
@@ -277,6 +281,8 @@ def items(path, lines, start, end, flat=False):
                 fenced = True
             else:
                 error(i, "code fence not written as two spaces, ``` and an optional language")
+        elif indent and re.match(r" {0,3}#{1,6}(?:[ \t]|$)", line):
+            error(i, "indented heading here; write headings at the margin")
         elif indent and line.strip() and not MARKER.match(stripped):
             error(i, "indented line that is no list item's wrapped line nor in a code fence; keep an item's "
                      "text in one block")
@@ -293,7 +299,8 @@ def items(path, lines, start, end, flat=False):
             j = i + 1
             while j < end and lines[j].startswith("  ") and lines[j].strip():
                 wrapped = lines[j].lstrip(" ")
-                if flat or MARKER.match(wrapped) or wrapped.startswith(("```", "~~~", ">")) or RULE.fullmatch(lines[j]):
+                if (flat or MARKER.match(wrapped) or wrapped.startswith(("```", "~~~", ">")) or RULE.fullmatch(lines[j])
+                        or re.match(r" {0,3}#{1,6}(?:[ \t]|$)", lines[j])):
                     break
                 if len(lines[j]) - len(wrapped) != 2:
                     error(j, f"wrapped line indented {len(lines[j]) - len(wrapped)} spaces; indent it two")
@@ -319,13 +326,19 @@ checked = 0
 entries = {}
 for path in sorted(glob.glob("skills/*/SKILL.md")):
     lines = open(path, encoding="utf-8").read().split("\n")
-    start = next((i for i, line in enumerate(lines) if OPERATIONS.match(line)), None)
-    if start is None:
+    found, setext = headings(lines, OPERATIONS.match, r"Operations\b")
+    if not found:
         continue
     checked += 1
-    if headings(lines, OPERATIONS.match, r"Operations\b") > 1:
+    if len(found) > 1:
         print(f"error: {path}: more than one `## Operations` section; keep the one", file=sys.stderr)
         failed = True
+    if setext:
+        print(f"error: {path}:{setext[0] + 1}: Operations heading underlined; write it as `## Operations`",
+              file=sys.stderr)
+        failed = True
+        continue
+    start = found[0]
     end = section_end(lines, start)
     names = entries[path.split("/")[1]] = []
     availability = []
@@ -377,8 +390,9 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
             failed = True
 
 readme = open("README.md", encoding="utf-8").read().split("\n")
-start = next((i for i, line in enumerate(readme) if OVERRIDES.fullmatch(line)), None)
-if headings(readme, OVERRIDES.fullmatch, r"Platform overrides[ \t]*$") > 1:
+found, setext = headings(readme, OVERRIDES.fullmatch, r"Platform overrides[ \t]*$")
+start = next((i for i in found if i not in setext), None)
+if len(found) > 1:
     print("error: README.md: more than one `## Platform overrides` section; keep the one", file=sys.stderr)
     failed = True
 if start is None:
