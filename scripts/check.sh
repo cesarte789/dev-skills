@@ -211,9 +211,11 @@ def headings(lines, atx, title, name):
     """The indices of the headings in lines that are ATX headings `atx` accepts,
     setext headings whose title, from that line to a `=` or `-` underline
     in the same run of non-blank lines and joined, matches `title` (a title
-    may wrap), or headings named `name` at any other indent, inside a
-    blockquote or list item, or written as an `<h1>`-`<h6>` tag; the second list holds the setext ones,
-    the third the contained or HTML ones. Any such line counts,
+    may wrap), or headings named `name` in any other form: ATX at any level
+    or indent, inside a blockquote or list item, with its title emphasised,
+    or as an `<h1>`-`<h6>` tag, read to the next blank line (see
+    `other_heading()`); the second list holds the setext ones, the third the
+    other forms. Any such line counts,
     whatever precedes it: telling a real setext heading from the last line of
     a paragraph takes a markdown parser, and a false count fails loudly where
     a missed one would pass silently. Lines in code fences count
@@ -228,11 +230,28 @@ def headings(lines, atx, title, name):
         elif lines[i].strip() and not UNDERLINE.fullmatch(lines[i]) and setext_title(lines, i, title):
             found.append(i)
             setext.append(i)
-        elif (re.match(r"[ \t]*(?:(?:>|[-*+]|\d+[.)])[ \t]*)*#{1,6}[ \t]+" + name, lines[i])
-              or re.search(r"<h[1-6]\b[^>]*>[ \t]*" + name, lines[i], re.IGNORECASE)):
+        elif other_heading(lines, i, name):
             found.append(i)
             contained.append(i)
     return found, setext, contained
+
+
+def other_heading(lines, i, name):
+    """Whether lines[i] opens a heading whose title, with HTML tags, `*`, `_`,
+    backticks and backslashes dropped, starts with `name`: an ATX heading at any
+    level, indent or depth of blockquote and list markers, or an `<h1>`-`<h6>`
+    tag read from its `<h` to the next blank line (a tag may wrap)."""
+    def plain(text):
+        return re.sub(r"<[^>]*>|[*_`\\]", " ", text)
+
+    atx = re.match(r"[ \t]*(?:(?:>|[-*+]|\d+[.)])[ \t]*)*#{1,6}[ \t]+(.*)", lines[i])
+    if atx and re.match(r"\s*" + name, plain(atx.group(1))):
+        return True
+    tag = re.search(r"<h[1-6](?![0-9A-Za-z-])", lines[i], re.IGNORECASE)
+    if not tag:
+        return False
+    k = next((k for k in range(i + 1, len(lines)) if not lines[k].strip()), len(lines))
+    return bool(re.match(r"\s*" + name, plain(" ".join([lines[i][tag.start():]] + lines[i + 1:k]))))
 
 
 def prose(text):
@@ -405,8 +424,8 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
               file=sys.stderr)
         failed = True
     if contained:
-        print(f"error: {path}:{contained[0] + 1}: Operations heading indented, inside a blockquote or list item, or in an HTML tag; "
-              "write it as `## Operations` at the margin", file=sys.stderr)
+        print(f"error: {path}:{contained[0] + 1}: Operations heading in another form (level, indent, blockquote, "
+              "list item, emphasis or HTML); write it as `## Operations` at the margin", file=sys.stderr)
         failed = True
     atx_found = [i for i in found if i not in setext and i not in contained]
     if not atx_found:
@@ -470,8 +489,9 @@ found, setext, contained = headings(readme, OVERRIDES.fullmatch, r"Platform over
                                    r"Platform overrides\b")
 start = next((i for i in found if i not in setext and i not in contained), None)
 if contained:
-    print(f"error: README.md:{contained[0] + 1}: Platform overrides heading indented, inside a blockquote or "
-          "list item, or in an HTML tag; write it as `## Platform overrides` at the margin", file=sys.stderr)
+    print(f"error: README.md:{contained[0] + 1}: Platform overrides heading in another form (level, indent, "
+          "blockquote, list item, emphasis or HTML); write it as `## Platform overrides` at the margin",
+          file=sys.stderr)
     failed = True
 if len(found) > 1:
     print("error: README.md: more than one `## Platform overrides` section; keep the one", file=sys.stderr)
