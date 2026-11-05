@@ -162,6 +162,7 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 BULLET = re.compile(r"^([-*+]) \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 FENCE = re.compile(r"`{3,}|~{3,}")
+HEADING = re.compile(r" {0,3}#{1,6}(?:\s|$)")
 
 
 def items(lines, start, end):
@@ -176,6 +177,7 @@ def items(lines, start, end):
     lines = [line.expandtabs(4) for line in lines]
     fence = None  # the run that opened the current code fence
     content = 0  # the open top-level item's content column; 0 when none is open
+    nested = False  # the previous line belongs to an item nested in the open one
     i = start
     while i < end:
         line = lines[i]
@@ -190,21 +192,26 @@ def items(lines, start, end):
             fence = run.group()
             if indent < content:
                 content = 0
-        elif line.strip():
-            if content and indent >= content:
-                pass
+        elif not line.strip():
+            nested = False
+        else:
+            if content and (indent >= content or (nested and not marker)):
+                # nested, or a lazy continuation of the nested line above
+                nested = True
+                i += 1
+                continue
             elif marker and indent <= 3:
                 j = i + 1
-                while (j < end and lines[j].strip() and not lines[j].startswith("#")
+                while (j < end and lines[j].strip() and not HEADING.match(lines[j])
                        and not FENCE.match(lines[j].lstrip(" "))
                        and not (MARKER.match(lines[j].lstrip(" ")) and len(lines[j]) - len(lines[j].lstrip(" ")) <= 3)):
                     j += 1
                 yield i, " ".join(part.strip() for part in lines[i:j])
                 content = indent + marker.end()
+                nested = False
                 i = j
                 continue
-            else:
-                content = 0
+            content = 0
         i += 1
 
 
