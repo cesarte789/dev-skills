@@ -161,6 +161,9 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # is read whole, with its indented continuation lines, since names and bold
 # spans wrap. A name holds no comma, which separates names in the README.
 BULLET = re.compile(r"^([-*+]) \*\*(.+?)\*\*(.*)$")
+# A top-level item: one leading space at most, since two put a `- ` item inside
+# the entry above it.
+ITEM = re.compile(r" ?(?:[-*+]|\d+[.)])\s")
 
 failed = False
 checked = 0
@@ -178,22 +181,22 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     for i in range(start, end):
         if lines[i].lstrip().startswith("```"):
             fenced = not fenced
-        if fenced or not re.match(r"(?:[-*+]|\d+[.)])\s", lines[i]):
+        if fenced or not ITEM.match(lines[i]):
             continue
         j = i + 1
-        while j < end and lines[j].startswith(" ") and lines[j].strip():
+        while j < end and lines[j].startswith(" ") and lines[j].strip() and not ITEM.match(lines[j]):
             j += 1
         text = " ".join(line.strip() for line in lines[i:j])
         bullet = BULLET.match(text)
         if bullet and bullet.group(1) == "-":
             name, rest = bullet.group(2), bullet.group(3)
-            if rest.startswith(" —") and "," in name:
-                print(f"error: {path}:{i + 1}: Operations entry name `{name}` holds a comma, which the "
-                      "README list uses to separate names", file=sys.stderr)
-                failed = True
-                continue
             if rest.startswith(" —"):
-                names.append(name)
+                if "," in name:
+                    print(f"error: {path}:{i + 1}: Operations entry name `{name}` holds a comma, which the "
+                          "README list uses to separate names", file=sys.stderr)
+                    failed = True
+                else:
+                    names.append(name)
                 continue
             if rest[:1] in (":", ","):
                 availability.append((i, re.findall(r"\*\*(.+?)\*\*", text.split(":")[0])))
