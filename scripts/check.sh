@@ -168,6 +168,7 @@ TAG = re.compile(r"<(?:[A-Za-z/?]|!(?!--))")
 OPERATIONS = re.compile(r" {0,3}##[ \t]+Operations\b")
 OVERRIDES = re.compile(r" {0,3}##[ \t]+Platform overrides[ \t]*#*[ \t]*")
 FENCE_START = ("```", "~~~")
+ONE_LINE_COMMENT = re.compile(r"<!--.*-->[ \t]*")
 HEADING = re.compile(r" {0,3}#{1,6}(?:[ \t]|$)")
 UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
 RULE = re.compile(r" {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*|" + UNDERLINE.pattern)  # a thematic break or setext underline
@@ -256,6 +257,8 @@ def items(path, lines, start, end, flat=False):
                 error(i, "second repo-conventions block; keep the one")
         if conventions:
             conventions = line != "<!-- /repo-conventions -->"
+            if conventions and line != "<!-- repo-conventions -->" and line.strip() and not line.startswith(">"):
+                error(i, "line in the repo-conventions block outside its blockquote; start it with `>`")
             i += 1
             continue
         if not fenced and not stripped.startswith(FENCE_START):
@@ -268,10 +271,11 @@ def items(path, lines, start, end, flat=False):
             elif line.strip() and indent < 2:
                 error(i, "line inside a code fence indented less than two spaces")
         elif (flat and line.strip() and not indent and not MARKER.match(stripped) and i > start
-              and lines[i - 1].strip() and not MARKER.match(lines[i - 1]) and not HEADING.match(lines[i - 1])):
+              and lines[i - 1].strip() and not MARKER.match(lines[i - 1]) and not HEADING.match(lines[i - 1])
+              and not ONE_LINE_COMMENT.fullmatch(line) and not ONE_LINE_COMMENT.fullmatch(lines[i - 1])):
             error(i, "paragraph wrapped onto a second line here; keep each README paragraph on one line")
         elif flat and indent and line.strip():
-            error(i, "indented line under a README list item; keep each item on one line")
+            error(i, "indented line in the README Platform overrides section; write every line at the margin")
         elif stripped.startswith(FENCE_START):
             if flat:
                 error(i, "code fence in the README list; keep it to one line per skill")
