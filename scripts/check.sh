@@ -157,7 +157,8 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # An entry is `- **name** — ...`; a bullet naming operations then `:` or `,` says
 # what happens when they are unavailable, so every name it gives must have an
 # entry. Any other bold bullet is a shape this check would misread, so it fails
-# rather than drop the entry silently.
+# rather than drop the entry silently. A bullet is read whole, with its indented
+# continuation lines, since names and bold spans wrap.
 BULLET = re.compile(r"^([-*+]) \*\*(.+?)\*\*(.*)$")
 
 failed = False
@@ -173,22 +174,24 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     names = entries[path.split("/")[1]] = []
     availability = []
     for i in range(start, end):
-        bullet = BULLET.match(lines[i])
-        if not bullet:
+        if not re.match(r"[-*+] \*\*", lines[i]):
             continue
-        if bullet.group(1) == "-" and bullet.group(3).startswith(" —"):
+        j = i + 1
+        while j < end and lines[j].startswith(" ") and lines[j].strip():
+            j += 1
+        text = " ".join(line.strip() for line in lines[i:j])
+        bullet = BULLET.match(text)
+        if bullet and bullet.group(1) == "-" and bullet.group(3).startswith(" —"):
             names.append(bullet.group(2))
-        elif bullet.group(1) == "-" and bullet.group(3)[:1] in (":", ","):
-            # The bullet wraps: read it with its indented continuation lines.
-            j = i + 1
-            while j < end and lines[j].startswith(" ") and lines[j].strip():
-                j += 1
-            text = " ".join(line.strip() for line in lines[i:j])
+        elif bullet and bullet.group(1) == "-" and bullet.group(3)[:1] in (":", ","):
             availability.append((i, re.findall(r"\*\*(.+?)\*\*", text.split(":")[0])))
         else:
             print(f"error: {path}:{i + 1}: Operations bullet in an unrecognized shape; write an entry as "
                   "`- **name** — ...`", file=sys.stderr)
             failed = True
+    if not names:
+        print(f"error: {path}:{start + 1}: Operations section has no `- **name** — ...` entries", file=sys.stderr)
+        failed = True
     for i, named in availability:
         for name in named:
             if name not in names:
@@ -225,6 +228,8 @@ if named != sorted(entries):
           f"in an Operations section\" should name exactly: {', '.join(sorted(entries))}", file=sys.stderr)
     failed = True
 for skill, names in entries.items():
+    if not names:
+        continue
     expected = f"- `{skill}`: {', '.join(names)}"
     if skill not in listed:
         print(f"error: README.md: Platform overrides has no line for {skill}; add: {expected}", file=sys.stderr)
