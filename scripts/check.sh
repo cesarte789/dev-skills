@@ -176,6 +176,8 @@ CLOSE_FENCE = "  ```"
 TAG = re.compile(r"<(?:[A-Za-z/?]|!(?!--))")
 OPERATIONS = re.compile(r" {0,3}##[ \t]+Operations\b")
 OVERRIDES = re.compile(r" {0,3}##[ \t]+Platform overrides[ \t]*#*[ \t]*")
+FENCE_START = ("```", "~~~")
+HEADING = re.compile(r" {0,3}#{1,6}(?:[ \t]|$)")
 UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
 RULE = re.compile(r" {0,3}(?:([-*_])(?:[ \t]*\1){2,}|=+|-+)[ \t]*")  # a thematic break or setext underline
 
@@ -184,7 +186,7 @@ def unfenced_lines(lines, start=0):
     """The indices of lines[start:] that lie outside code fences."""
     fenced = False
     for i in range(start, len(lines)):
-        if lines[i].lstrip(" ").startswith(("```", "~~~")):
+        if lines[i].lstrip(" ").startswith(FENCE_START):
             fenced = not fenced
         elif not fenced:
             yield i
@@ -199,11 +201,13 @@ def section_end(lines, start):
 
 
 def headings(lines, atx, title):
-    """The indices of the headings in lines, outside code fences, that are ATX
-    headings `atx` accepts or setext headings whose title line matches `title`,
-    underlined with `=` or `-`; the second list holds the setext ones."""
+    """The indices of the headings in lines that are ATX headings `atx` accepts
+    or setext headings whose title line matches `title`, underlined with `=`
+    or `-`; the second list holds the setext ones. Lines in code fences count
+    too, so a fence misread before a heading never hides it: an example heading
+    fails loudly as a second section instead."""
     found, setext = [], []
-    for i in unfenced_lines(lines):
+    for i in range(len(lines)):
         if atx(lines[i]):
             found.append(i)
         elif re.match(r" {0,3}" + title, lines[i]) and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1]):
@@ -263,31 +267,33 @@ def items(path, lines, start, end, flat=False):
             conventions = line != "<!-- /repo-conventions -->"
             i += 1
             continue
-        if not fenced and not stripped.startswith(("```", "~~~")):
+        if not fenced and not stripped.startswith(FENCE_START):
             unfenced(i, line)
         if fenced:
             if line == CLOSE_FENCE:
                 fenced = False
-            elif stripped.startswith(("```", "~~~")):
+            elif stripped.startswith(FENCE_START):
                 error(i, "fence line inside a code fence; close it with exactly two spaces then ```")
             elif line.strip() and indent < 2:
                 error(i, "line inside a code fence indented less than two spaces")
         elif flat and indent and line.strip():
             error(i, "indented line under a README list item; keep each item on one line")
-        elif stripped.startswith(("```", "~~~")):
+        elif stripped.startswith(FENCE_START):
             if flat:
                 error(i, "code fence in the README list; keep it to one line per skill")
             elif OPEN_FENCE.fullmatch(line):
                 fenced = True
             else:
                 error(i, "code fence not written as two spaces, ``` and an optional language")
-        elif indent and re.match(r" {0,3}#{1,6}(?:[ \t]|$)", line):
+        elif indent and HEADING.match(line):
             error(i, "indented heading here; write headings at the margin")
         elif indent and line.strip() and not MARKER.match(stripped):
             error(i, "indented line that is no list item's wrapped line nor in a code fence; keep an item's "
                      "text in one block")
         elif stripped.startswith(">"):
             error(i, "blockquote here; write it as plain text")
+        elif not flat and line.startswith("**"):
+            error(i, "bold name at the margin here; write an operation as an entry, `- **name** — ...`")
         elif RULE.fullmatch(line):
             error(i, "horizontal rule or setext underline here; use an ATX heading, or plain text")
         elif MARKER.match(stripped) and indent:
@@ -299,8 +305,8 @@ def items(path, lines, start, end, flat=False):
             j = i + 1
             while j < end and lines[j].startswith("  ") and lines[j].strip():
                 wrapped = lines[j].lstrip(" ")
-                if (flat or MARKER.match(wrapped) or wrapped.startswith(("```", "~~~", ">")) or RULE.fullmatch(lines[j])
-                        or re.match(r" {0,3}#{1,6}(?:[ \t]|$)", lines[j])):
+                if (flat or MARKER.match(wrapped) or wrapped.startswith(FENCE_START + (">",))
+                        or RULE.fullmatch(lines[j]) or HEADING.match(lines[j])):
                     break
                 if len(lines[j]) - len(wrapped) != 2:
                     error(j, f"wrapped line indented {len(lines[j]) - len(wrapped)} spaces; indent it two")
