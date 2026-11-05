@@ -195,8 +195,6 @@ def items(path, lines, start, end, flat=False):
     for i in range(start, end):
         if "\t" in lines[i]:
             error(i, "tab character; indent with spaces")
-        if "__" in prose(lines[i]):
-            error(i, "`__` outside a code span; write bold as **…**")
     fenced = conventions = False
     blocks = 0
     i = start
@@ -215,6 +213,8 @@ def items(path, lines, start, end, flat=False):
             continue
         if not fenced and opens_comment(line):
             error(i, "HTML comment over several lines; keep it on one line")
+        if not fenced and "__" in prose(line):
+            error(i, "`__` outside code; write bold as **…**")
         if fenced:
             if line == CLOSE_FENCE:
                 fenced = False
@@ -249,6 +249,8 @@ def items(path, lines, start, end, flat=False):
                     break
                 if opens_comment(wrapped):
                     error(j, "HTML comment over several lines; keep it on one line")
+                if "__" in prose(wrapped):
+                    error(j, "`__` outside code; write bold as **…**")
                 j += 1
             if (j < end and lines[j].strip() and not lines[j].startswith("  ")
                     and not MARKER.match(lines[j].lstrip(" "))):
