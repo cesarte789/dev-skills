@@ -166,7 +166,7 @@ CLOSE_FENCE = "  ```"
 # line or not; a `<!--` comment is left to the comment rule.
 TAG = re.compile(r"<(?:[A-Za-z/?]|!(?!--))")
 OPERATIONS = re.compile(r" {0,3}##[ \t]+Operations\b")
-OVERRIDES = re.compile(r" {0,3}##[ \t]+Platform overrides[ \t]*#*[ \t]*")
+OVERRIDES = re.compile(r"## Platform overrides")  # matched whole: the heading exactly
 FENCE_START = ("```", "~~~")
 SENTENCE = " keep every platform command in an "  # the README sentence naming the skills with an Operations section
 # A one-line comment that reads the same under every CommonMark version: no `<!-->` or `<!--->` opener and no
@@ -404,7 +404,8 @@ def items(path, lines, start, end, flat=False):
                 unfenced(j, wrapped)
                 j += 1
             if j < end and needs_blank_before(lines[j]):
-                error(j, "line right under a README list item; keep each item on one line" if flat
+                error(j, "line right under a README list item; keep each item on one line, or leave a blank line "
+                         "before anything else" if flat
                       else "line right under a list item; indent a wrapped line two spaces, or leave a blank line "
                            "before anything else")
             found.append((i, " ".join(part.strip() for part in lines[i:j])))
