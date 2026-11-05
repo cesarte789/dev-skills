@@ -156,8 +156,8 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 
 # An entry is `- **name** — ...`; a bullet naming operations then `:` or `,` says
 # what happens when they are unavailable, so every name it gives must have an
-# entry. Any other bold bullet is a shape this check would misread, so it fails
-# rather than drop the entry silently. A bullet is read whole, with its indented
+# entry. Any other top-level list item is a shape this check would misread, so
+# it fails rather than drop the entry silently. A bullet is read whole, with its indented
 # continuation lines, since names and bold spans wrap.
 BULLET = re.compile(r"^([-*+]) \*\*(.+?)\*\*(.*)$")
 
@@ -174,7 +174,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     names = entries[path.split("/")[1]] = []
     availability = []
     for i in range(start, end):
-        if not re.match(r"[-*+] \*\*", lines[i]):
+        if not re.match(r"(?:[-*+]|\d+[.)])\s", lines[i]):
             continue
         j = i + 1
         while j < end and lines[j].startswith(" ") and lines[j].strip():
@@ -186,7 +186,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
         elif bullet and bullet.group(1) == "-" and bullet.group(3)[:1] in (":", ","):
             availability.append((i, re.findall(r"\*\*(.+?)\*\*", text.split(":")[0])))
         else:
-            print(f"error: {path}:{i + 1}: Operations bullet in an unrecognized shape; write an entry as "
+            print(f"error: {path}:{i + 1}: Operations list item in an unrecognized shape; write an entry as "
                   "`- **name** — ...`", file=sys.stderr)
             failed = True
     if not names:
