@@ -279,6 +279,8 @@ def items(path, lines, start, end, flat=False):
         rendered = shown(text)
         if "__" in rendered:
             error(i, "`__` outside code; write bold as **…**")
+        if "\\" in rendered:
+            error(i, "backslash outside code; write the text without escapes")
         if TAG.search(rendered):
             error(i, "HTML tag outside code; write formatting as markdown")
 
@@ -299,6 +301,8 @@ def items(path, lines, start, end, flat=False):
                 error(i, "second repo-conventions block; keep the one")
         if conventions:
             conventions = line != "<!-- /repo-conventions -->"
+            if conventions and re.match(r">[ >]*(?:[-*+]|\d+[.)])\s+\*\*", line):
+                error(i, "bold list item in the repo-conventions block; operations are entries outside it")
             if conventions and line != "<!-- repo-conventions -->" and line.strip() and not line.startswith(">"):
                 error(i, "line in the repo-conventions block outside its blockquote; start it with `>`")
             i += 1
@@ -334,20 +338,22 @@ def items(path, lines, start, end, flat=False):
                      "text in one block")
         elif stripped.startswith(">"):
             error(i, "blockquote here; write it as plain text")
+        elif RULE.fullmatch(line):
+            error(i, "horizontal rule or setext underline here; use an ATX heading, or plain text")
         elif line.startswith("**"):
             error(i, "bold name at the margin here; write an operation as an entry, `- **name** — ...`")
         elif not flat and i > start and not MARKER.match(stripped) and (HEADING.match(line) or line.startswith("|")
                                          or re.search(r"\*\*[^*]+\*\*\S*\s+—", shown(line))):
             error(i, "sub-heading, table row or entry-shaped line in an Operations section; write an operation "
                      "as an entry, `- **name** — ...`")
-        elif RULE.fullmatch(line):
-            error(i, "horizontal rule or setext underline here; use an ATX heading, or plain text")
         elif MARKER.match(stripped) and indent:
             error(i, f"list item indented {indent} spaces; start every item at the margin, "
                      "since lists here do not nest")
         elif MARKER.match(stripped):
             if not line.startswith("- "):
                 error(i, "list item not started with `- `")
+            elif line[2:3].isspace():
+                error(i, "more than one space after the item's `-`; write `- ` then its text")
             j = i + 1
             while j < end and lines[j].startswith("  ") and lines[j].strip():
                 wrapped = lines[j].lstrip(" ")
