@@ -160,8 +160,9 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
 # then ``` and an optional language, closed by two spaces then ```, and no list
 # nests and nothing is quoted (bar the repo-conventions block, which the check
 # above keeps identical in every skill). The README list keeps each line whole,
-# with nothing indented under it. Anything else fails, rather than risk an
-# entry being read past silently. An entry is `- **name** — ...` and its name
+# with nothing indented under it, and gets no repo-conventions exemption.
+# Anything else fails, rather than risk an entry being read past silently. An
+# entry is `- **name** — ...` and its name
 # holds no comma, which separates names in the README; a bullet naming
 # operations then `:` or `,` says what happens when they are unavailable, so
 # every name it gives must have an entry.
@@ -187,7 +188,7 @@ def items(path, lines, start, end, flat=False):
         line = lines[i]
         stripped = line.lstrip(" ")
         indent = len(line) - len(stripped)
-        if line == "<!-- repo-conventions -->":
+        if line == "<!-- repo-conventions -->" and not flat:
             conventions = True
             blocks += 1
             if blocks > 1:
@@ -203,6 +204,8 @@ def items(path, lines, start, end, flat=False):
         if fenced:
             if line == CLOSE_FENCE:
                 fenced = False
+            elif stripped.startswith(("```", "~~~")):
+                error(i, "fence line inside a code fence; close it with exactly two spaces then ```")
             elif line.strip() and indent < 2:
                 error(i, "line inside a code fence indented less than two spaces")
         elif flat and indent and line.strip():
@@ -225,7 +228,7 @@ def items(path, lines, start, end, flat=False):
             j = i + 1
             while j < end and lines[j].startswith("  ") and lines[j].strip():
                 wrapped = lines[j].lstrip(" ")
-                if MARKER.match(wrapped) or wrapped.startswith(("```", "~~~", ">")):
+                if flat or MARKER.match(wrapped) or wrapped.startswith(("```", "~~~", ">")):
                     break
                 if "<!--" in wrapped and "-->" not in wrapped.split("<!--", 1)[1]:
                     error(j, "HTML comment over several lines; keep it on one line")
