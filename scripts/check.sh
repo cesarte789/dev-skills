@@ -188,11 +188,16 @@ def items(lines, start, end):
         if fence:
             if run and run.group()[0] == fence[0] and len(run.group()) >= len(fence) and not stripped[run.end():].strip():
                 fence = None
+                nested = False
         elif run:
             fence = run.group()
+            nested = False
             if indent < content:
                 content = 0
         elif not line.strip():
+            nested = False
+        elif HEADING.match(line):
+            content = 0
             nested = False
         else:
             if content and (indent >= content or (nested and not marker)):
