@@ -154,19 +154,10 @@ OPTIONS = r"(?:\s+(?:-[A-Za-z]\s+\S+|--[\w-]+(?:=\S+|\s+[^\s-]\S*)?))*"
 COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join(GIT.split())
                      + r")|(gh)" + OPTIONS + r"\s+(?:" + "|".join(GH.split()) + r"))(?![\w-])", re.M)
 
-# Operations sections and the README list keep one strict layout, so a reader
-# needs no markdown parser to find every item: an item starts `- ` at the
-# margin, its wrapped lines are indented two spaces, a code fence is two spaces
-# then ``` and an optional language, closed by two spaces then ```, and no list
-# nests and nothing is quoted (bar the repo-conventions block, which the check
-# above keeps identical in every skill). The README list keeps each line whole,
-# with nothing indented under it, and gets no repo-conventions exemption. No
-# HTML tag stands outside code, bar one-line comments.
-# Anything else fails, rather than risk an entry being read past silently. An
-# entry is `- **name** — ...` and its name holds no comma, which separates
-# names in the README. A bullet naming operations then `:` or `,` says what
-# happens when they are unavailable, and every bold name anywhere in it must
-# have an entry. Bold is written `**…**` only.
+# Operations sections and the README list keep the strict layout that
+# .claude/CLAUDE.md states under "Before pushing" (stated there only, so the two
+# never drift), so a reader needs no markdown parser to find every item.
+# Anything off it fails, rather than risk an entry being read past silently.
 BULLET = re.compile(r"^- \*\*(.+?)\*\*(.*)$")
 MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 OPEN_FENCE = re.compile(r"  ```[\w-]*")
@@ -179,7 +170,7 @@ OVERRIDES = re.compile(r" {0,3}##[ \t]+Platform overrides[ \t]*#*[ \t]*")
 FENCE_START = ("```", "~~~")
 HEADING = re.compile(r" {0,3}#{1,6}(?:[ \t]|$)")
 UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
-RULE = re.compile(r" {0,3}(?:([-*_])(?:[ \t]*\1){2,}|=+|-+)[ \t]*")  # a thematic break or setext underline
+RULE = re.compile(r" {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*|" + UNDERLINE.pattern)  # a thematic break or setext underline
 
 
 def unfenced_lines(lines, start=0):
@@ -292,7 +283,7 @@ def items(path, lines, start, end, flat=False):
                      "text in one block")
         elif stripped.startswith(">"):
             error(i, "blockquote here; write it as plain text")
-        elif not flat and line.startswith("**"):
+        elif line.startswith("**"):
             error(i, "bold name at the margin here; write an operation as an entry, `- **name** — ...`")
         elif RULE.fullmatch(line):
             error(i, "horizontal rule or setext underline here; use an ATX heading, or plain text")
@@ -423,6 +414,7 @@ for i, text in found:
     else:
         listed[item.group(1)] = [name.strip() for name in item.group(2).split(",")]
 intro = next((line for line in readme[start:end] if " keep every platform command in an " in line), "")
+intro = re.sub(r"<!--.*?-->", "", intro)  # a comment's names are no part of the rendered sentence
 named = sorted(re.findall(r"`([\w-]+)`", intro.split(" keep every platform command in an ")[0]))
 if named != sorted(entries):
     print("error: README.md: the Platform overrides sentence naming the skills that \"keep every platform command "
