@@ -216,6 +216,12 @@ def prose(text):
     return re.sub(r"`[^`]*`", lambda m: " " * len(m.group()), text)
 
 
+def needs_blank_before(line):
+    """Whether line, right after an item or a closing fence, must have a blank
+    line before it: it is no wrapped line (two spaces in) and no next item."""
+    return bool(line.strip()) and not line.startswith("  ") and not MARKER.match(line.lstrip(" "))
+
+
 def bad_comment(text):
     """Whether text holds a `<!--` that is not a well-formed one-line comment."""
     return "<!--" in COMMENT.sub("", prose(text))
@@ -269,8 +275,7 @@ def items(path, lines, start, end, flat=False):
         if fenced:
             if line == CLOSE_FENCE:
                 fenced = False
-                after = lines[i + 1] if i + 1 < end else ""
-                if after.strip() and not after.startswith("  ") and not MARKER.match(after):
+                if i + 1 < end and needs_blank_before(lines[i + 1]):
                     error(i + 1, "line right after a code fence; leave a blank line before it")
             elif stripped.startswith(FENCE_START):
                 error(i, "fence line inside a code fence; close it with exactly two spaces then ```")
@@ -320,8 +325,7 @@ def items(path, lines, start, end, flat=False):
                     error(j, f"wrapped line indented {len(lines[j]) - len(wrapped)} spaces; indent it two")
                 unfenced(j, wrapped)
                 j += 1
-            if (j < end and lines[j].strip() and not lines[j].startswith("  ")
-                    and not MARKER.match(lines[j].lstrip(" "))):
+            if j < end and needs_blank_before(lines[j]):
                 error(j, "line right under a README list item; keep each item on one line" if flat
                       else "line right under a list item; indent a wrapped line two spaces, or leave a blank line "
                            "before anything else")
