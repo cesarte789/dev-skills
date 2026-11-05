@@ -177,7 +177,9 @@ def items(lines, start, end):
     lines = [line.expandtabs(4) for line in lines]
     fence = None  # the run that opened the current code fence
     content = 0  # the open top-level item's content column; 0 when none is open
-    nested = False  # the previous line belongs to an item nested in the open one
+    nested = False  # the previous line is paragraph text nested in the open item
+    code = False  # the previous line is an indented code line nested in the open item
+    blank = True  # the previous line is blank
     i = start
     while i < end:
         line = lines[i]
@@ -196,13 +198,20 @@ def items(lines, start, end):
                 content = 0
         elif not line.strip():
             nested = False
-        elif HEADING.match(line):
+            blank = True
+            i += 1
+            continue
+        elif HEADING.match(line) and (not content or indent < content):
             content = 0
-            nested = False
+            nested = code = False
         else:
             if content and (indent >= content or (nested and not marker)):
-                # nested, or a lazy continuation of the nested line above
-                nested = True
+                # Nested in the open item, or a lazy continuation of nested
+                # paragraph text. Only paragraph text continues lazily: not an
+                # indented code line, nor a heading.
+                code = indent >= content + 4 and (blank or code)
+                nested = not code and not HEADING.match(stripped)
+                blank = False
                 i += 1
                 continue
             elif marker and indent <= 3:
@@ -213,10 +222,12 @@ def items(lines, start, end):
                     j += 1
                 yield i, " ".join(part.strip() for part in lines[i:j])
                 content = indent + marker.end()
-                nested = False
+                nested = code = blank = False
                 i = j
                 continue
             content = 0
+            nested = code = False
+        blank = False
         i += 1
 
 
