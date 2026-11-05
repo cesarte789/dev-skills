@@ -185,18 +185,22 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
             j += 1
         text = " ".join(line.strip() for line in lines[i:j])
         bullet = BULLET.match(text)
-        if bullet and bullet.group(1) == "-" and bullet.group(3).startswith(" —") and "," in bullet.group(2):
-            print(f"error: {path}:{i + 1}: Operations entry name `{bullet.group(2)}` holds a comma, which the "
-                  "README list uses to separate names", file=sys.stderr)
-            failed = True
-        elif bullet and bullet.group(1) == "-" and bullet.group(3).startswith(" —"):
-            names.append(bullet.group(2))
-        elif bullet and bullet.group(1) == "-" and bullet.group(3)[:1] in (":", ","):
-            availability.append((i, re.findall(r"\*\*(.+?)\*\*", text.split(":")[0])))
-        else:
-            print(f"error: {path}:{i + 1}: Operations list item in an unrecognized shape; write an entry as "
-                  "`- **name** — ...`", file=sys.stderr)
-            failed = True
+        if bullet and bullet.group(1) == "-":
+            name, rest = bullet.group(2), bullet.group(3)
+            if rest.startswith(" —") and "," in name:
+                print(f"error: {path}:{i + 1}: Operations entry name `{name}` holds a comma, which the "
+                      "README list uses to separate names", file=sys.stderr)
+                failed = True
+                continue
+            if rest.startswith(" —"):
+                names.append(name)
+                continue
+            if rest[:1] in (":", ","):
+                availability.append((i, re.findall(r"\*\*(.+?)\*\*", text.split(":")[0])))
+                continue
+        print(f"error: {path}:{i + 1}: Operations list item in an unrecognized shape; write an entry as "
+              "`- **name** — ...`", file=sys.stderr)
+        failed = True
     if not names:
         print(f"error: {path}:{start + 1}: Operations section has no `- **name** — ...` entries", file=sys.stderr)
         failed = True
