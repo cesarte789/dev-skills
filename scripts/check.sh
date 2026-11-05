@@ -179,6 +179,22 @@ OVERRIDES = re.compile(r" {0,3}##[ \t]+Platform overrides[ \t]*#*[ \t]*")
 UNDERLINE = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
 
 
+def section_end(lines, start):
+    """Where the section opened at lines[start] ends: the next level-1 or level-2
+    heading, ATX (indented up to three spaces) or setext, outside code fences."""
+    fenced = False
+    for i in range(start + 1, len(lines)):
+        if lines[i].lstrip(" ").startswith(("```", "~~~")):
+            fenced = not fenced
+        if fenced:
+            continue
+        if re.match(r" {0,3}##?(?:[ \t]|$)", lines[i]):
+            return i
+        if lines[i].strip() and i + 1 < len(lines) and UNDERLINE.fullmatch(lines[i + 1]):
+            return i
+    return len(lines)
+
+
 def headings(lines, atx, title):
     """How many headings in lines are ATX headings `atx` accepts, or setext
     headings whose title line matches `title`, underlined with `=` or `-`."""
@@ -212,7 +228,10 @@ def items(path, lines, start, end, flat=False):
         errors.append(f"{path}:{i + 1}: {message}")
 
     def unfenced(i, text):
-        """The rules every line outside a code fence keeps."""
+        """The rules every line outside a code fence keeps. Its code spans pair
+        on the line, so reading them line by line reads them as markdown does."""
+        if "\\`" in text or "``" in text or text.count("`") % 2:
+            error(i, "backticks outside a code fence must pair on their line, singly and unescaped")
         if opens_comment(text):
             error(i, "HTML comment over several lines; keep it on one line")
         if "__" in prose(text):
@@ -239,7 +258,7 @@ def items(path, lines, start, end, flat=False):
             conventions = line != "<!-- /repo-conventions -->"
             i += 1
             continue
-        if not fenced:
+        if not fenced and not stripped.startswith(("```", "~~~")):
             unfenced(i, line)
         if fenced:
             if line == CLOSE_FENCE:
@@ -304,7 +323,7 @@ for path in sorted(glob.glob("skills/*/SKILL.md")):
     if headings(lines, OPERATIONS.match, r"Operations\b") > 1:
         print(f"error: {path}: more than one `## Operations` section; keep the one", file=sys.stderr)
         failed = True
-    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    end = section_end(lines, start)
     names = entries[path.split("/")[1]] = []
     availability = []
     found, errors = items(path, lines, start, end)
@@ -363,7 +382,7 @@ if start is None:
     print("error: README.md: no `## Platform overrides` section listing each skill's override operations",
           file=sys.stderr)
     sys.exit(1)
-end = next((i for i in range(start + 1, len(readme)) if readme[i].startswith("## ")), len(readme))
+end = section_end(readme, start)
 listed = {}
 found, errors = items("README.md", readme, start, end, flat=True)
 for error in errors:
