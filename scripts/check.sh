@@ -155,9 +155,10 @@ COMMAND = re.compile(r"(?:^|[\s`'\"(])(?:(git)" + OPTIONS + r"\s+(?:" + "|".join
                      + r")|(gh)" + OPTIONS + r"\s+(?:" + "|".join(GH.split()) + r"))(?![\w-])", re.M)
 
 # Operations sections and the README list keep one strict layout, so a reader
-# needs no markdown parser to find every top-level item: an item starts `- ` at
-# the margin, its wrapped lines are indented two spaces, a nested item four, and
-# a code fence two, inside an entry. Anything else fails, rather than risk an
+# needs no markdown parser to find every item: an item starts `- ` at the
+# margin, its wrapped lines are indented two spaces, a code fence two, inside an
+# entry, and no list nests. The README list keeps each line whole, with nothing
+# indented under it. Anything else fails, rather than risk an
 # entry being read past silently. An entry is `- **name** — ...` and its name
 # holds no comma, which separates names in the README; a bullet naming
 # operations then `:` or `,` says what happens when they are unavailable, so
@@ -167,9 +168,10 @@ MARKER = re.compile(r"(?:[-*+]|\d+[.)])(?:\s|$)")
 FENCE = re.compile(r"`{3,}|~{3,}")
 
 
-def items(path, lines, start, end):
-    """The top-level items of lines[start:end] as (index, text), each item read
-    with its wrapped lines, plus an error for each line off the layout."""
+def items(path, lines, start, end, flat=False):
+    """The items of lines[start:end] as (index, text), each item read with its
+    wrapped lines, plus an error for each line off the layout. Flat, nothing
+    may be indented at all."""
     found, errors = [], []
     fence = None  # the run that opened the current code fence
     i = start
@@ -191,9 +193,11 @@ def items(path, lines, start, end):
                 errors.append(f"{where}: code fence indented {indent} spaces; indent it two, under an entry")
         elif stripped.startswith("<!--") and "-->" not in stripped:
             errors.append(f"{where}: HTML comment over several lines; keep it on one line")
-        elif MARKER.match(stripped) and 0 < indent < 4:
-            errors.append(f"{where}: list item indented {indent} spaces; start a top-level item at the margin, "
-                          "or indent a nested one four spaces")
+        elif flat and indent and line.strip():
+            errors.append(f"{where}: indented line under a README list item; keep each item on one line")
+        elif MARKER.match(stripped) and indent:
+            errors.append(f"{where}: list item indented {indent} spaces; start every item at the margin, "
+                          "since lists here do not nest")
         elif MARKER.match(stripped) and indent == 0:
             if not line.startswith("- "):
                 errors.append(f"{where}: top-level list item not started with `- `")
@@ -274,7 +278,7 @@ if start is None:
     sys.exit(1)
 end = next((i for i in range(start + 1, len(readme)) if readme[i].startswith("## ")), len(readme))
 listed = {}
-found, errors = items("README.md", readme, start, end)
+found, errors = items("README.md", readme, start, end, flat=True)
 for error in errors:
     print(f"error: {error}", file=sys.stderr)
     failed = True
