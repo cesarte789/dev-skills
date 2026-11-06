@@ -1,6 +1,6 @@
 # dev-skills
 
-Claude Code skills that automate the issue → PR → review → merge loop, plus two output styles, packaged as a plugin so every repo uses the same copy instead of drifting forks.
+Claude Code skills that automate the issue → PR → review → merge loop, plus one output style, packaged as a plugin so every repo uses the same copy instead of drifting forks.
 
 ## Install in a repo
 
@@ -73,9 +73,7 @@ To update a local install by hand: `claude plugin marketplace update dev-skills`
 
 ## Output styles
 
-`i-have-adhd` is an [output style](https://code.claude.com/docs/en/output-styles), not a skill: it shapes every reply for an ADHD reader (next action first, numbered steps, no tangents). Turn it on for a repo by adding `"outputStyle": "dev-skills:i-have-adhd"` to the `.claude/settings.json` above, or for yourself under `/config` → Output style.
-
-`asd-ste100` is an output style too: it writes every reply in [ASD-STE100](https://www.asd-ste100.org/) Simplified Technical English (approved words, short sentences, active voice), and leaves code, commands and paths unchanged. Turn it on the same way, with `"outputStyle": "dev-skills:asd-ste100"`. Only one output style is active at a time.
+`concise` is an [output style](https://code.claude.com/docs/en/output-styles), not a skill: it makes every reply short and easy to understand (next action first, numbered steps, plain words, short active sentences, no tangents), and leaves code, commands and paths unchanged. Turn it on for a repo by adding `"outputStyle": "dev-skills:concise"` to the `.claude/settings.json` above, or for yourself under `/config` → Output style.
 
 ## Platform overrides
 
@@ -98,4 +96,4 @@ To update a local install by hand: `claude plugin marketplace update dev-skills`
 
 - Contributing (checks, versioning, evals): [`.claude/CLAUDE.md`](.claude/CLAUDE.md).
 - License: MIT ([`LICENSE`](LICENSE)).
-- `output-styles/i-have-adhd.md` is adapted from [ayghri/i-have-adhd@4c76175](https://github.com/ayghri/i-have-adhd/tree/4c76175) by Ayoub Ghriss, under its MIT license (`output-styles/LICENSE`).
+- `output-styles/concise.md` is adapted in part from [ayghri/i-have-adhd@4c76175](https://github.com/ayghri/i-have-adhd/tree/4c76175) by Ayoub Ghriss, under its MIT license (`output-styles/LICENSE`).

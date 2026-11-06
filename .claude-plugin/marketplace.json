@@ -8,7 +8,7 @@
     {
       "name": "dev-skills",
       "source": "./",
-      "description": "Issue → PR → review → merge skills for Claude Code, plus the i-have-adhd and asd-ste100 output styles. Repo-agnostic: each skill takes its standards from the consuming repo's CLAUDE.md, AGENTS.md or GEMINI.md, else from its CI and project files."
+      "description": "Issue → PR → review → merge skills for Claude Code, plus the concise output style. Repo-agnostic: each skill takes its standards from the consuming repo's CLAUDE.md, AGENTS.md or GEMINI.md, else from its CI and project files."
     }
   ]
 }
