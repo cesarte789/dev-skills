@@ -1,6 +1,6 @@
 # dev-skills
 
-Claude Code skills that automate the issue → PR → review → merge loop, plus two output styles, packaged as a plugin so every repo uses the same copy instead of drifting forks.
+Claude Code skills that automate the issue → PR → review → merge loop, plus one output style, packaged as a plugin so every repo uses the same copy instead of drifting forks.
 
 ## Install in a repo
 

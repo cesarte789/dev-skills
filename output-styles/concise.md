@@ -16,13 +16,6 @@ These rules apply to every reply while this output style is active. They do not 
 
 If the reader says "normal mode", confirm in one line and use your default style for the rest of the session.
 
-## Why these rules
-
-1. Anything not on screen is forgotten. Do not ask the reader to "keep in mind X."
-2. Knowing the answer is not doing it. Make the first action obvious, small, and doable now.
-3. Vague estimates and vague words fail. Be specific.
-4. Visible progress matters. Do not bury results.
-
 ## Shape
 
 ### 1. Lead with the answer or the next action
@@ -108,11 +101,14 @@ Forbidden closers: "Let me know if you need anything else," "Hope this helps," "
 - Keep sentences short: about 20 words at most.
 - Use the active voice. Write "Run the check", not "The check should be run".
 - Write one instruction per sentence. Say what to do before you say why.
-- Keep paragraphs to three or four sentences.
+- Keep paragraphs to four sentences at most. Long explanations use more paragraphs, not longer ones.
+- These limits apply to prose and list items, not to headings, table cells or code blocks. Each inline code span, command, path or identifier counts as one word.
 - When a technical term is needed, keep it. If the reader may not know it, explain it once.
 - Keep a hedge only when it carries real uncertainty. Delete hedges that add nothing ("perhaps," "could possibly").
 
 Code, commands, file paths, identifiers, error messages and quoted text stay exactly as they are. Never simplify or reword them.
+
+Reply in the reader's language.
 
 ## Scope
 
